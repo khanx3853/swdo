@@ -177,6 +177,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
       Profession: 'Contributor / Philanthropist',
       Amount: numAmount,
       'Transaction ID': generatedTxn,
+      Category: purpose || 'Sadaqah & Welfare',
       Remarks: `${purpose} • ${paymentMethod || 'Easypaisa'}${remarks ? ` • ${remarks}` : ''}`,
       EnteredBy: currentUsername,
       ProofImage: proofImage,
@@ -688,8 +689,9 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                       onChange={(e) => setPurpose(e.target.value)}
                       className="w-full py-2 px-3 rounded-xl bg-slate-900/80 border border-purple-900/50 text-white text-xs focus:border-emerald-500 focus:outline-none"
                     >
-                      <option value="Zakat">Zakat Fund</option>
+                      <option value="Masajid Donations">🕌 Masajid Donations (مسجد تعمیر و دیکھ بھال)</option>
                       <option value="Sadaqah">Sadaqah & Welfare</option>
+                      <option value="Zakat">Zakat Fund</option>
                       <option value="Orphan Care">Orphan & Widow Relief</option>
                       <option value="Medical Relief">Emergency Medical Relief</option>
                       <option value="Ration Package">Ramadan / Food Ration</option>

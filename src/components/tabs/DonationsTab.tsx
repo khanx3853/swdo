@@ -30,6 +30,7 @@ import {
   CopyPlus,
   XCircle,
   Mail,
+  Landmark,
 } from 'lucide-react';
 import { Donation } from '../../types';
 import { formatPKR, formatNIC, formatContact } from '../../utils/formatters';
@@ -75,6 +76,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'masajid' | 'sadaqah' | 'zakat'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -83,8 +85,48 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
 
   const presetAmounts = [300, 500, 1000, 2500, 5000, 10000, 15000, 30000, 50000, 100000, 300000];
 
+  // Category Helper Functions
+  const isMasajidDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+
+    if (d.Category) {
+      return cat.includes('masajid') || cat.includes('mosque') || cat.includes('masjid') || cat.includes('مسجد');
+    }
+
+    return (
+      rem.includes('masajid') ||
+      rem.includes('masjid') ||
+      rem.includes('mosque') ||
+      rem.includes('مسجد')
+    );
+  };
+
+  const isSadaqahDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+
+    if (d.Category) {
+      return cat.includes('sadaqah') || cat.includes('welfare') || cat.includes('صدقہ');
+    }
+
+    return rem.includes('sadaqah') || rem.includes('welfare') || rem.includes('صدقہ');
+  };
+
+  const isZakatDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+
+    if (d.Category) {
+      return cat.includes('zakat') || cat.includes('زکوۃ');
+    }
+
+    return rem.includes('zakat') || rem.includes('زکوۃ');
+  };
+
   // Form state
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState('Masajid Donations');
   const [donorName, setDonorName] = useState('');
   const [nicNo, setNicNo] = useState('');
   const [contactNo, setContactNo] = useState('');
@@ -209,6 +251,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Profession: profession.trim() || 'Contributor',
       Amount: parsedAmount,
       'Transaction ID': txId.trim() || `TXN-${Date.now().toString().slice(-6)}`,
+      Category: category || 'Masajid Donations',
       Remarks: remarks.trim() || 'General Welfare Fund',
       EnteredBy: currentUsername || 'admin',
       Status: status,
@@ -326,7 +369,16 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     return donations.filter((d) => (d.Status || '').toLowerCase() !== 'rejected');
   }, [donations]);
 
-  // Filtered donations based on search and status
+  // Category Specific Sub-lists
+  const masajidDonationsList = useMemo(() => {
+    return approvedDonations.filter(isMasajidDonation);
+  }, [approvedDonations]);
+
+  const totalMasajidAmount = useMemo(() => {
+    return masajidDonationsList.reduce((sum, d) => sum + (Number(d.Amount) || 0), 0);
+  }, [masajidDonationsList]);
+
+  // Filtered donations based on search, status, and category
   const filteredDonations = useMemo(() => {
     // Hide rejected items from the main lists entirely for both Admin and normal users
     let list = isAdmin 
@@ -339,6 +391,18 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       } else if (statusFilter === 'approved') {
         list = approvedDonations;
       }
+    }
+
+    // Apply category sub-filter
+    if (categoryFilter === 'masajid') {
+      list = list.filter(isMasajidDonation);
+    } else if (categoryFilter === 'sadaqah') {
+      list = list.filter(isSadaqahDonation);
+    } else if (categoryFilter === 'zakat') {
+      list = list.filter(isZakatDonation);
+    } else if (categoryFilter === 'all') {
+      // Exclude Masajid donations from the 'all' view
+      list = list.filter(d => !isMasajidDonation(d));
     }
 
     let result = list;
@@ -393,19 +457,51 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
 
       return b.id.localeCompare(a.id);
     });
-  }, [donations, statusFilter, searchTerm, pendingDonations, approvedDonations, isAdmin]);
+  }, [donations, statusFilter, categoryFilter, searchTerm, pendingDonations, approvedDonations, nonRejectedDonations, isAdmin]);
+
+  // Category scoped counts for status buttons
+  const categoryScopedApprovedCount = useMemo(() => {
+    if (categoryFilter === 'masajid') return approvedDonations.filter(isMasajidDonation).length;
+    if (categoryFilter === 'sadaqah') return approvedDonations.filter(isSadaqahDonation).length;
+    if (categoryFilter === 'zakat') return approvedDonations.filter(isZakatDonation).length;
+    return approvedDonations.length;
+  }, [approvedDonations, categoryFilter]);
+
+  const categoryScopedNonRejectedCount = useMemo(() => {
+    if (categoryFilter === 'masajid') return nonRejectedDonations.filter(isMasajidDonation).length;
+    if (categoryFilter === 'sadaqah') return nonRejectedDonations.filter(isSadaqahDonation).length;
+    if (categoryFilter === 'zakat') return nonRejectedDonations.filter(isZakatDonation).length;
+    return nonRejectedDonations.length;
+  }, [nonRejectedDonations, categoryFilter]);
+
+  const categoryScopedPendingCount = useMemo(() => {
+    if (categoryFilter === 'masajid') return pendingDonations.filter(isMasajidDonation).length;
+    if (categoryFilter === 'sadaqah') return pendingDonations.filter(isSadaqahDonation).length;
+    if (categoryFilter === 'zakat') return pendingDonations.filter(isZakatDonation).length;
+    return pendingDonations.length;
+  }, [pendingDonations, categoryFilter]);
 
   const filteredPendingQueue = useMemo(() => {
+    let list = pendingDonations;
+
+    if (categoryFilter === 'masajid') {
+      list = list.filter(isMasajidDonation);
+    } else if (categoryFilter === 'sadaqah') {
+      list = list.filter(isSadaqahDonation);
+    } else if (categoryFilter === 'zakat') {
+      list = list.filter(isZakatDonation);
+    }
+
     const q = searchTerm.toLowerCase().trim();
-    const list = !q 
-      ? pendingDonations 
-      : pendingDonations.filter((d) => {
-          const name = (d['Donor Name'] || '').toLowerCase();
-          const tx = (d['Transaction ID'] || '').toLowerCase();
-          const amt = (d.Amount || 0).toString();
-          const contact = (d['Contact No'] || '').toLowerCase();
-          return name.includes(q) || tx.includes(q) || amt.includes(q) || contact.includes(q);
-        });
+    if (q) {
+      list = list.filter((d) => {
+        const name = (d['Donor Name'] || '').toLowerCase();
+        const tx = (d['Transaction ID'] || '').toLowerCase();
+        const amt = (d.Amount || 0).toString();
+        const contact = (d['Contact No'] || '').toLowerCase();
+        return name.includes(q) || tx.includes(q) || amt.includes(q) || contact.includes(q);
+      });
+    }
     
     return [...list].sort((a, b) => {
       const dateA = new Date(a.Date).getTime();
@@ -413,7 +509,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       if (dateB !== dateA) return dateB - dateA;
       return b.id.localeCompare(a.id);
     });
-  }, [pendingDonations, searchTerm]);
+  }, [pendingDonations, categoryFilter, searchTerm]);
 
   const totalFilteredAmount = useMemo(() => {
     return filteredDonations.reduce((sum, d) => sum + (Number(d.Amount) || 0), 0);
@@ -854,6 +950,28 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               <label className="field-label">Transaction ID / Slip No</label>
             </div>
 
+            {/* Category / Cause Selector */}
+            <div className="field-box">
+              <select
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  if (e.target.value === 'Masajid Donations') {
+                    setRemarks('Masajid Donations • Mosque Construction & Maintenance');
+                  }
+                }}
+                className="field-input font-bold text-emerald-400"
+              >
+                <option value="Masajid Donations">🕌 Masajid Donations (مسجد فنڈ)</option>
+                <option value="Sadaqah & Welfare">💚 Sadaqah & Welfare</option>
+                <option value="Zakat Fund">📖 Zakat Fund</option>
+                <option value="Emergency Medical Relief">🏥 Emergency Medical Relief</option>
+                <option value="General Welfare">General Welfare</option>
+              </select>
+              <Landmark className="field-icon text-emerald-400 w-4 h-4" />
+              <label className="field-label">Category / Cause</label>
+            </div>
+
             {/* Approval Status Selector */}
             <div className="field-box">
               <select
@@ -924,6 +1042,125 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
         </div>
       )}
 
+      {/* CATEGORY SECTIONS SUB-NAVBAR */}
+      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl dark:bg-slate-900/90 bg-white border dark:border-slate-800 border-purple-200 text-xs shadow-md">
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('all')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'all'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>All Collections</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('masajid')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'masajid'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/20 ring-2 ring-emerald-400/30'
+              : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+          }`}
+        >
+          <Landmark className="w-3.5 h-3.5 text-emerald-400" />
+          <span>🕌 Masajid Donations</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
+            {masajidDonationsList.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('sadaqah')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'sadaqah'
+              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-blue-600/20'
+              : 'text-blue-400 hover:text-blue-300 hover:bg-slate-800/50'
+          }`}
+        >
+          <HandCoins className="w-3.5 h-3.5" />
+          <span>💚 Sadaqah & Welfare</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('zakat')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'zakat'
+              ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/20'
+              : 'text-amber-400 hover:text-amber-300 hover:bg-slate-800/50'
+          }`}
+        >
+          <Coins className="w-3.5 h-3.5" />
+          <span>📖 Zakat Fund</span>
+        </button>
+      </div>
+
+      {/* DEDICATED MASAJID DONATIONS SECTION SPOTLIGHT */}
+      {categoryFilter === 'masajid' && (
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900/95 to-teal-950/50 border-2 border-emerald-500/40 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-lg">
+                <Landmark className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-bold text-emerald-300">
+                    Masajid Donations Section (مسجد کی تعمیر، توسیع و دیکھ بھال)
+                  </h3>
+                  <span className="text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                    Official Mosque Ledger
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                  Transparent record of contributions reserved for local Mosque construction, solar power installation, prayer carpets, sound equipment, and water filtration across District Shangla and KP.
+                </p>
+              </div>
+            </div>
+
+            {onOpenDonateModal && (
+              <button
+                type="button"
+                onClick={onOpenDonateModal}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-lg shadow-emerald-500/25 transition-all shrink-0 cursor-pointer border border-emerald-300/40"
+              >
+                <HandCoins className="w-4 h-4" />
+                <span>Donate to Masajid Fund</span>
+              </button>
+            )}
+          </div>
+
+          {/* Stats Grid for Masajid Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Masajid Funds Collected</p>
+              <p className="text-lg sm:text-xl font-extrabold text-emerald-400 font-mono mt-0.5">
+                {formatPKR(totalMasajidAmount)}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-teal-500/30">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Masajid Donators</p>
+              <p className="text-lg sm:text-xl font-extrabold text-teal-300 font-mono mt-0.5">
+                {masajidDonationsList.length} <span className="text-xs font-sans text-slate-400">Contributors</span>
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Primary Masajid Initiatives</p>
+              <p className="text-xs font-bold text-cyan-300 mt-1 truncate">
+                Solarization • Sound • Rugs • Water Systems
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Tabs & Search Bar */}
       <div className="glass-card p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-purple-500/30">
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -939,7 +1176,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                All ({nonRejectedDonations.length})
+                All ({categoryScopedNonRejectedCount})
               </button>
               <button
                 type="button"
@@ -951,7 +1188,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
-                <span>Pending ({pendingDonations.length})</span>
+                <span>Pending ({categoryScopedPendingCount})</span>
               </button>
               <button
                 type="button"
@@ -963,7 +1200,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Approved ({approvedDonations.length})</span>
+                <span>Approved ({categoryScopedApprovedCount})</span>
               </button>
             </div>
           ) : (
@@ -971,7 +1208,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             <div className="flex items-center gap-2 text-xs font-semibold">
               <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Approved Records ({approvedDonations.length})</span>
+                <span>Approved Records ({categoryScopedApprovedCount})</span>
               </span>
             </div>
           )}
@@ -1102,11 +1339,18 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                           {d.Date}
                         </td>
                         <td className="py-3 px-3">
-                          <div className="font-bold dark:text-slate-200 text-slate-800">
-                            {d['Donor Name']}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold dark:text-slate-200 text-slate-800">
+                              {d['Donor Name']}
+                            </span>
+                            {isMasajidDonation(d) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded shadow-sm">
+                                🕌 Masajid Fund
+                              </span>
+                            )}
                           </div>
                           <div className="text-[10px] text-slate-500 truncate max-w-xs font-mono">
-                            Ref: {d['Transaction ID'] || '-'}
+                            Ref: {d['Transaction ID'] || '-'} {d.Remarks ? `• ${d.Remarks}` : ''}
                           </div>
                         </td>
 

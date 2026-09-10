@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Scale,
   Users,
@@ -27,6 +27,17 @@ import {
   ChevronUp,
   Info,
   Calendar,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Upload,
+  Trash2,
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
+  Volume2,
+  VolumeX,
+  Loader2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -38,6 +49,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { compressImageFile } from '../../utils/imageUtils';
 import { Donation, Beneficiary, TabType, PortalSettings } from '../../types';
 import { formatPKR, parseAmount } from '../../utils/formatters';
 import { getRealTimeFinancialMetrics } from '../../utils/auditData';
@@ -56,6 +70,37 @@ interface HomeTabProps {
   onExportReceipt?: (donation: Donation) => void;
 }
 
+const DEFAULT_PICTURES = [
+  {
+    id: 'default-pic-1',
+    url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800',
+    caption: 'SWDO Community Welfare & Primary School Outreach Support'
+  },
+  {
+    id: 'default-pic-2',
+    url: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=800',
+    caption: 'Helping Hands, Rebuilding Lives Together with Love'
+  },
+  {
+    id: 'default-pic-3',
+    url: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&q=80&w=800',
+    caption: 'Emergency Food Packages & Relief Distribution in Shangla District'
+  }
+];
+
+const DEFAULT_VIDEOS = [
+  {
+    id: 'default-vid-1',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-holding-hands-of-an-elderly-person-41857-large.mp4',
+    caption: 'Helping Hands: Elder Care & Warm Compassionate Outreach'
+  },
+  {
+    id: 'default-vid-2',
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-volunteers-distributing-food-packages-45607-large.mp4',
+    caption: 'Emergency Aid: Direct Food Package & Relief Distribution'
+  }
+];
+
 export const HomeTab: React.FC<HomeTabProps> = ({
   donations,
   beneficiaries,
@@ -67,6 +112,156 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   onExportReceipt,
 }) => {
   const [showDonateModal, setShowDonateModal] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  // Gallery States
+  const [pictures, setPictures] = useState<{ id: string; url: string; caption: string }[]>([]);
+  const [videos, setVideos] = useState<{ id: string; url: string; caption: string }[]>([]);
+  const [activePicIndex, setActivePicIndex] = useState(0);
+  const [activeVidIndex, setActiveVidIndex] = useState(0);
+  const [isUploadingPic, setIsUploadingPic] = useState(false);
+  const [isUploadingVid, setIsUploadingVid] = useState(false);
+  const [slideshowPlaying, setSlideshowPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Subscribe to real-time gallery changes in Firestore
+  useEffect(() => {
+    const qPics = query(collection(db, 'gallery_pictures'));
+    const unsubPics = onSnapshot(qPics, (snapshot) => {
+      const list: any[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      if (list.length === 0) {
+        setPictures(DEFAULT_PICTURES);
+      } else {
+        setPictures(list);
+      }
+    }, (err) => {
+      console.error("Error subscribing to gallery_pictures:", err);
+      setPictures(DEFAULT_PICTURES);
+    });
+
+    const qVids = query(collection(db, 'gallery_videos'));
+    const unsubVids = onSnapshot(qVids, (snapshot) => {
+      const list: any[] = [];
+      snapshot.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      if (list.length === 0) {
+        setVideos(DEFAULT_VIDEOS);
+      } else {
+        setVideos(list);
+      }
+    }, (err) => {
+      console.error("Error subscribing to gallery_videos:", err);
+      setVideos(DEFAULT_VIDEOS);
+    });
+
+    return () => {
+      unsubPics();
+      unsubVids();
+    };
+  }, []);
+
+  // Slideshow interval
+  useEffect(() => {
+    if (!slideshowPlaying || pictures.length <= 1) return;
+    const interval = setInterval(() => {
+      setActivePicIndex((prev) => (prev + 1) % pictures.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [slideshowPlaying, pictures.length]);
+
+  const handleUploadPicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingPic(true);
+      const base64 = await compressImageFile(file, 1000, 0.8);
+      const captionInput = prompt("Enter a caption for this picture (optional):") || "";
+      await addDoc(collection(db, 'gallery_pictures'), {
+        url: base64,
+        caption: captionInput,
+        createdAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Error uploading picture:", err);
+      alert("Failed to upload image. Please try a smaller file.");
+    } finally {
+      setIsUploadingPic(false);
+    }
+  };
+
+  const handleUploadVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 500 * 1024 * 1024) {
+      alert("Video file is too large! Please select a video under 500MB.");
+      return;
+    }
+
+    try {
+      setIsUploadingVid(true);
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const base64 = event.target?.result as string;
+          const captionInput = prompt("Enter a title for this video (optional):") || "";
+          await addDoc(collection(db, 'gallery_videos'), {
+            url: base64,
+            caption: captionInput,
+            createdAt: new Date().toISOString()
+          });
+        } catch (innerErr) {
+          console.error("Failed to save video doc:", innerErr);
+          alert("Error saving video document to the cloud. The video might be too large.");
+        } finally {
+          setIsUploadingVid(false);
+        }
+      };
+      reader.onerror = () => {
+        alert("Failed to read video file.");
+        setIsUploadingVid(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error uploading video:", err);
+      alert("Failed to upload video.");
+      setIsUploadingVid(false);
+    }
+  };
+
+  const handleDeletePicture = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (id.startsWith('default-')) {
+      alert("Default pictures cannot be deleted.");
+      return;
+    }
+    if (!confirm("Are you sure you want to delete this picture from the slideshow?")) return;
+    try {
+      await deleteDoc(doc(db, 'gallery_pictures', id));
+      setActivePicIndex(0);
+    } catch (err) {
+      console.error("Error deleting picture:", err);
+    }
+  };
+
+  const handleDeleteVideo = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (id.startsWith('default-')) {
+      alert("Default videos cannot be deleted.");
+      return;
+    }
+    if (!confirm("Are you sure you want to delete this video from the playlist?")) return;
+    try {
+      await deleteDoc(doc(db, 'gallery_videos', id));
+      setActiveVidIndex(0);
+    } catch (err) {
+      console.error("Error deleting video:", err);
+    }
+  };
 
   // Filter approved donations for official financial balance calculations
   const approvedDonations = useMemo(() => {
@@ -82,20 +277,28 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     const monthMap: { [key: string]: number } = {};
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    // Initialize last 6 months
+    // Generate months from January 2024 up to the current year and current month
+    const startYear = 2024;
+    const startMonth = 0; // Jan
     const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${months[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
-      monthMap[key] = 0;
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    for (let year = startYear; year <= currentYear; year++) {
+      const endMonthOfThisYear = (year === currentYear) ? currentMonth : 11;
+      const startMonthOfThisYear = (year === startYear) ? startMonth : 0;
+      for (let month = startMonthOfThisYear; month <= endMonthOfThisYear; month++) {
+        const key = `${months[month]} ${year.toString().slice(-2)}`;
+        monthMap[key] = 0;
+      }
     }
 
     approvedDonations.forEach(d => {
       const date = new Date(d.Date);
       if (isNaN(date.getTime())) return;
       const key = `${months[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
-      if (monthMap[key] !== undefined || true) { // We want to show all months present in data or at least the last 6
-        monthMap[key] = (monthMap[key] || 0) + (Number(d.Amount) || 0);
+      if (monthMap[key] !== undefined) {
+        monthMap[key] += (Number(d.Amount) || 0);
       }
     });
 
@@ -107,9 +310,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         const d1 = new Date(parseInt(`20${y1}`), months.indexOf(m1));
         const d2 = new Date(parseInt(`20${y2}`), months.indexOf(m2));
         return d1.getTime() - d2.getTime();
-      })
-      .slice(-6); // Show only last 6 months for clean UI
+      });
   }, [approvedDonations]);
+
+  // Smooth auto-scroll chart container to show current month by default
+  useEffect(() => {
+    if (chartContainerRef.current) {
+      chartContainerRef.current.scrollLeft = chartContainerRef.current.scrollWidth;
+    }
+  }, [monthlyData]);
 
   // Real-time financial metrics reconciled with official audit report
   const financialMetrics = useMemo(() => {
@@ -247,17 +456,239 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           </a>
         </div>
 
-        <div className="pt-4 border-t border-purple-900/40 flex flex-col items-center justify-center gap-2.5 text-center">
-          <a
-            href="mailto:Swdo.kpk@gmail.com"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-300 hover:text-purple-200 transition-all text-xs font-mono font-medium"
-          >
-            <Mail className="w-4 h-4 text-purple-400" />
-            <span>Swdo.kpk@gmail.com</span>
-          </a>
-          <p className="text-[11px] sm:text-xs text-slate-400 font-medium mb-1">
-            District Shangla, Khyber Pakhtunkhwa, Pakistan
-          </p>
+        {/* Pictures Slideshow & Continuous Video Player Grid */}
+        <div className="pt-5 border-t border-purple-900/40 grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 text-left">
+          
+          {/* Section 1: Pictures Auto Slideshow */}
+          <div className="relative rounded-2xl overflow-hidden bg-slate-950/80 border border-purple-500/15 p-4 flex flex-col justify-between group min-h-[300px]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-purple-300">
+                <ImageIcon className="w-4 h-4 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider">SWDO Live Gallery</span>
+              </div>
+              
+              {/* Image Upload Option */}
+              {isAdmin && (
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-purple-500/25 hover:bg-purple-500/40 text-purple-200 rounded-lg border border-purple-500/30 flex items-center gap-1 transition-all">
+                    {isUploadingPic ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Upload className="w-3 h-3" />
+                    )}
+                    <span>Upload Pic</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadPicture}
+                      disabled={isUploadingPic}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Slideshow Display Area */}
+            {pictures.length > 0 ? (
+              <div className="relative flex-1 rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
+                <img
+                  src={pictures[activePicIndex]?.url}
+                  alt={pictures[activePicIndex]?.caption || "SWDO Gallery Picture"}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover select-none"
+                />
+                
+                {/* Delete overlay for admin users */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeletePicture(pictures[activePicIndex]?.id, e)}
+                    className="absolute top-2 right-2 p-2 rounded-lg bg-red-600/85 hover:bg-red-500 text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg z-10"
+                    title="Delete Image"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Slideshow Controls Navigation */}
+                {pictures.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePicIndex((prev) => (prev - 1 + pictures.length) % pictures.length);
+                      }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white cursor-pointer transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePicIndex((prev) => (prev + 1) % pictures.length);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white cursor-pointer transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+
+                {/* Slide Caption Overlay */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/70 to-transparent p-3 text-left">
+                  <p className="text-[11px] sm:text-xs text-slate-200 line-clamp-2 leading-relaxed">
+                    {pictures[activePicIndex]?.caption || "Empowering community developments in Shangla"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-slate-700 rounded-xl bg-slate-900/40 text-center">
+                <ImageIcon className="w-8 h-8 text-slate-500 mb-2" />
+                <p className="text-xs text-slate-400 font-medium">No pictures added yet.</p>
+              </div>
+            )}
+
+            {/* Slideshow Bottom Dots & Playback Toggle */}
+            {pictures.length > 1 && (
+              <div className="flex items-center justify-between mt-3 px-1">
+                <button
+                  type="button"
+                  onClick={() => setSlideshowPlaying(!slideshowPlaying)}
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  {slideshowPlaying ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5" />}
+                  <span>{slideshowPlaying ? 'Pause Slideshow' : 'Resume'}</span>
+                </button>
+                <div className="flex gap-1">
+                  {pictures.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActivePicIndex(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        i === activePicIndex ? 'bg-purple-400 w-3' : 'bg-slate-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Continuous Auto-Play Video Player */}
+          <div className="relative rounded-2xl overflow-hidden bg-slate-950/80 border border-purple-500/15 p-4 flex flex-col justify-between group min-h-[300px]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-orange-400">
+                <VideoIcon className="w-4 h-4 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider">SWDO Videos</span>
+              </div>
+              
+              {/* Video Upload Option */}
+              {isAdmin && (
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-orange-500/25 hover:bg-orange-500/40 text-orange-200 rounded-lg border border-orange-500/30 flex items-center gap-1 transition-all">
+                    {isUploadingVid ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Upload className="w-3 h-3" />
+                    )}
+                    <span>Upload Video</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleUploadVideo}
+                      disabled={isUploadingVid}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Video Player Display Area */}
+            {videos.length > 0 ? (
+              <div className="relative flex-1 rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
+                <video
+                  key={videos[activeVidIndex]?.id || activeVidIndex}
+                  src={videos[activeVidIndex]?.url}
+                  autoPlay
+                  controls
+                  muted={isMuted}
+                  playsInline
+                  referrerPolicy="no-referrer"
+                  onEnded={() => {
+                    // Automatically play next video in the loop when ended!
+                    setActiveVidIndex((prev) => (prev + 1) % videos.length);
+                  }}
+                  className="w-full h-full object-cover select-none"
+                />
+
+                {/* Delete overlay for admin users */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteVideo(videos[activeVidIndex]?.id, e)}
+                    className="absolute top-2 right-2 p-2 rounded-lg bg-red-600/85 hover:bg-red-500 text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-lg z-20"
+                    title="Delete Video"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                {/* Mute/Unmute quick overlay */}
+                <button
+                  type="button"
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="absolute bottom-12 right-2 p-2 rounded-lg bg-black/60 hover:bg-black text-white transition-colors cursor-pointer z-10"
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX className="w-3.5 h-3.5 text-orange-300" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                </button>
+
+                {/* Video Title Overlay */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/75 to-transparent p-3 text-left">
+                  <p className="text-[11px] sm:text-xs text-slate-200 line-clamp-2 leading-relaxed font-semibold">
+                    {videos[activeVidIndex]?.caption || "SWDO Welfare Campaign Relief Video"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 border border-dashed border-slate-700 rounded-xl bg-slate-900/40 text-center">
+                <VideoIcon className="w-8 h-8 text-slate-500 mb-2" />
+                <p className="text-xs text-slate-400 font-medium">No videos added yet.</p>
+              </div>
+            )}
+
+            {/* Continuous Video Loop Selector */}
+            {videos.length > 1 && (
+              <div className="flex items-center justify-between mt-3 px-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Playing {activeVidIndex + 1} of {videos.length} (Loop)
+                </span>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveVidIndex((prev) => (prev - 1 + videos.length) % videos.length)}
+                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-orange-300 text-[10px] font-bold cursor-pointer transition-all"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVidIndex((prev) => (prev + 1) % videos.length)}
+                    className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-orange-300 text-[10px] font-bold cursor-pointer transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
           <div className="w-full relative group mt-2">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
             <button
@@ -296,7 +727,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             </button>
           </div>
         </div>
-      </div>
 
       {/* Pending Admin Approval Banner (Admins Only) */}
       {isAdmin && pendingDonations.length > 0 && (
@@ -736,51 +1166,56 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           </div>
         </div>
 
-        <div className="h-[160px] w-full relative z-10">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 500 }}
-                dy={5}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 500 }}
-                tickFormatter={(value) => `₨${(value / 1000).toFixed(0)}k`}
-              />
-              <Tooltip 
-                cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
-                contentStyle={{ 
-                  backgroundColor: '#0f172a', 
-                  border: '1px solid rgba(249, 115, 22, 0.2)',
-                  borderRadius: '8px',
-                  fontSize: '10px',
-                  color: '#fff'
-                }}
-                itemStyle={{ color: '#f97316', fontWeight: 'bold' }}
-                formatter={(value: number) => [formatPKR(value), 'Collections']}
-              />
-              <Bar 
-                dataKey="total" 
-                radius={[4, 4, 0, 0]}
-                barSize={24}
-              >
-                {monthlyData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={index === monthlyData.length - 1 ? '#10b881' : '#1e293b'}
-                    stroke={index === monthlyData.length - 1 ? '#10b881' : '#334155'}
-                    strokeWidth={1}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <div 
+          ref={chartContainerRef}
+          className="h-[160px] w-full relative z-10 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50 pb-1"
+        >
+          <div style={{ width: `${Math.max(100, monthlyData.length * 40)}px`, minWidth: '100%', height: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 500 }}
+                  dy={5}
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 500 }}
+                  tickFormatter={(value) => `₨${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
+                  contentStyle={{ 
+                    backgroundColor: '#0f172a', 
+                    border: '1px solid rgba(249, 115, 22, 0.2)',
+                    borderRadius: '8px',
+                    fontSize: '10px',
+                    color: '#fff'
+                  }}
+                  itemStyle={{ color: '#f97316', fontWeight: 'bold' }}
+                  formatter={(value: number) => [formatPKR(value), 'Collections']}
+                />
+                <Bar 
+                  dataKey="total" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={24}
+                >
+                  {monthlyData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={index === monthlyData.length - 1 ? '#10b881' : '#1e293b'}
+                      stroke={index === monthlyData.length - 1 ? '#10b881' : '#334155'}
+                      strokeWidth={1}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

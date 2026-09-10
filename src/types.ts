@@ -19,12 +19,14 @@ export interface Donation {
   'Transaction ID': string;
   Remarks: string;
   EnteredBy: string;
+  Category?: string;
   ProofImage?: string;
   Status?: 'Approved' | 'Pending' | 'Rejected';
   SubmittedAt?: string;
   ApprovedBy?: string;
   ApprovedAt?: string;
   RejectionReason?: string;
+  DonorEmail?: string;
 }
 
 export interface Beneficiary {

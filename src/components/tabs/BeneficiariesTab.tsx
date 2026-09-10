@@ -36,7 +36,31 @@ import {
   exportBeneficiariesCSV,
 } from '../../utils/formatters';
 
+const isMasajidBeneficiary = (b: Beneficiary) => {
+  const name = (b['Beneficiary Name'] || '').toLowerCase();
+  const purpose = (b.Purpose || '').toLowerCase();
+  const remarks = (b.Remarks || '').toLowerCase();
+
+  return (
+    purpose.includes('masajid') ||
+    purpose.includes('mosque') ||
+    purpose.includes('masjid') ||
+    remarks.includes('masajid') ||
+    remarks.includes('mosque') ||
+    remarks.includes('masjid') ||
+    name.includes('masajid') ||
+    name.includes('mosque') ||
+    name.includes('masjid') ||
+    name.includes('madrasah') ||
+    purpose.includes('madrasah') ||
+    remarks.includes('madrasah')
+  );
+};
+
 const isWheelchairOrDisabled = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) {
+    return false;
+  }
   const name = (b['Beneficiary Name'] || '').toLowerCase();
   if (
     name.includes('penaflex') ||
@@ -84,6 +108,9 @@ const isWheelchairOrDisabled = (b: Beneficiary) => {
 };
 
 const isDirectFinancialAid = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) {
+    return false;
+  }
   if (isWheelchairOrDisabled(b)) {
     return false;
   }
@@ -129,6 +156,7 @@ interface BeneficiariesTabProps {
 const COMMON_PURPOSES = [
   'Direct financial beneficiaries patients, incidents, accidents',
   'Wheelchair Distribution & Expenses',
+  'Masajid Donations & Mosque Support',
   'Medical Relief & Surgery Support',
   'Monthly Ration Pack / Food Package',
   'Education Scholarship & College Fee',
@@ -170,7 +198,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'disabled' | 'direct_financial'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'disabled' | 'direct_financial' | 'masajid'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const csvFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -205,6 +233,10 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
   const [isEditingDfBanner, setIsEditingDfBanner] = useState(false);
   const [customDfCount, setCustomDfCount] = useState<string>(() => localStorage.getItem('swdo_banner_df_count') || '');
   const [customDfAmount, setCustomDfAmount] = useState<string>(() => localStorage.getItem('swdo_banner_df_amount') || '');
+
+  const [isEditingMjBanner, setIsEditingMjBanner] = useState(false);
+  const [customMjCount, setCustomMjCount] = useState<string>(() => localStorage.getItem('swdo_banner_mj_count') || '');
+  const [customMjAmount, setCustomMjAmount] = useState<string>(() => localStorage.getItem('swdo_banner_mj_amount') || '');
 
 
 
@@ -309,6 +341,8 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
           ? 'Disabled Beneficiaries (Wheelchair Records) Report'
           : categoryFilter === 'direct_financial'
           ? 'Direct Financial Aid Beneficiaries Report'
+          : categoryFilter === 'masajid'
+          ? 'Masajid Disbursed & Mosque Support Report'
           : 'All Beneficiaries & Welfare Relief Official Ledger Report';
       await exportBeneficiariesReportPDF(filtered, settings, title);
     } catch (err) {
@@ -324,6 +358,8 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
         ? 'SWDO_Wheelchairs_Report'
         : categoryFilter === 'direct_financial'
         ? 'SWDO_Financial_Aid_Report'
+        : categoryFilter === 'masajid'
+        ? 'SWDO_Masajid_Disbursed_Report'
         : 'SWDO_Beneficiaries_Report';
     exportBeneficiariesCSV(filtered, prefix);
   };
@@ -335,12 +371,14 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
     const q = searchTerm.toLowerCase().trim();
     let baseList = beneficiaries;
     if (categoryFilter === 'all') {
-      // Exclude wheelchair / disabled beneficiaries from general list as requested
-      baseList = baseList.filter((b) => !isWheelchairOrDisabled(b));
+      // Exclude wheelchair / disabled and Masajid beneficiaries from general list as requested
+      baseList = baseList.filter((b) => !isWheelchairOrDisabled(b) && !isMasajidBeneficiary(b));
     } else if (categoryFilter === 'disabled') {
       baseList = baseList.filter(isWheelchairOrDisabled);
     } else if (categoryFilter === 'direct_financial') {
       baseList = baseList.filter(isDirectFinancialAid);
+    } else if (categoryFilter === 'masajid') {
+      baseList = baseList.filter(isMasajidBeneficiary);
     }
 
     let list = !q ? baseList : baseList.filter((b) => {
@@ -395,7 +433,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
   }, [filtered]);
 
   const nonWheelchairBeneficiaries = useMemo(() => {
-    return beneficiaries.filter((b) => !isWheelchairOrDisabled(b));
+    return beneficiaries.filter((b) => !isWheelchairOrDisabled(b) && !isMasajidBeneficiary(b));
   }, [beneficiaries]);
 
   const wheelchairBeneficiaries = useMemo(() => {
@@ -404,6 +442,10 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
 
   const directFinancialBeneficiaries = useMemo(() => {
     return beneficiaries.filter(isDirectFinancialAid);
+  }, [beneficiaries]);
+
+  const masajidBeneficiaries = useMemo(() => {
+    return beneficiaries.filter(isMasajidBeneficiary);
   }, [beneficiaries]);
 
   const totalWheelchairsCount = wheelchairBeneficiaries.length;
@@ -417,6 +459,12 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
 
   const effectiveDfCount = customDfCount !== '' ? Number(customDfCount) : totalDfCount;
   const effectiveDfAmount = customDfAmount !== '' ? Number(customDfAmount) : totalDfAmount;
+
+  const totalMasajidCount = masajidBeneficiaries.length;
+  const totalMasajidAmount = masajidBeneficiaries.reduce((sum, b) => sum + parseAmount(b.Amount), 0);
+
+  const effectiveMjCount = customMjCount !== '' ? Number(customMjCount) : totalMasajidCount;
+  const effectiveMjAmount = customMjAmount !== '' ? Number(customMjAmount) : totalMasajidAmount;
 
   // Bulk Actions Logic
   const handleToggleSelect = (id: string) => {
@@ -869,6 +917,21 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
             {directFinancialBeneficiaries.length}
           </span>
         </button>
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('masajid')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+            categoryFilter === 'masajid'
+              ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 border-orange-500'
+              : 'dark:bg-slate-900 bg-slate-100 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border dark:border-purple-900/40 border-purple-200'
+          }`}
+        >
+          <span className="text-sm">🕌</span>
+          <span>Masajid Disbursed</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-orange-500/20 text-orange-300 font-mono">
+            {masajidBeneficiaries.length}
+          </span>
+        </button>
       </div>
 
       {/* Search & Statistics Bar */}
@@ -1214,6 +1277,81 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
                     }}
                     title="Edit Banner Values"
                     className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-xs font-bold cursor-pointer ml-2"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {categoryFilter === 'masajid' && (
+        <div className="glass-card p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-orange-500/30 bg-gradient-to-r from-orange-900/20 via-slate-900/40 to-amber-900/20 shadow-lg mt-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-orange-500/20 text-orange-300 border border-orange-500/30">
+              <span className="text-xl">🕌</span>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-orange-400">Masajid Disbursed & Mosque Support Summary</h4>
+              <p className="text-xs text-slate-400">Auto-calculated from live records (mosque construction & repair)</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            {isEditingMjBanner ? (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <label className="text-[10px] text-slate-400 block font-medium">Masajid Supported</label>
+                  <input
+                    type="number"
+                    className="w-20 px-2 py-1 text-sm font-mono font-bold bg-slate-800 text-orange-300 rounded border border-orange-500/40 text-right"
+                    value={customMjCount !== '' ? customMjCount : totalMasajidCount}
+                    onChange={(e) => setCustomMjCount(e.target.value)}
+                  />
+                </div>
+                <div className="text-right">
+                  <label className="text-[10px] text-slate-400 block font-medium">Total (Rs.)</label>
+                  <input
+                    type="number"
+                    className="w-32 px-2 py-1 text-sm font-mono font-bold bg-slate-800 text-emerald-400 rounded border border-emerald-500/40 text-right"
+                    value={customMjAmount !== '' ? customMjAmount : totalMasajidAmount}
+                    onChange={(e) => setCustomMjAmount(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('swdo_banner_mj_count', customMjCount);
+                    localStorage.setItem('swdo_banner_mj_amount', customMjAmount);
+                    setIsEditingMjBanner(false);
+                  }}
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <div className="text-[11px] text-slate-400 font-medium">Number of Masajid Supported</div>
+                  <div className="text-lg font-mono font-bold text-orange-300">{effectiveMjCount} Masajid</div>
+                </div>
+                <div className="h-8 w-px bg-slate-700/60 hidden sm:block"></div>
+                <div className="text-right">
+                  <div className="text-[11px] text-slate-400 font-medium">Total Amount Disbursed</div>
+                  <div className="text-lg font-mono font-bold text-emerald-400">{formatPKR(effectiveMjAmount)}</div>
+                </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customMjCount === '') setCustomMjCount(totalMasajidCount.toString());
+                      if (customMjAmount === '') setCustomMjAmount(totalMasajidAmount.toString());
+                      setIsEditingMjBanner(true);
+                    }}
+                    title="Edit Banner Values"
+                    className="px-2.5 py-1 rounded-lg bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 transition-colors text-xs font-bold cursor-pointer ml-2"
                   >
                     Edit
                   </button>

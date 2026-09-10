@@ -108,7 +108,61 @@ export default function App() {
     const unsubSettings = subscribeDocument<PortalSettings>(
       'settings',
       'portalSettings',
-      (data) => setSettings(data),
+      (data) => {
+        if (data) {
+          let needsUpdate = false;
+          const updated = { ...data };
+
+          if (!data.Address || data.Address.includes("Batkot") || data.Address.includes("Lelai") || !data.Address.includes("Barbatkot")) {
+            updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
+            needsUpdate = true;
+          }
+
+          if (data.Chairperson === "Fazal Rahim" || !data.Chairperson) {
+            updated.Chairperson = "Ali Bahadur";
+            needsUpdate = true;
+          }
+
+          if (data.Secretary === "Muhammad Zada" || !data.Secretary) {
+            updated.Secretary = "Muhammad Parvez";
+            needsUpdate = true;
+          }
+
+          if (data['Easypaisa Title'] === "Shangla Welfare Org" || !data['Easypaisa Title']) {
+            updated['Easypaisa Title'] = "ALI BAHADUR";
+            needsUpdate = true;
+          }
+
+          if (data['Bank Title'] === "Askari Bank - SWDO Official" || !data['Bank Title']) {
+            updated['Bank Title'] = "MEEZAN BANK";
+            needsUpdate = true;
+          }
+
+          if (data['Account Title'] === "Shangla Welfare & Development Org" || !data['Account Title']) {
+            updated['Account Title'] = "ALI BAHADUR";
+            needsUpdate = true;
+          }
+
+          if (data['Bank Account No'] === "12345678901234" || !data['Bank Account No']) {
+            updated['Bank Account No'] = "00300110485989";
+            needsUpdate = true;
+          }
+
+          if (data['Bank No'] === "12345678901234" || !data['Bank No']) {
+            updated['Bank No'] = "PK34MEZN0000300110485989";
+            needsUpdate = true;
+          }
+
+          if (needsUpdate) {
+            setSettings(updated);
+            saveDocToFirestore('settings', 'portalSettings', updated);
+          } else {
+            setSettings(data);
+          }
+        } else {
+          setSettings(data);
+        }
+      },
       INITIAL_SETTINGS
     );
 
