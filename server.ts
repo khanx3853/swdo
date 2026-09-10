@@ -94,8 +94,13 @@ async function startServer() {
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
     const smtpUser = process.env.SMTP_USER || "swdo.kpk@gmail.com";
-    const smtpPass = process.env.SMTP_PASS || "skovwfcmuzfsfvxb";
+    const smtpPass = process.env.SMTP_PASS;
     const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "swdo.kpk@gmail.com, khanx3853@gmail.com";
+
+    if (!smtpPass) {
+      console.warn("SMTP_PASS is not configured. Email notifications are disabled.");
+      return null;
+    }
 
     if (!pooledTransporter) {
       const nodemailer = await import("nodemailer");
@@ -132,7 +137,9 @@ async function startServer() {
     // Asynchronously dispatch email in background via pooled connection
     (async () => {
       try {
-        const { transporter, smtpUser, adminEmail } = await getSmtpTransporter();
+        const result = await getSmtpTransporter();
+        if (!result) return;
+        const { transporter, smtpUser, adminEmail } = result;
 
         const attachments = [];
         if (donation.ProofImage && typeof donation.ProofImage === 'string' && donation.ProofImage.startsWith('data:image/')) {
@@ -316,7 +323,9 @@ async function startServer() {
     // Process email sending in non-blocking background task
     (async () => {
       try {
-        const { transporter, smtpUser, adminEmail } = await getSmtpTransporter();
+        const result = await getSmtpTransporter();
+        if (!result) return;
+        const { transporter, smtpUser, adminEmail } = result;
 
         let targetEmail = donation.DonorEmail || donation.Email || "";
         if (!targetEmail && donation['Contact No'] && donation['Contact No'].includes('@')) {
@@ -459,7 +468,12 @@ async function startServer() {
     const targetEmail = (req.query.to as string) || process.env.ADMIN_NOTIFICATION_EMAIL || "swdo.kpk@gmail.com";
 
     try {
-      const { transporter, smtpUser, adminEmail } = await getSmtpTransporter();
+      const result = await getSmtpTransporter();
+      if (!result) {
+        res.status(503).json({ success: false, error: 'Email service not configured' });
+        return;
+      }
+      const { transporter, smtpUser, adminEmail } = result;
 
       await transporter.sendMail({
         from: `"SWDO Relief Portal" <${smtpUser}>`,
