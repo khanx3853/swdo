@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "donations": {
+      "title": "Donations",
+      "description": "Donation records collected",
+      "schema": {
+        "properties": {
+          "id": { "type": "string" },
+          "Amount": { "type": "number" },
+          "Donor Name": { "type": "string" }
+        }
+      }
+    },
+    "beneficiaries": {
+      "title": "Beneficiaries",
+      "description": "Beneficiary relief disbursement records",
+      "schema": {
+        "properties": {
+          "id": { "type": "string" },
+          "Amount": { "type": "number" },
+          "Beneficiary Name": { "type": "string" }
+        }
+      }
+    },
+    "members": {
+      "title": "Executive Members",
+      "description": "Executive cabinet members",
+      "schema": {
+        "properties": {
+          "id": { "type": "string" },
+          "NICImage": { "type": "string" }
+        }
+      }
+    },
+    "swdoMembers": {
+      "title": "General Members",
+      "description": "SWDO general membership records",
+      "schema": {
+        "properties": {
+          "id": { "type": "string" },
+          "NICImage": { "type": "string" }
+        }
+      }
+    },
+    "users": {
+      "title": "User Accounts",
+      "description": "User login accounts and access rights",
+      "schema": {
+        "properties": {
+          "id": { "type": "string" }
+        }
+      }
+    },
+    "settings": {
+      "title": "Portal Settings",
+      "description": "Global Organization Settings",
+      "schema": {
+        "properties": {
+          "Foundation Name": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1269 @@
+2024		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	روزی خان حاجی صاب	سعودی عرب	ریاض ڈیرہ	17300		
+2	غفران علی	سعودی عرب	القصیم ڈیرہ	13400	 
+3	یوسف کاکا	دوبئ	دوبئ	7000	خرچ شدہ رقم
+4	سلیم خان	سعودی عرب	دمام ڈیرہ	12134	راشن تقسیم1	59500
+5	فضل تواب 	سعودی عرب	خمیس،مشید ڈیرے	24100	راشن تقسیم2	87460
+6	نجیب اللہ	سعودی عرب	ریاض ڈیرہ	15603	جیکٹس	10000
+7	اویس	پاکستان	دندي	500	
+میزان بینک ٹیکس
+2784
+8	ظاہرگل	سعودی عرب	ریاض ڈیرہ	10500	ٹوٹل رقم	159744
+9	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	58906		
+10	سردار حسین	سعودی عرب	ریاض ڈیرہ	11050		
+11	نا معلوم	پاکستان	دندي	1000		
+12	اسرار	سعودی عرب	"''	4000		
+13	نامعلوم	پاکستان	کراچی	1000		
+14	نامعلوم	پاکستان	ایبٹ آباد	1000		
+15	عمر شریف	عمان	عمان	6600		
+16	ظاہر نبی	پاکستان	کراچی	2000		
+17	نیزار	سعودی عرب	ریاض	10000		
+18	عزیز اللہ	سعودی عرب	جدہ ڈیرہ	10290		
+19	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	21509		
+20	اسلم حان	سعودی عرب	مدینہ	2000		
+21	خان زرین	سعودی عرب	مدینہ	7280		
+22	سبحان اللہ	سعودی عرب	ریاض	1500		
+23	عصمت اللہ	سعودی عرب	ریاض	15000		
+24	محمد زادہ کاکا	سعودی عرب	ریاض	34600		
+25	فوران حاجی صاحب	سعودی عرب	ریاض	17127		
+26	رشید احمد	سعودی عرب	دمام	3181		
+27	نورزمین اکا	سعودی عرب	ریاض	29067		
+28	عبدالظاہر+4 ڈیرے	سعودی عرب	ریاض/القسیم	22800		
+ٹوٹل رقم (ماہ اگست)	360447		
+سابقہ رقم	111677		
+ٹوٹل رقم 	472124		
+خرچ شدہ رقم	159744		
+فاوندیشن کے پاس موجودہ رقم	312380		
+ 	 	 	 		
+ 	 	 	 		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ ستمبر) 2024		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	خان زرین خان	سعودی عرب	مدینہ	3640		
+2	عصمت اللہ	سعودی عرب	ریاض 	7000		
+3	اسلم خان	سعودی عرب	مدینہ	3000		
+4	اسرار 	سعودی عرب	ریاض	4000		
+5	عطاء اللہ	سعودی عرب	ریاض ڈیرہ	10492		
+6	فضل تواب خان	سعودی عرب	خمیس ڈیرے	23000		
+7	نجیم	سعودی عرب	العلا ڈیرے	27786		
+8	محمد شریف	سعودی عرب	القصیم ڈیرہ	4332		
+9	محمد خالق	سعودی عرب	ریاض ڈیرہ	4332		
+10	عزیز اللہ	سعودی عرب	جدہ ڈیرہ	12500		
+11	سردار حسین	سعودی عرب	ریاض ڈیرہ	11020		
+12	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	44087		
+13	شازید خان	سعودی عرب	تبوک	2982		
+14	فخرالدین	سعودی عرب	ریاض	1481		
+15	رشید احمد	سعودی عرب	تبوک	2485		
+16	غیر باٹکوڑی مسافر	سعودی عرب	العلا 	10000		
+17	قابل شاہ	عمان	عمان	6500		
+18	سلیم خان	سعودی عرب	دمام ڈیرہ	3031		
+19	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	25401		
+20	نورزمین اکا	سعودی عرب	ریاض ڈیرہ	0		
+21	فورآن 	سعودی عرب	ریاض ڈیرہ	14815		
+22	عبداظاہر/قدیم	سعودی عرب	ریاض ڈیرہ	0		
+23	ظاہرگل	سعودی عرب	ریاض ڈیرہ	12366		
+24	کبیر/محمدذادہ کاکا	سعودی عرب	ریاض ڈیرہ	16100		
+25	روزی خان	سعودی عرب	ریاض ڈیرہ	16070		
+26	 	 	 	 		
+27	 	 	 	 		
+28	 	 	 	 		
+ٹوٹل رقم (ماہ ستمبر)	266420		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ اکتوبر) 2024		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	سلیم خان	سعودی عرب	دمام ڈیرہ	3031		
+2	خان زرین خان	سعودی عرب	مدینہ	3600		
+3	اسلم خان	سعودی عرب	مدینہ	19345		
+4	اسرار 	سعودی عرب	ریاض	4000		
+5	رشید احمد	سعودی عرب	تبوک	2050		
+6	فضل تواب خان	سعودی عرب	خمیس ڈیرے	20100		
+7	نامعلوم	نامعلوم	نامعلوم	2000		
+8	نامعلوم	نامعلوم	نامعلوم	1000		
+9	عطاء اللہ	سعودی عرب	ریاض ڈیرہ	7350		
+10	عصمت اللہ	سعودی عرب	ریاض 	11500		
+11	عبداواجد	سعودی عرب	العلا ڈیرہ	33000		
+12	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	40000		
+13	کبیر/محمدذادہ کاکا	سعودی عرب	ریاض ڈیرہ	14000		
+14	نجیم+منیر+خالق	سعودی عرب	ریاض ڈیرے	13200		
+15	روزی خان	سعودی عرب	ریاض ڈیرہ	13200		
+16	رحیم حاجی صاحب	سعودی عرب	ریاض ڈیرہ	19933		
+17	عزیز اللہ	سعودی عرب	جدہ	10000		
+18	جمشید	سعودی عرب	القسیم ڈیرہ	9206		
+19	ظاہرگل	سعودی عرب	ریاض ڈیرہ	12500		
+20	قابل شاہ	عمان	عمان	6458		
+21	سردار حسین	سعودی عرب	ریاض ڈیرہ	11165		
+22	شازید خان	سعودی عرب	تبوک	1500		
+24	نورزمین اکا	سعودی عرب	ریاض ڈیرہ	0		
+25	حضرت علی	سعودی عرب	ریاض ڈیرہ	0		
+26	فورآن 	سعودی عرب	ریاض ڈیرہ	0		
+27	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	0		
+28	نیزار	سعودی عرب	ریاض 	0		
+ٹوٹل رقم (ماہ اکتوبر)	258138		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ نومبر) 2024		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	خان زرین خان	سعودی عرب	مدینہ	3600		
+2	فضل تواب خان	سعودی عرب	خمیس ڈیرے	22500		
+3	اسلم خان	سعودی عرب	مدینہ	3600		
+4	جمشید	سعودی عرب	القسیم ڈیرہ	9206		
+5	قابل شاہ	عمان	عمان	6457		 
+6	نامعلوم	نامعلوم	نامعلوم	1000		
+7	اسرار 	سعودی عرب	ریاض	4000		
+8	کریم الرحمن	پاکستان	باٹکوڑ	500		
+9	محمد نبی اکا	پاکستان	کراچی	3000		
+10	محمد رمیز سیفٹی افسر	سعودی عرب	العلا معرفت واجد کاکا 	10000		
+11	شازید خان	سعودی عرب	تبوک	1500		
+12	نا معلوم	پاکستان	ایبٹ آباد	500		
+13	شیر علی	سعودی عرب	ریاض	1600		
+14	رشید احمد	سعودی عرب	تبوک	2000		
+15	عبداواجد	سعودی عرب	العلا ڈیرہ	22197		
+16	نامعلوم زنانہ	پاکستان	کراچی	2000		
+17	عطاء اللہ	سعودی عرب	ریاض ڈیرہ	0		
+18	عصمت اللہ	سعودی عرب	ریاض 	0		
+19	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	0		
+20	کبیر/محمدذادہ کاکا	سعودی عرب	ریاض ڈیرہ	0		
+21	نجیم+منیر+خالق	سعودی عرب	ریاض ڈیرے	0		
+22	روزی خان	سعودی عرب	ریاض ڈیرہ	0		
+24	رحیم حاجی صاحب	سعودی عرب	ریاض ڈیرہ	0		
+25	عزیز اللہ	سعودی عرب	جدہ	0		
+26	ظاہرگل	سعودی عرب	ریاض ڈیرہ	0		
+27	سردار حسین	سعودی عرب	ریاض ڈیرہ	0		
+29	نورزمین اکا	سعودی عرب	ریاض ڈیرہ	0		
+30	حضرت علی	سعودی عرب	ریاض ڈیرہ	0		
+31	فورآن 	سعودی عرب	ریاض ڈیرہ	0		
+32	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	0		
+33	نیزار	سعودی عرب	ریاض 	0		
+34	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم (ماہ نومبر )	93660		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ دسمبر) 2024		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	خان زرین خان	سعودی عرب	مدینہ	7300		
+2	فضل تواب خان	سعودی عرب	خمیس ڈیرے	35800		
+3	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	52327		
+4	سمیع اللہ لالا	پاکستان	برباٹکوڑ	20000		
+5	نامعلوم	نامعلوم	نامعلوم	2205		
+6	نورزمین اکا	سعودی عرب	ریاض	13325		
+7	نامعلوم	نامعلوم	نامعلوم	1000		
+8	محمدذادہ کاکا(انفرادی)	سعودی عرب	ریاض 	7300		
+9	لیاقت	سعودی عرب	ریاض 	7000		
+10	ناظم نجیب اللہ	پاکستان	برباٹکوڑ	20000		
+11	اسلم خان	سعودی عرب	مدینہ	3600		
+12	سربالی خان	پاکستان	کراچی	1500		
+13	جلال 	پاکستان	دندي	2000		
+14	واجد کاکا بشمول دیگر	سعودی عرب	خمیس 	18200		
+15	محمد رمیز	سعودی عرب	العلا والے	10000			 
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+21	 	 	 	 		
+22	 	 	 	 		
+24	 	 	 	 		
+25	 	 	 	 		
+26	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم (ماہ دسمبر )	201557		
+3650      √	قمر حاجی 	3650	میراجان مرحوم	خان زرین خان		
+7000      √	یوسف 	لیاقت		
+30,000   √	یوسف 	شیر محمد درب : یوسف کے ایزی پیسہ نمبر پر بیہجے		
+SHANGLA WELFARE & DEVELOPMENT ORG ( RAMADAN PKG 2025)		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	خان زرین خان	سعودی عرب	مدینہ	10000		
+2	ظاہر گل 	سعودی عرب	ریاض	15000		
+3	شوکت کمپنی	پاکستان	میرہ	25000		
+4	صالح محمد کے ذریعے	پاکستان	نا معلوم	3000		
+5	عصمت 	سعودی عرب	ریاض	20000		
+6	لیاقت	سعودی عرب	ریاض	0		
+7	حنیف اللہ	سعودی عرب	مدینہ	15000		
+8	جمشید علی 	سعودی عرب	القسیم	20000		
+9	شیر محمد لالا	سعودی عرب	درب/العلا	50000		
+10	اسلم خان	سعودی عرب	مدینہ	10000		
+11	فورآن 	سعودی عرب	ریاض	0		
+12	بخت با چا	سعودی عرب	درب/العلا	10000		
+13	علی بہادر	پاکستان	کراچی	20000		
+14	فضل تواب خان	سعودی عرب	خمیس	10000		
+15	غلام نبی	پاکستان	کراچی	20000		
+16	محمد زادہ کاکا	سعودی عرب	ریاض	7000		
+17	بہار علی	پاکستان	باٹکوڑ	5000		
+18	سردار حسین	سعودی عرب	ریاض 	7428		
+19	محمد رمیز	سعودی عرب	سیفٹی آفسر	10000		
+20	زرفرین کاکا	پاکستان	باٹکوڑ	2000		
+21	پرویز استاد	پاکستان	باٹکوڑ	2000		
+22	 	 	 	 		
+23	 	 	 	 		
+24	 	 	 	 		
+25	 	 	 	 		
+26	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم	261428		
+SHANGLA WELFARE & DEVELOPMENT ORG ( DEC 2024)		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	خان زرین خان	سعودی عرب	مدینہ	7300		
+2	فضل تواب خان	سعودی عرب	خمیس ڈیرے	35800		
+3	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	52327		
+4	سمیع اللہ لالا	پاکستان	برباٹکوڑ	20000		
+5	نامعلوم	نامعلوم	نامعلوم	2205		
+6	نورزمین اکا	سعودی عرب	ریاض	13325		
+7	نامعلوم	نامعلوم	نامعلوم	1000		
+8	محمدذادہ کاکا(انفرادی)	سعودی عرب	ریاض 	7300		
+9	لیاقت	سعودی عرب	ریاض 	7000		
+10	ناظم نجیب اللہ	پاکستان	برباٹکوڑ	20000		
+11	اسلم خان	سعودی عرب	مدینہ	3600		
+12	سربالی خان	پاکستان	کراچی	1500		
+13	جلال 	پاکستان	دندي	2000		
+14	واجد کاکا بشمول دیگر	سعودی عرب	خمیس 	18200		
+15	محمد رمیز	سعودی عرب	العلا والے	10000		
+16	عطاء اللہ	سعودی عرب	ریاض ڈیرہ	0		
+17	عصمت اللہ	سعودی عرب	ریاض 	0		
+18	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	0		
+19	کبیر/محمدذادہ کاکا	سعودی عرب	ریاض ڈیرہ	0		
+20	نجیم+منیر+خالق	سعودی عرب	ریاض ڈیرے	0		
+21	روزی خان	سعودی عرب	ریاض ڈیرہ	0		
+22	عزیز اللہ	سعودی عرب	جدہ	0		
+23	ظاہرگل	سعودی عرب	ریاض ڈیرہ	0		
+24	سردار حسین	سعودی عرب	ریاض ڈیرہ	0		
+25	نورزمین اکا	سعودی عرب	ریاض ڈیرہ	0		
+26	حضرت علی	سعودی عرب	ریاض ڈیرہ	0		
+27	فورآن 	سعودی عرب	ریاض ڈیرہ	0		
+28	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	0		
+29	نیزار	سعودی عرب	ریاض 	0		
+ 	 	 	 	 		
+ٹوٹل رقم (ماہ دسمبر )	201557		
+3650      √	قمر حاجی 	3650	میراجان مرحوم	خان زرین خان		
+7000      √	یوسف 	لیاقت		
+30,000   √	یوسف 	شیر محمد درب : یوسف کے ایزی پیسہ نمبر پر بیہجے		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ جنوری)2025  		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	روزی خان	سعودی عرب	ریاض ڈیرہ	16160		
+2	ہاشم علی	سعودی عرب	القسیم ڈیرہ	14906		
+3	بخت کریم اکا	سعودی عرب	ریاض ڈیرہ	39369		
+4	شیر علی	سعودی عرب	ریاض	1000		
+5	فیاض	پاکستان	باٹکوڑ	1100		
+6	نامعلوم	پاکستان	نامعلوم	500		
+7	فضل تواب خان	سعودی عرب	خمیس،مشیط ڈیرے	69000		
+8	نجیم	سعودی عرب	ریاض	15900		
+9	قابل شاہ	عمان	عمان	13850		
+10	رحیم حاجی صاحب	سعودی عرب	ریاض ڈیرہ	17513		
+11	رحیم اللہ لالا	سعودی عرب	ریاض ڈیرہ	48642		
+12	عطا ء اللہ	سعودی عرب	ریاض ڈیرہ	8844		
+13	محمد زادہ کاکا	سعودی عرب	ریاض ڈیرہ	11055		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+21	 	 	 	 		
+22	 	 	 	 		
+23	 	 	 	 		
+24	 	 	 	 		
+25	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم 	257839		
+برباٹکوڈ فاونڈیشن سعودی عرب (ماہ فروری)2025  		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	اسلم خان	سعودی عرب	مدینہ	4500		
+2	والدہ خان زرین	سعودی عرب	مدینہ	7200		
+3	محمد نبی	پاکستان	کراچی	2500		
+4	بمعرفت اسلم	سعودی عرب	مدینہ	9427		
+5	والدہ علی بہادر	پاکستان	مساجد کےلیے	20000		
+6	واجد کاکا کے ہاتھ پر	سعودی عرب	خمیس،العلا،ریاض	34920		
+7	روزی خان 	سعودی عرب	خصوصی معاونت	5000		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+21	 	 	 	 		
+22	 	 	 	 		
+23	 	 	 	 		
+24	 	 	 	 		
+25	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم 	83547		
+برباٹکوڈ فاونڈیشن دفتر فرنیچر معاونین خصوصی  		
+نمبرشمار	نام	ملک	رہائش	عطیات		
+1	اسلم خان	سعودی عرب	مدینہ	3650		
+2	خان زرین	سعودی عرب	مدینہ	1825		
+3	علی بہادر	پاکستان	کراچی	3000		
+4	عنایت اللہ	سعودی عرب	 	1000		
+5	عادل خان	سعودی عرب	 	1825		
+6	حنیف اللہ	سعودی عرب	 	3600		
+7	عبدالواجد	سعودی عرب	 	3600		
+8	واجد	سعودی عرب	 	3600		
+9	ضیاء	سعودی عرب	 	 		
+10	عطاءاللہ	سعودی عرب	 	3700		
+11	یاہد اسلام	سعودی عرب	 	3600		
+12	رحیم حاجی	سعودی عرب	 	3600		
+13	نور احق	سعودی عرب	 	7200		
+14	بہارعلی	ایک عدد کمپیوٹر	 		
+15	علی بہادر	ایک عدد ٹرایپورٹ/ایک عدد مايک	 		
+16	فرآن حاجی	سعودی عرب	ریاض	6105		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+21	 	 	 	 		
+22	 	 	 	 		
+23	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم 	46305		
+برباٹکوڈ فاونڈیشن  رمضان فطرہ/حدیہ فہرست  2025		
+نمبرشمار	نام	ملک	فطرہ/حدیہ	عطیات		
+1	اسلم خان	سعودی عرب	فطرہ	1825		
+2	خان زرین	سعودی عرب	فطرہ	1825		
+3	عادل خان	سعودی عرب	فطرہ	1825		
+4	نامعلوم	پاکستان	منت	10000		
+5	مولانا صالح محمد	پاکستان	فطرہ	2200		
+6	عبدالواجد	سعودی عرب	فطرہ	1800		
+7	رحیم حاجی	سعودی عرب	فطرہ	2160		
+8	علی زر	سعودی عرب	فطرہ	1800		
+9	ابوزر	سعودی عرب	فطرہ	1800		
+10	ہدایت اللہ	سعودی عرب	فطرہ	1800		
+11	رحیم اللہ لالا	سعودی عرب	فطرہ	2160		
+12	نسیم بہادر	پاکستان	فطرہ	1600		
+13	علی بہادر	پاکستان	فطرہ	1000		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+ 	 	 	 	 		
+ٹوٹل رقم 	31795		
+FALAH FOUNDATION Saudia Arab ,Oman (DONATION LIST) MARCH 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	Rozi Khan 	KSA	Riyadh	17500		
+2	Khan Zareen 	KSA	Madina	3726		
+3	Raheem Ullah lala	KSA	Riyadh	27118		
+4	Rasheed,Zia	KSA	Tabook	8451		
+5	Kabir(Indivisual)	KSA	Riyadh	3000		
+6	Namaloom	-	-	1100		
+7	Fazal Tawab Group	KSA	khamis,mushait	18657		
+8	Syed Afzal	Pak	Batkot	2000		
+9	Sheer Ali 	KSA	Riyadh	1500		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+19	 	 	 	 		
+20	 	 	 	 		
+21	 	 	 	 		
+22	 	 	 	 		
+23	 	 	 	 		
+24	 	 	 	 		
+25	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	83052		
+FALAH FOUNDATION Islamabad Pindi (DONATION LIST) MARCH 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	Zahid Ali	Pakistan	Islambd/Pindi	150		
+2	Nabi Yaz	Pakistan	Islambd/Pindi	250		
+3	Noor Nawaz	Pakistan	Islambd/Pindi	150		
+4	Majid Ali	Pakistan	Islambd/Pindi	200		
+5	Azeem Khan	Pakistan	Islambd/Pindi	400		
+6	Abdul Basit	Pakistan	Islambd/Pindi	500		
+7	Abid Nawaz	Pakistan	Islambd/Pindi	400		
+8	Nawaz Khan 	Pakistan	Islambd/Pindi	500		
+9	Shakeel Dr	Pakistan	Islambd/Pindi	500		
+10	Saeed Ali	Pakistan	Islambd/Pindi	250		
+11	Namaloom	Pakistan	Islambd/Pindi	1000		
+12	Dilawar 	Pakistan	Islambd/Pindi	200		
+13	Asif Nawaz	Pakistan	Islambd/Pindi	2000		
+14	Abdul Basit(2nd time)	Pakistan	Islambd/Pindi	300		
+15	Ihtisham	Pakistan	Islambd/Pindi	500		
+16	Qari Ata Ullah	Pakistan	Islambd/Pindi	500		
+17	Zar Fareen Kaka	Pakistan	Islambd/Pindi	500		
+18	Sultan Zareen	Pakistan	Islambd/Pindi	300		
+19	Abdul Basit(3rd time)	Pakistan	Islambd/Pindi	300		
+20	M.Irshad	Pakistan	Islambd/Pindi	300		
+21	Saqib	Pakistan	Islambd/Pindi	497		
+22	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	9697		
+FALAH FOUNDATION Karachi Sindh (DONATION LIST) MARCH 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	Sarbali Khan	Pakistan	Karachi	1019		
+2	M.Humayun	Pakistan	Gawadar	2000		
+3	Fazal Amin 	Pakistan	Kozbatkot	2000		
+4	Namaloom	Pakistan	Karachi	1000		
+5	Shamsul Haadi	Pakistan	Karachi	1000		
+6	Muzammil Bhai	Pakistan	Gawadar	1988		
+7	Nizam Ullah	Pakistan	Karachi	2000		
+8	Naseem Bahadur	Pakistan	Karachi	1950		
+9	Usman	Pakistan	Karachi	1000		
+10	 	Pakistan	 	 		
+11	 	Pakistan	 	 		
+12	 	Pakistan	 	 		
+13	 	Pakistan	 	 		
+14	 	Pakistan	 	 		
+15	 	Pakistan	 	 		
+16	 	Pakistan	 	 		
+17	 	Pakistan	 	 		
+18	 	Pakistan	 	 		
+19	 	Pakistan	 	 		
+20	 	Pakistan	 	 		
+21	 	Pakistan	 	 		
+22	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	13957		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR KHAISTA RAHMAN & M.ZAHID KARACHI (5TH MAY 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	M.ZADA KAKA	KSA	Riyadh	7475		
+2	ASLAM KHAN	KSA	Mdina	2000		
+3	NAJEEM DEERA	KSA	Riyadh	10447		
+4	NAMALOOM	KSA	-	8136		
+5	QARI JAVEED	KSA	Khamis Mushait	1492		
+6	PARVEEZ USTAAD	PAK	Khamis Mushait	1000		
+7	AZEEM ULLAH	KSA	Khamis Mushait	1492		
+8	ROZI KHAN  DEERA	KSA	Riyadh	5800		
+9	FORAN	KSA	Riyadh	3734		
+10	INAYAT URAHMAN	KSA	Riyadh	7400		
+11	NAMAOOM	PAK	-	2000		
+12	QARI KHALID	KSA	 	7392		
+13	SAJID DEERA	KSA	Riyadh	13784		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	72152		
+khiasta Rahman	32968	M.Zahid	39184	 		
+ 					
+SWDO Karachi Sindh (DONATION LIST) APRIL 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SHAFI	Pakistan	KARACHI	500		
+2	NAMALOOM	Pakistan	KARACHI	1000		
+3	DILAWAR	Pakistan	KARACHI	300		
+4	USMAN/JAMSHEED	Pakistan	KARACHI	1000		
+5	ZEESHAN	Pakistan	KARACHI	1000		
+6	M.ISLAM	Pakistan	KARACHI	1000		
+7	ROH ULLAH	Pakistan	KARACHI	500		
+8	USMAN	Pakistan	KARACHI	500		
+9	NASEEM BAHADUR	Pakistan	KARACHI	1000		
+10	SHAMSUL HADI	Pakistan	KARACHI	1000		
+11	ZAHIR NABI	Pakistan	KARACHI	1000		
+12	BAKHT AMEEN	Pakistan	KARACHI	1000		
+13	 	Pakistan	 	 		
+14	 	Pakistan	 	 		
+15	 	Pakistan	 	 		
+16	 	Pakistan	 	 		
+17	 	Pakistan	 	 		
+18	 	Pakistan	 	 		
+19	 	Pakistan	 	 		
+20	 	Pakistan	 	 		
+21	 	Pakistan	 	 		
+22	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	9800		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) APRIL 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	500		
+2	NOOR NAWAZ KHAN	Pakistan	ISLAM/PINDI	150		
+3	JAMEEL AHMED	Pakistan	ISLAM/PINDI	300		
+4	DILAWAR	Pakistan	ISLAM/PINDI	250		
+5	NAMALOOM	Pakistan	ISLAM/PINDI	100		
+6	MAJID ALI	Pakistan	ISLAM/PINDI	200		
+7	BASIT	Pakistan	ISLAM/PINDI	300		
+8	IHTISHAM	Pakistan	ISLAM/PINDI	500		
+9	AMIR NAWAZ	Pakistan	ISLAM/PINDI	500		
+10	SALAH UDDIN	Pakistan	ISLAM/PINDI	250		
+11	ATA ULLAH	Pakistan	ISLAM/PINDI	500		
+12	NAZIM ULLAH	Pakistan	ISLAM/PINDI	1000		
+13	BASIT	Pakistan	ISLAM/PINDI	300		
+14	FARMAN ULLAH	Pakistan	ISLAM/PINDI	500		
+15	NOOR KHAN	Pakistan	ISLAM/PINDI	1000		
+16	ZAKIR ULLAH	Pakistan	ISLAM/PINDI	150		
+17	BASIT	Pakistan	ISLAM/PINDI	300		
+18	SHAMSU NABI	Pakistan	ISLAM/PINDI	100		
+19	DR SHEER AYAZ	Pakistan	ISLAM/PINDI	500		
+20	AJMAL KHAN	Pakistan	ISLAM/PINDI	600		
+21	HAFIZ SAEED ALI	Pakistan	ISLAM/PINDI	250		
+22	MAJID ALI	Pakistan	ISLAM/PINDI	200		
+23	NAWAZ KHAN	Pakistan	ISLAM/PINDI	1000		
+24	AZEEM QARI	Pakistan	ISLAM/PINDI	400		
+25	BASIT	Pakistan	ISLAM/PINDI	300		
+26	ZAFAR ULLAH	Pakistan	ISLAM/PINDI	500		
+27	AMJAD ALI	Pakistan	ISLAM/PINDI	600		
+28	ASIF NAWAZ 	Pakistan	ISLAM/PINDI	1000		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	12250		
+SWDO KSA/OMAN (DONATION LIST) APRIL 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	QARI KHALID	KSA	FOR WHEEL CHAIR	11104		
+2	FARMAN(DRAB)	KSA	 	1495		
+3	WASEEM	KSA	 	1495		
+4	NAMALOOM	KSA	RIYADH	10095		
+5	KHALID KHAN	KSA	 	2000		
+6	JAMSHEED ALI	KSA	ALQASEEM	7470		
+7	RAHEEM ULLAH	KSA	RIYADH	39000		
+8	ON WAJID KAKA HAND	KSA	DIFFERENT AREAS	38568		
+9	AMROZ/SHAKIR	KSA	 	5249		
+10	M.RAMEEZ	KSA	 	5000		
+11	KABIR DEERA	KSA	FOR SAIFUR DISABLE	16500		
+12	M.WAHID	BATKOT	 	500		
+13	YAHID ISLAM	KSA	KHAMIS/MUSHID	13487		
+14	 	KSA	 	 		
+15	 	KSA	 	 		
+16	 	KSA	 	 		
+17	 	KSA	 	 		
+18	 	KSA	 	 		
+19	 	KSA	 	 		
+20	 	KSA	 	 		
+21	 	KSA	 	 		
+22	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	151963		
+عید الضحی 2025 پیکج ( معاونین خصوی فہرست)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	علی بہادر	پاکستان	کراچی	5000		
+2	ہدایت اللہ	پاکستان	باٹکوٹ	2000		
+3	یاسر 	پاکستان	کراچی	2000		
+4	ارشاد	دوبي	دوبي	2000		
+5	خان زرین	سعودی عرب	مدینہ	5971		
+6	 	 	 	 		
+7	 	 	 	 		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	16971		
+SWDO KSA/OMAN (DONATION LIST) MAY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ROZI KHAN HAJI SHB	KSA	RYIADH	5000		
+2	C/O ABDUL WAJID KAKA	KSA	KHAMIS	13648		
+3	C/O ABDUL WAJID KAKA	KSA	KHAMIS	1507		
+4	M.RAMEEZ BHAI	KSA	PUNJAB	5000		
+5	M.ISRAR BABAKHAIL	KSA	RYIADH	4000		
+6	FARMAN/NASEEB	KSA	DRAB	4535		
+7	 	KSA	 	 		
+8	 	KSA	 	 		
+9	 	KSA	 	 		
+10	 	KSA	 	 		
+11	 	KSA	 	 		
+12	 	KSA	 	 		
+13	 	KSA	 	 		
+14	 	KSA	 	 		
+15	 	KSA	 	 		
+16	 	KSA	 	 		
+17	 	KSA	 	 		
+18	 	KSA	 	 		
+19	 	KSA	 	 		
+20	 	KSA	 	 		
+21	 	KSA	 	 		
+22	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	33690		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) MAY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	400		
+2	SHAKEEL	Pakistan	ISLAM/PINDI	500		
+3	BASIT	Pakistan	ISLAM/PINDI	300		
+4	HAFIZ SAEED	Pakistan	ISLAM/PINDI	200		
+5	QARI AZEEM	Pakistan	ISLAM/PINDI	500		
+6	M.MUSA	Pakistan	ISLAM/PINDI	500		
+7	BASIT	Pakistan	ISLAM/PINDI	300		
+8	 	Pakistan	ISLAM/PINDI	 		
+9	 	Pakistan	ISLAM/PINDI	 		
+10	 	Pakistan	ISLAM/PINDI	 		
+11	 	Pakistan	ISLAM/PINDI	 		
+12	 	Pakistan	ISLAM/PINDI	 		
+13	 	Pakistan	ISLAM/PINDI	 		
+14	 	Pakistan	ISLAM/PINDI	 		
+15	 	Pakistan	ISLAM/PINDI	 		
+16	 	Pakistan	ISLAM/PINDI	 		
+17	 	Pakistan	ISLAM/PINDI	 		
+18	 	Pakistan	ISLAM/PINDI	 		
+19	 	Pakistan	ISLAM/PINDI	 		
+20	 	Pakistan	ISLAM/PINDI	 		
+21	 	Pakistan	ISLAM/PINDI	 		
+22	 	Pakistan	ISLAM/PINDI	 		
+23	 	Pakistan	ISLAM/PINDI	 		
+24	 	Pakistan	ISLAM/PINDI	 		
+25	 	Pakistan	ISLAM/PINDI	 		
+26	 	Pakistan	ISLAM/PINDI	 		
+27	 	Pakistan	ISLAM/PINDI	 		
+28	 	Pakistan	ISLAM/PINDI	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	2700		
+SWDO Karachi Sindh (DONATION LIST) MAY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	FARHAT ULLAH	Pakistan	KARACHI	500		
+2	WAHID ULLAH	Pakistan	KARACHI	700		
+3	MUZAMMIL	Pakistan	GAWADAR	1988		
+4	NAMALOOM	Pakistan	KARACHI MALIR	1100		
+5	ZAHIR NABI 	Pakistan	KARACHI	1000		
+6	NASEEM BAHADUR	Pakistan	KARACHI	1000		
+7	NASEEM BAHADUR	Pakistan	KARACHI	1000		
+8	WAHID ULLAH	Pakistan	KARACHI	500		
+9	AMEEN BABAKHAIL	Pakistan	KARACHI	500		
+10	DILAWAR KHAN	Pakistan	KARACHI NAZIMABAD	500		
+11	SHAMS UL HADI	Pakistan	KARACHI	1000		
+12	 	Pakistan	KARACHI	 		
+13	 	Pakistan	 	 		
+14	 	Pakistan	 	 		
+15	 	Pakistan	 	 		
+16	 	Pakistan	 	 		
+17	 	Pakistan	 	 		
+18	 	Pakistan	 	 		
+19	 	Pakistan	 	 		
+20	 	Pakistan	 	 		
+21	 	Pakistan	 	 		
+22	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	9788		
+PAKISTAN COLLECTIVE (DONATION LIST) MAY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NAMALOOM	PAK	BATKOL	20000		
+2	DR PARVEEZ	PAK	BATKOT	1500		
+3	NAMALOOM	PAK	DANDAI	2000		
+4	NAMALOOM	PAK	DANDAI	500		
+5	WALI ULLAH	PAK	LELAI	500		
+6	UMAR ZAR	PAK	BATKOT	11800		
+7	NAMALOOM	PAK	DANDAI/THAKOT	1000		
+8	WAHID BRO KARIM MOLANA	PAK	BATKOT	500		
+9	KARIM URAHMAN	PAK	BATKOT	1000		
+10	HIDAYAT ULLAH	PAK	BATKOT	2000		
+11	ALI BAHADUR	PAK	KARACHI	1000		
+12	SISTER	PAK	SHORWA	1000		
+13	RAHIM HAJI SHB	PAK	BATKOT	1000		
+14	 	PAK	 	 		
+15	 	PAK	 	 		
+16	 	PAK	 	 		
+17	 	PAK	 	 		
+18	 	PAK	 	 		
+19	 	PAK	 	 		
+20	 	PAK	 	 		
+21	 	PAK	 	 		
+22	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	43800		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR RAHMAN ALI (MAALI) SHORWA DANDAI KOZKALE (MAY 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NIAZ ALI 	QATAR/DUBAI	QATAR	20000		
+2	M.ISLAM	PAKISTAN	ISLAMABAD	20000		
+3	C/0 IHSAN LALA	PAKISTAN	SHANGLA	8645		
+4	NAMALOOM	PAKISTAN	BATKOL	3000		
+5	SWDO	PAKISTAN	 	2000		
+6	 	 	 	 		
+7	 	 	 	 		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+16	 	 	 	 		
+17	 	 	 	 		
+18	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	53645		
+ 	 	 	 	 		
+SWDO KSA/OMAN (DONATION LIST) JUNE 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NAMALOOM	KSA	 	1511		
+2	FAZAL KHALIQ	KSA	 	1512		
+3	M.TAHIR	KSA	TAKHTA JABA	3784		
+4	KABIR	KSA	RYIADH	3000		
+5	WAJID	KSA	RYIADH	3000		
+6	BAKHT BACHA	KSA	 	5289		
+7	SALEEM BIN RAHIM ULLAH	KSA	 	3788		
+8	GUL SHAAD CONTRCTR	KSA	 	3784		
+9	M.RAMEEZ 	KSA	SAFETY OFFICER	5000		
+10	KHAMIS/MUSHIT	KSA	KHAMIS/MUSHIT	19133		
+11	M.RASHEED BABAKHAIL	KSA	 	5000		
+12	RAHIM ULLAH LALA	KSA	MARKANAI DEERA	45000		
+13	(S) NAMALOOM	KSA	RYIADH	5000		
+14	M.SHAREEF	KSA	ALQASEEM	12373		
+15	SROZAMIN	KSA	RYIADH	2250		
+16	ISMAT/INAYAT	KSA	RYIADH	11243		
+17	(Z)BATKOL NAMALOOM	KSA	 	5000		
+18	RAHIM ZADA	KSA	RYIADH	5000		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	140667		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) JUNE 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	500		
+2	QARI AZEEM QASMI	Pakistan	ISLAM/PINDI	500		
+3	NAWAZ KHAN	Pakistan	ISLAM/PINDI	1000		
+4	BASIT	Pakistan	ISLAM/PINDI	300		
+5	HIDAYAT ULLAH	Pakistan	ISLAM/PINDI	2000		
+6	MAJID ALI	Pakistan	ISLAM/PINDI	200		
+7	DR SHAKEEL	Pakistan	ISLAM/PINDI	500		
+8	BASIT	Pakistan	ISLAM/PINDI	300		
+9	QARI AZEEM QASMI	Pakistan	ISLAM/PINDI	400		
+10	BASIT	Pakistan	ISLAM/PINDI	300		
+11	MAJID ALI	Pakistan	ISLAM/PINDI	200		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	6200		
+SWDO Karachi Sindh (DONATION LIST) JUNE 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SHAFI	Pakistan	KARACHI	500		
+2	M.AQIB	Pakistan	KARACHI	300		
+3	NAMALOOM	Pakistan	KARACHI	1000		
+4	WAHID ULLAH	Pakistan	KARACHI	800		
+5	USMAN	Pakistan	KARACHI	500		
+6	SHAMSUL HADI	Pakistan	KARACHI	1000		
+7	SHAFI 2ND TIME	Pakistan	KARACHI	500		
+8	 	Pakistan	 	 		
+9	 	Pakistan	 	 		
+10	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	4600		
+PAKISTAN COLLECTIVE (DONATION LIST) JUNE 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	KHAN ZARIN 	PAK	BATKOT	500		
+2	JALAL	PAK	DANDAI	3000		
+3	NAMALOOM	PAK	DANDAI	1000		
+4	NAMALOOM	PAK	DANDAI	1000		
+5	M.MUDASSIR	PAK	CHAKWAL/PUNJAB	1000		
+6	SHAHBAZ BHAI	PAK	FAISALABAD/PUNJAB	1000		
+7	KHAN ZARIN 2ND TIME	PAK	BATKOT	500		
+8	 	PAK	 	 		
+9	 	PAK	 	 		
+10	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	8000		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR RAHMAN ALI (MAALI) SHORWA DANDAI KOZKALE (MAY,JUNE,JULY,AUG 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NIAZ ALI 	QATAR/DUBAI	QATAR	20000		
+2	M.ISLAM	PAKISTAN	ISLAMABAD	20000		
+3	C/0 IHSAN LALA	PAKISTAN	SHANGLA	8645		
+4	NAMALOOM	PAKISTAN	BATKOL	3000		
+5	SWDO	PAKISTAN	KARACHI	2000		
+6	M.ISLAM	PAKISTAN	ISLAMABAD	15000		
+7	M.ISLAM	PAKISTAN	ISLAMABAD	15000		
+8	M.ISLAM	PAKISTAN	ISLAMABAD	15000		
+9	 	 	 	 		
+10	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	98645		
+ 	 	 	 	 		
+SWDO KSA/OMAN (DONATION LIST) JULY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	JAMSEED DEERA	KSA	ALQASEEM	10000		
+2	FAIZ HAJI	KSA	RIYADH	3753		
+3	WAJID KAKA/AMROZ	KSA	KHAMIS	3750		
+4	QARI QAMAR	KSA	KHAMIS	2252		
+5	M.RAMEEZ SAFETY OFFICER	KSA	-	5000		
+6	 	KSA	 	 		
+7	 	KSA	 	 		
+8	 	KSA	 	 		
+9	 	KSA	 	 		
+10	 	KSA	 	 		
+11	 	KSA	 	 		
+12	 	KSA	 	 		
+13	 	KSA	 	 		
+14	 	KSA	 	 		
+15	 	KSA	 	 		
+16	 	KSA	 	 		
+17	 	KSA	 	 		
+18	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	24755		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) JULY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	400		
+2	BASIT	Pakistan	ISLAM/PINDI	300		
+3	M.NAWAZ	Pakistan	ISLAM/PINDI	1000		
+4	DILAWAR KHAN	Pakistan	ISLAM/PINDI	200		
+5	NAWAZ KHAN	Pakistan	ISLAM/PINDI	100		
+6	QARI AZEEM	Pakistan	ISLAM/PINDI	600		
+7	HAQ NAWAZ	Pakistan	ISLAM/PINDI	300		
+8	HIDAYAT ULLAH	Pakistan	ISLAM/PINDI	2000		
+9	NAMALOOM NNZ	Pakistan	ISLAM/PINDI	100		
+10	 	Pakistan	 	 		
+11	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	5000		
+SWDO Karachi Sindh (DONATION LIST) JULY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NIZAM ULLAH	Pakistan	KARACHI MALIR	2000		
+2	FATIH URAHMAN	Pakistan	KARACHI MALIR	2000		
+3	NASEEM BAHADUR	Pakistan	KARACHI	2000		
+4	MUZAMIL BHAI	Pakistan	GAWADAR	2038		
+5	 	Pakistan	 	 		
+6	 	Pakistan	 	 		
+7	 	Pakistan	 	 		
+8	 	Pakistan	 	 		
+9	 	Pakistan	 	 		
+10	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	8038		
+PAKISTAN COLLECTIVE (DONATION LIST) JULY 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	KHAN BAHADUR	PAK	KARACHI	2000		
+2	RAHMAN	PAK	DANDAI	800		
+3	HAMMAD	PAK	DANDAI	500		
+4	 	PAK	 	 		
+5	 	PAK	 	 		
+6	 	PAK	 	 		
+7	 	PAK	 	 		
+8	 	PAK	 	 		
+9	 	PAK	 	 		
+10	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	3300		
+معاونین خصوصی فہرست براے سیلاب ذدگان خيبرپختونخوا پاکستان		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	AZEEM KHAN	PAK	ISLAMABAD	1000		
+2	RAHIM ULLAH LALA	KSA	RYIADH	16456		
+3	DILDAAR KHAN	PAK	SKURDO	2000		
+4	M,ADIL RAZA	PAK	KARACHI	2000		
+5	FIDA MUHAMMAD	KSA	-	2000		
+6	ZAKIR KHAN	PAK	SHORWA	2000		
+7	UMAR ZAR	PAK	BATKOT	1500		
+8	IMRAN	PAK	MANSEHRA	1000		
+9	DEDAAR	PAK	DANDAI	500		
+10	DR AMJAD	PAK	BATKOT	1500		
+11	IMDAD ULLAH	PAK	LELAI	500		
+12	BAKHSHAD ALI	PAK	BATKOT	500		
+13	ROZI KHAN DEERA	KSA	RYIADH	12700		
+14	DR SAEED AMIN	PAK	BATKOT COLLECTIVE	14000		
+15	KAMRAN	PAK	ABBOTABAD	1000		
+16	NAMALOOM	PAK	ABBOTABAD	500		
+17	M.HAMZA	PAK	-	200		
+18	DR PARVEEZ 	PAK	BATKOT	5000		
+19	IFTIKHAR	PAK	MARDAAN	3000		
+20	NAMALOOM KID	PAK	ISLAMABAD	200		
+21	SHAHID	PAK	 	100		
+22	SHEER MUHAMMAD LALA	KSA	DRUB	10000		
+23	RAHMAN	KSA	DANDAI	500		
+24	FAKHR UDDIN	KSA	 	1495		
+25	MAJID ALI	PAK	ISLAMABAD	200		
+26	ABDULLAH 	KSA	RIYADH	14951		
+27	SARDAR DEERA	KSA	RIYADH	18668		
+28	BASIT	PAK	ISLAMABAD	300		
+29	SHAYAN BEKRI	PAK	DANDAI	500		
+30	ABDUL RAHMAN GUJJAR	PAK	KARACHI	3000		
+31	SAJID S/O YUSUF KAKA	PAK	BATKOT	5000		
+32	JAWWAD S/0 ISRAIEL	PAK	KARCHI	5000		
+33	FAIZ HAJI DEERA	KSA	RIYADH	9775		
+34	HAMMAD BHAI	PAK	THAKOT PUMP	1000		
+35	C/0 DR BAKHTI ZAR	PAK	ABBOTABAD	1500		
+36	NAMALOOM (S)	KSA	RIYADH	1000		
+37	YASIR BABAKHAIL	PAK	KARCHI	1000		
+38	HANIF ULLAH LALA	KSA	MADINA	7200		
+39	ABU BAKAR STUDENT	PAK	DANDAI	500		
+40	NAMALOOM	PAK	DANDAI	50		
+40	M.ZADA KAKA DEERA	KSA	RIYADH	19350		
+41	ABID NAWAZ	PAK	ISLAMABAD	500		
+42	QARI IBAD 	PAK	DANDAI	500		
+43	M.RIZWAN	PAK	FAISALABAD	20000		
+44	JHANGIR BHAI	PAK	KARACHI	1000		
+45	FAZAL RAHMAN KAKA DEERA	KSA	RIYADH	5231		
+46	JALAL	PAK	DANDAI PUMP	3000		
+47	JAMA MASJID BATKOT	PAK	BATKOT	5130		
+48	JAMA MASJID BARKALY	PAK	BARKALY	5110		
+49	JAMA MASJID DANDAI	PAK	DANDAI	12470		
+50	C/O MOLANA KARIM ULLAH	PAK	BATKOT COLLECTIVE	3810		
+51	NAMALOOM S	PAK	KARACHI MALIR	1000		
+52	NAJEEB DEERA	KSA	ALQASEEM	10130		
+53	QARI QAMAR	KSA	KHAMIS	1500		
+54	HAYAT MARKHANAI	KSA	RIYADH	3000		
+55	KHAN ZARIN	PAK	HANSANABDAL	500		
+56	NOHAR	PAK	BATKOT	600		
+57	ZIA	PAK	BATKOT	300		
+58	NAMALOOM N	PAK	ISLAMABAD	70		
+59	C/OFAYAZ KHAN	PAK	BATKOT	2500		
+60	KHALID KHAN	KSA	RIYADH	1200		
+61	USMAN	PAK	NORTH KARACHI	1500		
+62	HAJI ABDUL HAMEED	PAK	NORTH KARACHI	1000		
+63	NASEEM BAHADUR	PAK	KARACHI	1000		
+64	C/O MOLANA KARIM ULLAH	PAK	FROM DIFFERENT MOSQUES	10030		
+65	AND MOLANA FARMAN	OF LELAI		
+66	ALI BAHADUR	PAK	KARACHI	3000		
+67	SWDO	PAK	SELF FINANCE	60274		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	323000		
+SWDO KSA/OMAN (DONATION LIST) aug 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	RAHIM ULLAH LAL	KSA	MARKHANAI RIYADH DEERA	22800		
+2	KHAMIS DONATIOON COLLECTIVCE	KSA	KHAMIS	22354		
+3	ROZI KHAN	KSA	RIYADH	7000		
+4	GUL MUHAMMAD	KSA	RIYADH	3100		
+5	ATA ULLAH	KSA	RIYADH	2997		
+6	WAJID ALI	KSA	RIYADH	2500		
+7	BAKHT BACHA DRUB	KSA	KSA	4500		
+8	USMAN ABBASI	KSA	KSA	1498		
+9	RAHIM HAJIS SHB	KSA	KSA	4000		
+10	JAVEED QARI	KSA	KSA	1500		
+11	ROZI KHAN HAJI SHB	KSA	KSA	3000		
+12	FIDA MUHAMMAD	KSA	KSA	1500		
+13	 	KSA	 	 		
+14	 	KSA	 	 		
+15	 	KSA	 	 		
+16	 	KSA	 	 		
+17	 	KSA	 	 		
+18	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	76749		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) aug 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	500		
+2	BASIT	Pakistan	ISLAM/PINDI	300		
+3	BASIT 2ND TIME	Pakistan	ISLAM/PINDI	300		
+4	M.NAWAZ KHAN	Pakistan	ISLAM/PINDI	1000		
+5	NABI AYAZ	Pakistan	ISLAM/PINDI	400		
+6	HAQ NAWAZ	Pakistan	ISLAM/PINDI	300		
+7	BASIT	Pakistan	ISLAM/PINDI	300		
+8	ZARFAREEN KAKA	Pakistan	ISLAM/PINDI	500		
+9	HAQ NAWAZ	Pakistan	ISLAM/PINDI	300		
+10	YASIR ULLAH	Pakistan	ISLAM/PINDI	500		
+11	QARI AZEEM	Pakistan	ISLAM/PINDI	1000		
+12	BASIT	Pakistan	ISLAM/PINDI	300		
+13	IHTISHAM	Pakistan	ISLAM/PINDI	500		
+14	NOOR ISLAM	Pakistan	ISLAM/PINDI	300		
+15	BASIT	Pakistan	ISLAM/PINDI	300		
+16	DR ZARRAR C/O SHAKEEL	Pakistan	ABBOTABAD	5000		
+17	HAMMAD	Pakistan	THAKOT PUMP	500		
+18	 	Pakistan	 	 		
+19	 	Pakistan	 	 		
+20	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	12300		
+SWDO Karachi Sindh (DONATION LIST) aug 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	M.ISLAM 	Pakistan	KARACHI	1000		
+2	SHAFI BHAI WITH UNKNOWN	Pakistan	KARACHI	1500		
+3	NAZIM ULLAH	Pakistan	KARACHI	1000		
+4	WAHID ULLAH	Pakistan	KARACHI	1000		
+5	NAMALOM	Pakistan	MALIR CANT	1000		
+6	USMAN	Pakistan	NORTH KARACHI	500		
+7	NASEEM BAHADUR	Pakistan	LANDHI	1000		
+8	SHAMUL HADI	Pakistan	MALIR CANT	1000		
+9	MUZAMIL DRAB	Pakistan	GAWADAR	2028		
+10	FATIH URAHMAN	Pakistan	HAIDARABAD	1000		
+11	 	Pakistan	 	 		
+12	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	11028		
+SPECIAL APPEAL FOR CANCER PATIENT (ADIL NAZEER) KARACHI DONATION LIST		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	 KABIR	KSA	RIYADH	1500		
+2	ABDUL WAJID	PAK	KHAMIS	3746		
+3	YAHID ISLAM	PAK	KHAMIS	2000		
+4	ALI BAHADUR	PAK	KARACHI	1000		
+5	USMAN ABBASI	PAK	KSA	2247		
+6	 	PAK	 	 		
+7	 	PAK	 	 		
+8	 	PAK	 	 		
+9	 	PAK	 	 		
+10	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	10493		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR ZAHIR( GENERAL) TEEPAR KOZBATKOT DRUB(SEPT,NOV,DEC 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SWDO	PAK	PAK	5000		
+2	SWDO	PAK	Pak	10000		
+3	M.ISLAM	PAK	ISLAMABAD	3000		
+4	RAHIM HAJI SAHB	KSA	KSA	2000		
+5	BAKHT BACHA	KSA	KSA	3741		
+6	M.ISLAM	PAK	ISLAMABAD	19090		
+7	 	 	 	 		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	42831		
+ 	 	 	 	 		
+SWDO KSA/OMAN (DONATION LIST) SEPT 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	M.RAMEEZ BHAI	KSA	AL ULA	5000		
+2	QARI QAMAR SHB	KSA	KSA	1498		
+3	RAHIM ULLAH LALA	KSA	RIYADH DEERA	25550		
+4	RASHID AHMED	KSA	TABOK	3778		
+5	ROZI KHAN HAJI SHB	KSA	RIYADH 	5000		
+6	ABDUL WAJID/QAMAR QARI	KSA	KHAMIS	3716		
+7	FAZAL TAWAB	KSA	KHAMIS DEERY	15625		
+8	RAHIM HAJI SHB	KSA	RIYADH	3720		
+9	ABDUL SALAM	KSA	RIYADH	1488		
+10	AMROZ	KSA	RIYADH	1488		
+11	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	66863		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) SEPT 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISLAM/PINDI	500		
+2	ZARFARIN KAKA	Pakistan	ISLAM/PINDI	500		
+3	USMAN ALI	Pakistan	BUNER	300		
+4	NAWAZ KHAN	Pakistan	ISLAM/PINDI	1000		
+5	M.RASHAAD 	Pakistan	BATKOT	1000		
+6	QARI AZEEM	Pakistan	ISLAM/PINDI	1000		
+7	ZAHID ALI 	Pakistan	UNKNOWN	500		
+8	NAMALOM	Pakistan	ISLAM/PINDI	150		
+9	SAMI ULLAH BHAI	Pakistan	BAMBLAI	6400		
+10	HIDAYAT ULLAH	Pakistan	ISLAM/PINDI	3000		
+11	BAKHSHAD ALI	Pakistan	BATKOT	500		
+12	NABI AYAZ	Pakistan	ISLAM/PINDI	500		
+13	BAKHT ZAR 	Pakistan	ABBOTABAD	1000		
+14	FAMAN ULLAH	Pakistan	BATKOT	1000		
+15	ATA ULLAH	Pakistan	-	100		
+16	FAZLULLAH	Pakistan	BATKOT	500		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	17950		
+SWDO Karachi Sindh (DONATION LIST) SEPT 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	DILAWAR	PAK	NORTH NAZIMABAD	497		
+2	NAZIM ULLAH	PAK	MALIR	1000		
+3	M,NABI AKA	PAK	KARACHI	2000		
+4	USMAN	PAK	NORTH KARACHI	500		
+5	NASEEM BAHADUR	PAK	LANDHI	1000		
+6	NAMALOM C/O SHAFI BHAI	PAK	KARACHI	5000		
+7	FATIH URAHMAN	PAK	HYDERABAD	1000		
+8	KHAN BAHADUR WIFE	PAK	KARACHI	1000		
+9	SHAMUL HADI	PAK	KARACHI	1000		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	12997		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR THE GRAND MOTHER OF ( MOLVI FAIZUL HUQ) BARBATKOT (OCT 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	NABI AYAZ	PAK	ISLAMABAD	500		
+2	SULTAN ZADA	PAK	BATKOT	500		
+3	DR AMJAD	PAK	BATKOT	6000		
+4	ROZI KHAN HAJI SHB	KSA	RIYADH	3000		
+5	BAKHT ZAHIR	PAK	TEXILA	4000		
+6	RAHIM ULLAH LALA	KSA	RIYADH	7000		
+7	SHAZID KHAN	KSA	TABUK	3000		
+8	ABID NAWAZ	PAK	ISLAMABAD	400		
+9	WAJID ALI	KSA	RIYADH	3000		
+10	SAID AYAZ	PAK	BATKOT	1000		
+11	KHAN BAHADUR LALA	PAK	KARACHI	1000		
+12	ZEESHAN ALI	PAK	SUKKUR	1000		
+13	KNAMALOOM	PAK	MALIR CANT	1000		
+14	NOOR ISLAM	PAK	ISLAMABAD	300		
+15	M.TAIF	PAK	BATKOT	500		
+16	ZAR FARIN KAKA	PAK	ISLAMABAD	500		
+17	QARI QAMAR SHB	KSA	KSA	2247		
+18	NOHAR ALI	PAK	SUKKUR	800		
+19	ALI BAHADUR	PAK	KARACHI	1000		
+20	NAZIM ULLAH	PAK	KARACHI	1000		
+21	ABID RIYADH DEERA	KSA	RIYADH	4494		
+22	SHAFI 	PAK	KARACHI	500		
+TOTAL RECEIVED AMOUNT	42741		
+ 	 	 	 	 		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR  ( NASEEM ULLAH GUJJAR) KADARDAAM (NOV 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SWDO	PAK	-	13000		
+2	BAKHT BACHA	KSA	KSA	2976		
+3	HIDAYAT ULLAH	PAK	ISL	1000		
+4	N NAMALOOM	PAK	ISL	300		
+5	RAHIM HAJI SHB	KSA	RIYADH	2232		
+6	BAHAR ALI	PAK	BATKOT	3000		
+7	MOULNA HAFEEZ URAHMAN	PAK	BATKOT	1000		
+8	NAMALOM	PAK	BATKOT	300		
+9	BAKHT MULLAH	KSA	-	6300		
+10	QAMAR QARI SHB	KSA	KHAMIS	1859		
+11	SAJID	KSA	RIYADH	1710		
+12	SHEER MUHAMMAD LALA	KSA	-	10000		
+13	FAZAL KABIR/TARIF	KSA	RIYADH	3500		
+14	YADI ISLAM	KSA	KHAMIS	4000		
+15	DR BAKHTI ZAR	PAK	BATKOT	1000		
+16	SARDAR/SAJID	KSA	RIYADH	5201		
+18	SHEER AYAZ	PAK	BATKOT	2500		
+TOTAL RECEIVED AMOUNT	59878		
+PAYABLE AMOUNT	10178		
+SWDO KSA/OMAN (DONATION LIST) oct 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	M.RAMEEZ BHAI	KSA	KSA	5000		
+2	SHEER MUHAMMAD LALA	KSA	KSA	20000		
+3	NAMALOOM	KSA	KSA	1000		
+4	RAHIM ULLAH LALA	KSA	MARKHANAI DEERA	32450		
+5	ROZI KHAN 	KSA	KSA	3500		
+6	QAMAR QARI SHB	KSA	KSA	1486		
+7	RAHIM HAJI SHB	KSA	KSA	15605		
+8	KARIM URAHMAN	KSA	KSA	4000		
+9	FAZAL TAWAB KHAN	KSA	KHAMIS DEERE KSA	19321		
+10	 	KSA	 	 		
+11	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	102362		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) oct 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISL/PINDI	500		
+2	QARI AZEEM	Pakistan	ISL/PINDI	1000		
+3	YASIR BABAKHAIL	Pakistan	ISL/PINDI	1000		
+4	M.IHTISHAM	Pakistan	ISL/PINDI	500		
+5	DR ZARRAR CO SHAKEEL	Pakistan	ABBOTABAD	1500		
+6	BAKHSHAD ALI	Pakistan	ISL/PINDI	500		
+7	ZIA	Pakistan	BATKOT	200		
+8	NAMALOM N	Pakistan	PESHAWAR	2500		
+9	M.HUSSAIN	Pakistan	BATKOT	508		
+10	HIDAYAT ULLAH	Pakistan	ISL/PINDI	2000		
+11	FARMAN ULLAH	Pakistan	BATKOT	1040		
+12	NAMALOM N	Pakistan	ISL/PINDI	150		
+13	NAMALOM SH	Pakistan	ISL/PINDI	300		
+14	NABI AYAZ	Pakistan	ISL/PINDI	500		
+15	 	Pakistan	 	 		
+16	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	12198		
+SWDO Karachi Sindh (DONATION LIST) 0ct 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SHAFI BHAI	PAK	KARACHI	500		
+2	NAMALOOM H	PAK	KARACHI	1000		
+3	BAKHT MUNEER	PAK	KARACHI	500		
+4	FATEH URAHMAN	PAK	HYUDERABAD	1000		
+5	MUZAMMIL BHAI	PAK	GAWADAR	2030		
+6	USMAN	PAK	NORTH KARACHI	500		
+7	DILAWAR KHAN	PAK	NAZIMABAD	500		
+8	SHAMSUL HADI	PAK	MALIR	1000		
+9	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	7030		
+SWDO KSA/OMAN (DONATION LIST) NOV 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	M.RAMEEZ BHAI	KSA	ALULA KSA	5000		
+2	ROZI KHAN HAJI SHB 	KSA	RIYADH DEERA	4000		
+3	KHAN ZARIN	KSA	MADINA	3600		
+4	RASHEED BABAKHAIL	KSA	TABOK	3185		
+5	RAHEEM HAJI SHB	KSA	RIYADH 	4448		
+6	ROZI KHAN HAJI SHB 	KSA	RIYADH	3500		
+7	QARI QAMAR	KSA	KSA	1485		
+8	SARDAR/SAJID	KSA	RIYADH DEERA	45295		
+9	ASLAM KHAN	KSA	MADINA	11100		
+10	WAJID KAKA	KSA	KHAMIS	3708		
+11	 	KSA	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	85321		
+SWDO  ISLAMABAD/PINDI (DONATION LIST) NOV 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	ABID NAWAZ	Pakistan	ISL/PINDI	500		
+2	NAMALOOM C/O NABI AYAZ	Pakistan	ISL/PINDI	1150		
+3	RASHAD BHAI	Pakistan	BATKOT	1000		
+4	M.MUSA BHAI	Pakistan	ISL/PINDI	500		
+5	NAMALOM F	Pakistan	BATKOT	300		
+6	WAHID	Pakistan	BATKOT	600		
+7	MAJID ALI	Pakistan	ISL/PINDI	300		
+8	NAMALOM N	Pakistan	PESHAWAR	500		
+9	MOULANA HAFEEZ URAHMAN	Pakistan	BATKOT	500		
+10	HAMMAD BHAI	Pakistan	THAKOT	500		
+11	QARI AZEEM	Pakistan	ISL/PINDI	1000		
+12	BASIT	Pakistan	ISL/PINDI	900		
+13	MAJID ALI	Pakistan	ISL/PINDI	200		
+14	NABI AYAZ	Pakistan	ISL/PINDI	500		
+15	NAMALOM N	Pakistan	PESHAWAR	1000		
+16	HIDAYAT ULLAH	Pakistan	ISL/PINDI	2000		
+17	 	 	 	 		
+18	 	Pakistan	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	11450		
+SWDO Karachi Sindh (DONATION LIST) NOV 2025  		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SHAFI BHAI	PAK	KARACHI	500		
+2	NAMALOM F	PAK	HYDERABAD	1000		
+3	MUZAMMIL BHAI	PAK	GAWADAR	2018		
+4	USMAN	PAK	KARACHI	500		
+5	SHAMUL HADI	PAK	MALIR	1000		
+6	MOLANA HAFEEZ URAHMAN	PAK	BATKOT	250		
+7	 	PAK	 	 		
+8	 	PAK	 	 		
+9	 	PAK	 	 		
+ 	 	 	 	 		
+TOTAL RECEIVED AMOUNT	5268		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR  ( THE MOTHER OF MOULANA FAIZ UL HAQ) BATKOT (DEC 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	FAYAZ 	PAK	BATKOT	500		
+2	BAKHT HASSAN	PAK	BATKOT	1000		
+3	FURAN HAJI SHB	KSA	RIYADH	3121		
+4	ROZI KHAN HAJI SHB	KSA	RIYADH	2500		
+5	RAHIM ULLAH LALA	KSA	RIYADH	7300		
+6	HIDAYAT ULLAH	PAK	ISL	424		
+7	FATEH URAHMAN	PAK	HYDERABAD SINDH	1000		
+8	NI NAMALOM	PAK	ISL	300		
+9	M.ISLAM LALA	KSA	KSA	37207		
+10	JAVEED QARI	KSA	KHAMIS	1486		
+11	GHUFRAN/FARMAN	KSA	ALQASEEM	20000		
+12	DR AMJAD	PAK	BATKOT	5000		
+13	SARBALI KHAN	PAK	KARACHI	990		
+14	ROZI KHAN HAJI SHB DEERA	KSA	RIYADH	3000		
+15	 	 	 	 		
+TOTAL RECEIVED AMOUNT	83828		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "EMERGENCY MEDICAL DONATION SPECIAL APPEAL"		
+FOR  ( QAREEB ULLAH QARI) BATKOT (DEC 2025)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	KARIM URAHMAN	KSA	RIYADH	2500		
+2	FAZAL KABIR	KSA	RIYADH	2500		
+3	NAMALOM H	PAK	KARACHI	1000		
+4	ROZI KHAN HAJI SHB	KSA	RIYADH DEERA	3000		
+5	SHAFI URAHMAN	KSA	RIYADH	2000		
+6	FAZAL KABIR	KSA	RIYADH	7400		
+7	 	 	 	 		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+TOTAL RECEIVED AMOUNT	18400		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "REGISTERED"		
+RAMADAN UL MUBARAK PACKAGE 2026		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	HIDAYAT ULLAH	PAK	ISLAMABAD	2000		
+2	ABID NAWAZ	PAK	ISLAMABAD	500		
+3	KARIM URAHMAN/F.KABIR	KSA	RIYADH	7400		
+4	KHAN ZARIN	KSA	MADINA	3700		
+5	QARI AZEEM QASMI	PAK	ISLAMABAD	1200		
+6	SADAQAT HUSSAIN	PAK	ISLAMABAD	500		
+7	NAMALOM	PAK	PESHAWAR	1000		
+8	BASIT	PAK	ISLAMABAD	1000		
+9	MAJID	PAK	ISLAMABAD	200		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+TOTAL RECEIVED AMOUNT	17500		
+SHANGLA WELFARE & DEVELOPMENT ORGANIZATION "REGISTERED"		
+RAMADAN UL MUBARAK PACKAGE 2026 (BALA BAMBLAI)		
+S#	NAMES	COUNTRY	RESIDENT	AMOUNT		
+1	SAMI URAHMAN	PAK	KARACHI	1000		
+2	NOSHERWAN BHAI	PAK	KARACHI	1000		
+3	 	 	 	 		
+4	 	 	 	 		
+5	 	 	 	 		
+6	 	 	 	 		
+7	 	 	 	 		
+8	 	 	 	 		
+9	 	 	 	 		
+10	 	 	 	 		
+11	 	 	 	 		
+12	 	 	 	 		
+13	 	 	 	 		
+14	 	 	 	 		
+15	 	 	 	 		
+TOTAL RECEIVED AMOUNT	2000

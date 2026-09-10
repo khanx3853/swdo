@@ -1,0 +1,8 @@
+{
+  "name": "Shangla Welfare & Development Organisation",
+  "description": "Shangla Welfare & Development Organisation (SWDO) Web Portal for managing donations, beneficiaries, members, users, and financial statements.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
