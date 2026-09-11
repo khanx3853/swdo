@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Sun, Moon, LogOut, CheckCircle2, Lock, Eye } from 'lucide-react';
+import { ShieldCheck, Sun, Moon, LogOut, CheckCircle2, Lock, Eye, RefreshCcw } from 'lucide-react';
 import { PortalSettings, UserAccount } from '../types';
 import { Logo } from './Logo';
 
@@ -13,6 +13,7 @@ interface HeaderProps {
   isQuotaExceeded?: boolean;
   onResetQuota?: () => void;
   dbStatus?: { ok: boolean; error?: string };
+  onRefresh?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   isQuotaExceeded,
   onResetQuota,
   dbStatus,
+  onRefresh,
 }) => {
   return (
     <header className="sticky top-0 z-40 dark:bg-slate-950/90 bg-white/90 backdrop-blur-md dark:border-purple-500/30 border-purple-200 border-b px-3 sm:px-4 py-3 flex items-center justify-between shadow-lg">
@@ -46,6 +48,17 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2.5">
+        {/* Refresh Button */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          title="Refresh Data"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 shadow-sm cursor-pointer dark:bg-slate-900/90 dark:border-purple-500/40 dark:text-slate-100 dark:hover:bg-slate-800 bg-white border-purple-200 text-slate-800 hover:bg-purple-50 group"
+        >
+          <RefreshCcw className="w-4 h-4 text-emerald-500 group-hover:rotate-180 transition-transform duration-500" />
+          <span className="text-[11px] font-semibold hidden md:inline">Refresh</span>
+        </button>
+
         {/* Quota Exceeded Warning / Retry */}
         {isQuotaExceeded && (
           <button

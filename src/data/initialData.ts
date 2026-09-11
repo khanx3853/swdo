@@ -11046,12 +11046,131 @@ export const INITIAL_BENEFICIARIES: Beneficiary[] = [
   }
 ];
 
-export const INITIAL_MEMBERS: Member[] = [];
+export const INITIAL_MEMBERS: Member[] = [
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea1",
+    "Name": "Ali Bahadar",
+    "Father Name": "Gul Sangeen",
+    "Designation": "President",
+    "N.I.C No": "42201-4525425-5",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea2",
+    "Name": "Abdul Wajid",
+    "Father Name": "Muhammad Karim",
+    "Designation": "V.President",
+    "N.I.C No": "42501-9645506-7",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea3",
+    "Name": "Muhammad Perveez",
+    "Father Name": "Khanimullah",
+    "Designation": "General Secretary",
+    "N.I.C No": "15501-2253893-7",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea4",
+    "Name": "Bakhti Zar",
+    "Father Name": "Sher Khan",
+    "Designation": "Finance Secretary",
+    "N.I.C No": "15502-6279390-5",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea5",
+    "Name": "Umar Zar",
+    "Father Name": "Sher Khan",
+    "Designation": "Joint Secretary",
+    "N.I.C No": "15502-3270307-7",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea6",
+    "Name": "Karim Ullah",
+    "Father Name": "Gul Zada",
+    "Designation": "Press Secretary",
+    "N.I.C No": "15502-7422725-1",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea7",
+    "Name": "Fayaz Bahadar",
+    "Father Name": "Saifur Rahman",
+    "Designation": "Office Secretary",
+    "N.I.C No": "15502-2096508-9",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea8",
+    "Name": "Zar Farin",
+    "Father Name": "Sattan",
+    "Designation": "Coordination Secretary",
+    "N.I.C No": "15501-2243403-5",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  },
+  {
+    "id": "8d8f0f10-9598-49b4-aa56-04f775b74ea9",
+    "Name": "Rahim Ullah",
+    "Father Name": "Habib Khan",
+    "Designation": "Patron-in-Chief",
+    "N.I.C No": "15502-8823336-5",
+    "Address": "Maira Bar Batkot",
+    "Contact No": "",
+    "Joining Date": "2024-01-01",
+    "Expiry Date": "2029-01-01",
+    "Remarks": "Executive Cabinet Member",
+    "Source": "Audit"
+  }
+];
 
 export const INITIAL_USERS: UserAccount[] = [
   {
     "id": "8e540699-e9d6-48a4-aa47-7126e373a82f", "Source": "Audit",
     "username": "admin",
+    "password": "admin123",
     "Rights": "Admin",
     "Access": [
       "Home",
@@ -11062,11 +11181,12 @@ export const INITIAL_USERS: UserAccount[] = [
       "Settings",
       "Statement"
     ],
-    "Theme": "Light"
+    "Theme": "Dark"
   },
   {
     "id": "636e1d51-7189-48c3-a282-a6edcd4cab91", "Source": "Audit",
     "username": "junaid",
+    "password": "junaid123",
     "Rights": "Admin",
     "Access": [
       "Home",
@@ -11077,17 +11197,18 @@ export const INITIAL_USERS: UserAccount[] = [
       "Settings",
       "Statement"
     ],
-    "Theme": "Light"
+    "Theme": "Dark"
   },
   {
     "id": "5534a01a-ae2e-4d0e-a84a-bbbc01055b9f", "Source": "Audit",
     "username": "viewer",
+    "password": "viewer123",
     "Rights": "Viewer",
     "Access": [
       "Home",
       "Statement"
     ],
-    "Theme": "Light"
+    "Theme": "Dark"
   }
 ];
 

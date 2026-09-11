@@ -72,6 +72,7 @@ interface HomeTabProps {
   settings?: PortalSettings;
   currentUsername?: string;
   onExportReceipt?: (donation: Donation) => void;
+  refreshTrigger?: number;
 }
 
 const DEFAULT_PICTURES = [
@@ -114,6 +115,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   settings,
   currentUsername,
   onExportReceipt,
+  refreshTrigger = 0,
 }) => {
   const [showDonateModal, setShowDonateModal] = useState(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -153,7 +155,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   useEffect(() => {
     fetchGallery();
-  }, []);
+  }, [refreshTrigger]);
 
   // Slideshow interval
   useEffect(() => {

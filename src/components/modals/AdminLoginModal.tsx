@@ -58,24 +58,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         onLoginSuccess(matchedUser);
         onClose();
       }, 300);
-    } else if (
-      (trimmedUser.toLowerCase() === 'admin' && trimmedPass === 'admin123') ||
-      (trimmedUser.toLowerCase() === 'admin' && trimmedPass === 'admin')
-    ) {
-      // Fallback default admin
-      const defaultAdmin: UserAccount = {
-        id: 'user-admin',
-        username: 'admin',
-        password: trimmedPass,
-        Rights: 'Admin',
-        Access: ['Home', 'Donations', 'Beneficiaries', 'Members', 'Users', 'Settings', 'Statement'],
-        Theme: 'Dark',
-      };
-      setTimeout(() => {
-        setIsLoading(false);
-        onLoginSuccess(defaultAdmin);
-        onClose();
-      }, 300);
     } else {
       setTimeout(() => {
         setIsLoading(false);

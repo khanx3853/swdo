@@ -1276,7 +1276,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                   <th className="py-3 px-3 font-semibold">Date</th>
                   <th className="py-3 px-3 font-semibold">Donor Name</th>
                   <th className="py-3 px-3 font-semibold text-center">Status</th>
-                  <th className="py-3 px-3 font-semibold text-center">Proof</th>
+                  {isAdmin && <th className="py-3 px-3 font-semibold text-center">Proof</th>}
                   <th className="py-3 px-3 font-semibold hidden md:table-cell">Contact</th>
                   <th className="py-3 px-3 font-semibold text-right">Amount</th>
                   <th className="py-3 px-3 font-semibold text-right">Actions</th>
@@ -1285,7 +1285,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               <tbody className="divide-y dark:divide-purple-900/30 divide-purple-100">
                 {filteredDonations.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-slate-400">
+                    <td colSpan={isAdmin ? 8 : 6} className="text-center py-8 text-slate-400">
                       No donations found for selected filter
                     </td>
                   </tr>
@@ -1353,27 +1353,29 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                           )}
                         </td>
 
-                        {/* Proof Thumbnail */}
-                        <td className="py-3 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          {d.ProofImage ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setLightboxImage({
-                                  url: d.ProofImage!,
-                                  title: `Proof: ${d['Donor Name']} (${formatPKR(d.Amount)})`,
-                                })
-                              }
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-purple-900/40 text-emerald-400 text-[10px] font-semibold border border-slate-700 transition-colors cursor-pointer"
-                              title="Click to view screenshot"
-                            >
-                              <ImageIcon className="w-3 h-3" />
-                              <span>View</span>
-                            </button>
-                          ) : (
-                            <span className="text-[10px] text-slate-500">-</span>
-                          )}
-                        </td>
+                        {/* Proof Thumbnail - Admin Only */}
+                        {isAdmin && (
+                          <td className="py-3 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {d.ProofImage ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setLightboxImage({
+                                    url: d.ProofImage!,
+                                    title: `Proof: ${d['Donor Name']} (${formatPKR(d.Amount)})`,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-purple-900/40 text-emerald-400 text-[10px] font-semibold border border-slate-700 transition-colors cursor-pointer"
+                                title="Click to view screenshot"
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                                <span>View</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-slate-500">-</span>
+                            )}
+                          </td>
+                        )}
 
                         <td className="py-3 px-3 font-mono text-slate-400 hidden md:table-cell">
                           {d['Contact No'] || '-'}

@@ -197,6 +197,22 @@ export default function App() {
 
   // Navigation
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleRefresh = async () => {
+    // Increment trigger to force re-fetch in components like HomeTab (Gallery)
+    setRefreshTrigger(prev => prev + 1);
+    
+    // Also re-verify general connectivity
+    const status = await checkSupabaseConnection();
+    setDbStatus(status as any);
+    
+    // Reset quota flag in case it was a temporary glitch
+    resetQuotaFlag();
+    setQuotaExceeded(false);
+    
+    showToast('Data refresh triggered...', 'info');
+  };
 
   // Modals state
   const [selectedDetail, setSelectedDetail] = useState<{
@@ -604,6 +620,7 @@ export default function App() {
         isQuotaExceeded={quotaExceeded}
         onResetQuota={handleResetQuota}
         dbStatus={dbStatus}
+        onRefresh={handleRefresh}
       />
 
       {/* Main App Container */}
@@ -628,6 +645,7 @@ export default function App() {
               settings={settings}
               currentUsername={currentUser?.username || 'Guest Donator'}
               onExportReceipt={handleExportDonationReceipt}
+              refreshTrigger={refreshTrigger}
             />
           )}
 
