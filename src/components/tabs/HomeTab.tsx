@@ -125,22 +125,23 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   const [isMuted, setIsMuted] = useState(true);
 
   // Fetch gallery data from Firestore (single read to save quota)
-  useEffect(() => {
-    async function fetchGallery() {
-      try {
-        const picSnapshot = await getDocs(query(collection(db, 'gallery_pictures')));
-        const picList = picSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-        setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
+  const fetchGallery = async () => {
+    try {
+      const picSnapshot = await getDocs(query(collection(db, 'gallery_pictures')));
+      const picList = picSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
 
-        const vidSnapshot = await getDocs(query(collection(db, 'gallery_videos')));
-        const vidList = vidSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-        setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
-      } catch (err) {
-        console.error("Error fetching gallery data:", err);
-        setPictures(DEFAULT_PICTURES);
-        setVideos(DEFAULT_VIDEOS);
-      }
+      const vidSnapshot = await getDocs(query(collection(db, 'gallery_videos')));
+      const vidList = vidSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
+    } catch (err) {
+      console.error("Error fetching gallery data:", err);
+      setPictures(DEFAULT_PICTURES);
+      setVideos(DEFAULT_VIDEOS);
     }
+  };
+
+  useEffect(() => {
     fetchGallery();
   }, []);
 
@@ -450,6 +451,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               {/* Image Upload Option */}
               {isAdmin && (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchGallery}
+                    className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-blue-500/25 hover:bg-blue-500/40 text-blue-200 rounded-lg border border-blue-500/30 flex items-center gap-1 transition-all"
+                    title="Refresh Gallery"
+                  >
+                    <Loader2 className="w-3 h-3" />
+                    <span>Refresh</span>
+                  </button>
                   <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-purple-500/25 hover:bg-purple-500/40 text-purple-200 rounded-lg border border-purple-500/30 flex items-center gap-1 transition-all">
                     {isUploadingPic ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
