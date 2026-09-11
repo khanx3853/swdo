@@ -194,26 +194,6 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     // Play subtle notification chime for immediate audio feedback
     playSuccessChime();
 
-    // Trigger automated admin email notification backend endpoint only for Pending status
-    // We execute this asynchronously so it doesn't block the UI rendering the success state
-    if (newDonation.Status === 'Pending') {
-      const triggerNotification = async () => {
-        try {
-          const resp = await fetch('/api/notify-donation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newDonation),
-          });
-          const data = await resp.json();
-          console.log("Email notification response from modal:", data);
-        } catch (err) {
-          console.error("Failed to trigger email notification:", err);
-        }
-      };
-      
-      void triggerNotification();
-    }
-
     setSubmittedDonation(newDonation);
   };
 

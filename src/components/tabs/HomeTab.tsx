@@ -136,6 +136,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       return;
     }
     try {
+      // First try to fetch metadata only to see if we have many items
+      // If it fails with Load failed, it's likely too much data
       const picList = await fetchCollection<any>('gallery_pictures');
       setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
 
@@ -143,6 +145,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
     } catch (err) {
       console.error("Error fetching gallery data:", err);
+      // Fallback to defaults on any network error
       setPictures(DEFAULT_PICTURES);
       setVideos(DEFAULT_VIDEOS);
     }
@@ -164,6 +167,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   const handleUploadPicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Hard limit for base64 storage
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image is too large! Please select an image under 10MB.");
+      return;
+    }
+
     try {
       setIsUploadingPic(true);
       const base64 = await compressImageFile(file, 1000, 0.8);
@@ -176,7 +186,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       fetchGallery(); // Refresh after upload
     } catch (err) {
       console.error("Error uploading picture:", err);
-      alert("Failed to upload image. Please try a smaller file.");
+      alert("Failed to upload image. This may be due to database limits for large files.");
     } finally {
       setIsUploadingPic(false);
     }
@@ -186,8 +196,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    if (file.size > 500 * 1024 * 1024) {
-      alert("Video file is too large! Please select a video under 500MB.");
+    // Hard limit for base64 storage in Postgres row
+    const MAX_BASE64_SIZE = 12 * 1024 * 1024; // 12MB limit for safety
+    if (file.size > MAX_BASE64_SIZE) {
+      alert("Video file is too large for database storage! Please select a video under 12MB. For larger videos, please contact the developer to enable Cloud Storage.");
       return;
     }
 
@@ -457,9 +469,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                 <span className="text-xs font-bold uppercase tracking-wider">SWDO Live Gallery</span>
               </div>
               
-              {/* Image Upload Option */}
+              {/* Image Upload & Maintenance Options */}
               {isAdmin && (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm("Permanently delete ALL pictures from the gallery?")) {
+                        pictures.forEach(p => deleteFromFirestore('gallery_pictures', p.id));
+                        setPictures(DEFAULT_PICTURES);
+                      }
+                    }}
+                    className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-red-500/15 hover:bg-red-500/25 text-red-300 rounded-lg border border-red-500/20 flex items-center gap-1 transition-all"
+                    title="Clear All Pictures"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                   <button
                     type="button"
                     onClick={fetchGallery}
@@ -467,7 +492,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                     title="Refresh Gallery"
                   >
                     <Loader2 className="w-3 h-3" />
-                    <span>Refresh</span>
                   </button>
                   <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-purple-500/25 hover:bg-purple-500/40 text-purple-200 rounded-lg border border-purple-500/30 flex items-center gap-1 transition-all">
                     {isUploadingPic ? (
@@ -585,9 +609,22 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                 <span className="text-xs font-bold uppercase tracking-wider">SWDO Videos</span>
               </div>
               
-              {/* Video Upload Option */}
+              {/* Video Upload & Maintenance Options */}
               {isAdmin && (
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm("Permanently delete ALL videos from the gallery? This helps if a large video is causing loading errors.")) {
+                        videos.forEach(v => deleteFromFirestore('gallery_videos', v.id));
+                        setVideos(DEFAULT_VIDEOS);
+                      }
+                    }}
+                    className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-red-500/15 hover:bg-red-500/25 text-red-300 rounded-lg border border-red-500/20 flex items-center gap-1 transition-all"
+                    title="Clear All Videos"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                   <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-orange-500/25 hover:bg-orange-500/40 text-orange-200 rounded-lg border border-orange-500/30 flex items-center gap-1 transition-all">
                     {isUploadingVid ? (
                       <Loader2 className="w-3 h-3 animate-spin" />

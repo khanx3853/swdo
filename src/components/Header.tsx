@@ -12,6 +12,7 @@ interface HeaderProps {
   onRequestLogin?: () => void;
   isQuotaExceeded?: boolean;
   onResetQuota?: () => void;
+  dbStatus?: { ok: boolean; error?: string };
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRequestLogin,
   isQuotaExceeded,
   onResetQuota,
+  dbStatus,
 }) => {
   return (
     <header className="sticky top-0 z-40 dark:bg-slate-950/90 bg-white/90 backdrop-blur-md dark:border-purple-500/30 border-purple-200 border-b px-3 sm:px-4 py-3 flex items-center justify-between shadow-lg">
@@ -58,10 +60,25 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Sync Indicator */}
-        {!isQuotaExceeded && (
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-500">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-[11px]">System Live</span>
+        {!isQuotaExceeded && dbStatus && (
+          <div className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-xs font-semibold ${
+            dbStatus.ok 
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+              : 'bg-red-500/10 border-red-500/20 text-red-500'
+          }`}>
+            {dbStatus.ok ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+            )}
+            <span className="text-[11px]">{dbStatus.ok ? 'System Live' : 'Offline Mode'}</span>
+          </div>
+        )}
+
+        {!isQuotaExceeded && !dbStatus && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-500/10 border border-slate-500/20 text-xs font-semibold text-slate-500">
+            <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 animate-pulse" />
+            <span className="text-[11px]">Syncing...</span>
           </div>
         )}
 

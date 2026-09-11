@@ -9,5 +9,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  supabaseAnonKey || 'placeholder',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      headers: { 'x-application-name': 'swdo-portal' },
+    },
+  }
 );
+
+// Connectivity check helper
+export const checkSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('donations').select('count', { count: 'exact', head: true });
+    if (error) throw error;
+    return { ok: true, count: data };
+  } catch (err: any) {
+    console.error('Supabase connectivity check failed:', err);
+    return { ok: false, error: err.message || 'Unknown connectivity error' };
+  }
+};

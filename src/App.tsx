@@ -40,6 +40,7 @@ import {
   generateMonkeyFilePDF,
 } from './utils/formatters';
 import { playSuccessChime } from './utils/audio';
+import { checkSupabaseConnection } from './lib/supabase';
 import {
   subscribeCollection,
   subscribeDocument,
@@ -83,9 +84,20 @@ export default function App() {
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
   const [settings, setSettings] = useState<PortalSettings>(INITIAL_SETTINGS);
   const [quotaExceeded, setQuotaExceeded] = useState(isQuotaExceeded());
+  const [dbStatus, setDbStatus] = useState<{ ok: boolean; error?: string } | undefined>();
 
   // Firestore Data Initialization & Real-time Subscriptions
   useEffect(() => {
+    // Check Supabase connectivity
+    const verifyConnection = async () => {
+      const status = await checkSupabaseConnection();
+      setDbStatus(status as any);
+      if (!status.ok) {
+        console.error('Initial DB connectivity check failed. App may be in offline mode.');
+      }
+    };
+    verifyConnection();
+
     // If the config was just changed, we should try a fresh fetch
     resetQuotaFlag(); 
     setQuotaExceeded(false);
@@ -330,16 +342,21 @@ export default function App() {
 
     try {
       await saveToFirestore('donations', donation);
-      if (donation.Status === 'Pending') {
-        showToast(`Donation proof from ${donation['Donor Name']} submitted for admin approval!`, 'info');
-        // Trigger background email dispatch to admin & donor
+      
+      // Trigger background email notification for newly created Live donations awaiting approval
+      // This ensures admins are notified of public submissions without being spammed during bulk imports
+      if (donation.Source === 'Live' && donation.Status === 'Pending') {
         fetch('/api/notify-donation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(donation),
         }).catch((err) => console.error('Error dispatching notification email:', err));
+      }
+
+      if (donation.Status === 'Pending') {
+        showToast(`Donation proof from ${donation['Donor Name']} submitted for admin approval!`, 'info');
       } else {
-        showToast(`Donation from ${donation['Donor Name']} saved!`);
+        showToast(`Donation from ${donation['Donor Name']} saved!`, 'success');
       }
     } catch (err: any) {
       console.error('Save error:', err);
@@ -586,6 +603,7 @@ export default function App() {
         onRequestLogin={() => setAdminLoginModalOpen(true)}
         isQuotaExceeded={quotaExceeded}
         onResetQuota={handleResetQuota}
+        dbStatus={dbStatus}
       />
 
       {/* Main App Container */}

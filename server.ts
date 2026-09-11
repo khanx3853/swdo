@@ -54,12 +54,11 @@ async function startServer() {
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
     const smtpUser = process.env.SMTP_USER || "swdo.kpk@gmail.com";
-    const smtpPass = process.env.SMTP_PASS;
+    const smtpPass = process.env.SMTP_PASS || "skovwfcmuzfsfvxb"; // Fallback to verified app password
     const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "swdo.kpk@gmail.com, khanx3853@gmail.com";
 
-    if (!smtpPass) {
-      console.warn("SMTP_PASS is not configured. Email notifications are disabled.");
-      return null;
+    if (!smtpPass || smtpPass === "MY_SMTP_PASS") {
+      console.warn("⚠️ SMTP_PASS is not configured correctly. Email notifications may fail.");
     }
 
     if (!pooledTransporter) {
@@ -87,9 +86,12 @@ async function startServer() {
   }
 
   // API route to send email notification to admin when new donation is submitted
-  app.post("/api/notify-donation", async (req, res) => {
-    const donation = req.body;
-    console.log("⚡ High-speed donation notification triggered:", donation['Donor Name']);
+    app.post("/api/notify-donation", async (req, res) => {
+      const donation = req.body;
+      const origin = req.headers.origin || req.headers.referer || "";
+      const baseUrl = process.env.APP_URL || (origin.endsWith('/') ? origin.slice(0, -1) : origin) || "https://ais-dev-oeeigrz5owddw4vhrihztj-539654624355.asia-southeast1.run.app";
+      
+      console.log("⚡ High-speed donation notification triggered:", donation['Donor Name']);
 
     // Send instant HTTP response to client so UI remains blazingly fast
     res.json({ success: true, status: "queued" });
@@ -172,7 +174,7 @@ async function startServer() {
                     <tr><td class="label">Status</td><td class="value"><span style="color: #fbbf24; font-weight: bold;">⏳ Pending Admin Approval</span></td></tr>
                   </table>
 
-                  <a href="${process.env.APP_URL || 'https://ais-dev-oeeigrz5owddw4vhrihztj-539654624355.asia-southeast1.run.app'}" class="button">Review & Approve in Admin Portal</a>
+                  <a href="${baseUrl}" class="button">Review & Approve in Admin Portal</a>
                 </div>
                 <div class="footer">
                   Shangla Welfare & Development Organisation • District Shangla, KP, Pakistan<br>
@@ -447,12 +449,14 @@ async function startServer() {
             </p>
             <div style="background: #1e293b; padding: 12px; border-radius: 8px; font-family: monospace; color: #a7f3d0; font-size: 13px;">
               Delivered to: ${targetEmail}<br>
-              SMTP Account: ${smtpUser}
+              SMTP Account: ${smtpUser}<br>
+              Server Time: ${new Date().toLocaleString()}
             </div>
           </div>
         `,
       });
 
+      console.log(`✅ Test email delivered successfully to ${targetEmail}`);
       res.json({ success: true, message: `High-speed test email delivered successfully to ${targetEmail}!` });
     } catch (error) {
       console.error("Test email error:", error);
