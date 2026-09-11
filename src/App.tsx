@@ -81,76 +81,63 @@ export default function App() {
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
   const [settings, setSettings] = useState<PortalSettings>(INITIAL_SETTINGS);
 
-  // Firestore Real-Time Cloud Listeners
+  // Firestore Data Initialization (single reads to save quota)
   useEffect(() => {
-    const unsubDonations = subscribeCollection<Donation>(
-      'donations',
-      (data) => setDonations(data),
-      INITIAL_DONATIONS
-    );
-
-    const unsubBeneficiaries = subscribeCollection<Beneficiary>(
-      'beneficiaries',
-      (data) => setBeneficiaries(data),
-      INITIAL_BENEFICIARIES
-    );
-
-    const unsubMembers = subscribeCollection<Member>(
-      'members',
-      (data) => setMembers(data),
-      INITIAL_MEMBERS
-    );
-
-    const unsubUsers = subscribeCollection<UserAccount>(
-      'users',
-      (data) => setUsers(data),
-      INITIAL_USERS
-    );
-
-    const unsubSettings = subscribeDocument<PortalSettings>(
-      'settings',
-      'portalSettings',
-      (data) => {
-        if (data) {
+    async function initData() {
+      try {
+        const donationsData = await fetchCollection<Donation>('donations');
+        setDonations(donationsData.length > 0 ? donationsData : INITIAL_DONATIONS);
+        
+        const benData = await fetchCollection<Beneficiary>('beneficiaries');
+        setBeneficiaries(benData.length > 0 ? benData : INITIAL_BENEFICIARIES);
+        
+        const memData = await fetchCollection<Member>('members');
+        setMembers(memData.length > 0 ? memData : INITIAL_MEMBERS);
+        
+        const userData = await fetchCollection<UserAccount>('users');
+        setUsers(userData.length > 0 ? userData : INITIAL_USERS);
+        
+        const settingsData = await fetchDocument<PortalSettings>('settings', 'portalSettings');
+        if (settingsData) {
           let needsUpdate = false;
-          const updated = { ...data };
+          const updated = { ...settingsData };
 
-          if (!data.Address || data.Address.includes("Batkot") || data.Address.includes("Lelai") || !data.Address.includes("Barbatkot")) {
+          if (!settingsData.Address || settingsData.Address.includes("Batkot") || settingsData.Address.includes("Lelai") || !settingsData.Address.includes("Barbatkot")) {
             updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
             needsUpdate = true;
           }
 
-          if (data.Chairperson === "Fazal Rahim" || !data.Chairperson) {
+          if (settingsData.Chairperson === "Fazal Rahim" || !settingsData.Chairperson) {
             updated.Chairperson = "Ali Bahadur";
             needsUpdate = true;
           }
 
-          if (data.Secretary === "Muhammad Zada" || !data.Secretary) {
+          if (settingsData.Secretary === "Muhammad Zada" || !settingsData.Secretary) {
             updated.Secretary = "Muhammad Parvez";
             needsUpdate = true;
           }
 
-          if (data['Easypaisa Title'] === "Shangla Welfare Org" || !data['Easypaisa Title']) {
+          if (settingsData['Easypaisa Title'] === "Shangla Welfare Org" || !settingsData['Easypaisa Title']) {
             updated['Easypaisa Title'] = "ALI BAHADUR";
             needsUpdate = true;
           }
 
-          if (data['Bank Title'] === "Askari Bank - SWDO Official" || !data['Bank Title']) {
+          if (settingsData['Bank Title'] === "Askari Bank - SWDO Official" || !settingsData['Bank Title']) {
             updated['Bank Title'] = "MEEZAN BANK";
             needsUpdate = true;
           }
 
-          if (data['Account Title'] === "Shangla Welfare & Development Org" || !data['Account Title']) {
+          if (settingsData['Account Title'] === "Shangla Welfare & Development Org" || !settingsData['Account Title']) {
             updated['Account Title'] = "ALI BAHADUR";
             needsUpdate = true;
           }
 
-          if (data['Bank Account No'] === "12345678901234" || !data['Bank Account No']) {
+          if (settingsData['Bank Account No'] === "12345678901234" || !settingsData['Bank Account No']) {
             updated['Bank Account No'] = "00300110485989";
             needsUpdate = true;
           }
 
-          if (data['Bank No'] === "12345678901234" || !data['Bank No']) {
+          if (settingsData['Bank No'] === "12345678901234" || !settingsData['Bank No']) {
             updated['Bank No'] = "PK34MEZN0000300110485989";
             needsUpdate = true;
           }
@@ -159,22 +146,16 @@ export default function App() {
             setSettings(updated);
             saveDocToFirestore('settings', 'portalSettings', updated);
           } else {
-            setSettings(data);
+            setSettings(settingsData);
           }
         } else {
-          setSettings(data);
+          setSettings(INITIAL_SETTINGS);
         }
-      },
-      INITIAL_SETTINGS
-    );
-
-    return () => {
-      unsubDonations();
-      unsubBeneficiaries();
-      unsubMembers();
-      unsubUsers();
-      unsubSettings();
-    };
+      } catch (err) {
+        console.error("Error initializing data:", err);
+      }
+    }
+    initData();
   }, []);
 
 
