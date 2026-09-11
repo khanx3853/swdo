@@ -341,8 +341,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     const liveNewApprovedDonors = donations.filter(
       (d) =>
         d.Status === 'Approved' &&
-        (d.id.startsWith('don-live-') ||
-          d.id.startsWith('live-') ||
+        (d.Source === 'Live' ||
           (d as any).isLiveAdded === true)
     );
     const liveUnique = new Set(
@@ -356,8 +355,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     const baseCount = 124;
     const liveNewBeneficiaries = beneficiaries.filter(
       (b) =>
-        b.id.startsWith('ben-live-') ||
-        b.id.startsWith('live-') ||
+        b.Source === 'Live' ||
         (b as any).isLiveAdded === true
     );
     return baseCount + liveNewBeneficiaries.length;

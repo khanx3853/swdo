@@ -27,15 +27,45 @@ function handleDbError(err: any, context: string) {
   // Optional: check for specific Supabase errors if needed
 }
 
-// Helper function to strip all undefined values before sending to DB
+// Helper function to strip all undefined values and client-side only fields before sending to DB
 export function sanitizeForDb<T>(data: T): T {
   if (data === null || data === undefined) {
     return data;
   }
   try {
-    return JSON.parse(JSON.stringify(data));
+    const sanitized = JSON.parse(JSON.stringify(data));
+    
+    // List of fields to exclude from database persistence (client-side only)
+    const excludeFields = ['isLiveAdded'];
+    
+    if (typeof sanitized === 'object' && sanitized !== null) {
+      excludeFields.forEach(field => {
+        if (field in sanitized) {
+          delete sanitized[field];
+        }
+      });
+    }
+    
+    return sanitized;
   } catch {
     return data;
+  }
+}
+
+export async function saveBulkToFirestore<T extends { id: string }>(
+  collectionName: string,
+  items: T[]
+) {
+  try {
+    const sanitized = items.map(item => sanitizeForDb(item));
+    const { error } = await supabase
+      .from(collectionName)
+      .upsert(sanitized);
+    
+    if (error) throw error;
+  } catch (err) {
+    console.error(`Failed to bulk save to DB [${collectionName}]:`, err);
+    throw err;
   }
 }
 
@@ -48,10 +78,11 @@ export function subscribeCollection<T extends { id: string }>(
   // Initial fetch
   fetchCollection<T>(collectionName).then(data => {
     if (data.length === 0 && initialDataIfEmpty && initialDataIfEmpty.length > 0) {
-      // Seed if empty
-      Promise.all(initialDataIfEmpty.map(item => saveToFirestore(collectionName, item)))
-        .then(() => fetchCollection<T>(collectionName))
-        .then(seededData => onData(seededData));
+      // Show initial data immediately so UI isn't empty while seeding
+      onData(initialDataIfEmpty);
+      // Seed if empty using bulk upsert
+      saveBulkToFirestore(collectionName, initialDataIfEmpty)
+        .catch(err => console.error(`Seeding failed for ${collectionName}:`, err));
     } else {
       onData(data);
     }

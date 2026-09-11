@@ -27,6 +27,7 @@ export interface Donation {
   ApprovedAt?: string;
   RejectionReason?: string;
   DonorEmail?: string;
+  Source?: 'Audit' | 'Live';
 }
 
 export interface Beneficiary {
@@ -44,6 +45,7 @@ export interface Beneficiary {
   Remarks: string;
   VerifiedBy?: string;
   Status?: 'Allotted' | 'Pending' | 'Verified';
+  Source?: 'Audit' | 'Live';
 }
 
 export interface Member {
@@ -59,6 +61,7 @@ export interface Member {
   Remarks: string;
   NICImage?: string;
   NICImageBack?: string;
+  Source?: 'Audit' | 'Live';
 }
 
 export interface UserAccount {
@@ -68,6 +71,7 @@ export interface UserAccount {
   Rights: 'Admin' | 'Checker' | 'Operator' | 'Viewer';
   Access: string[]; // e.g. ['Home', 'Donations', 'Beneficiaries', 'Members', 'Users', 'Settings', 'Statement', 'SwdoMembers']
   Theme: 'Dark' | 'Light';
+  Source?: 'Audit' | 'Live';
 }
 
 export interface PortalSettings {

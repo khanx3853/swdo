@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { generateUUID } from '../../utils/uuid';
 import {
   X,
   HeartHandshake,
@@ -167,7 +168,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     const generatedTxn = txnId.trim() || `TXN-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const newDonation: Donation = {
-      id: `don-live-${Date.now()}`,
+      id: generateUUID(),
       Date: new Date().toISOString().split('T')[0],
       'Donor Name': donorName.trim() || 'Anonymous (فی سبیل اللہ)',
       'NIC No': '',
@@ -183,7 +184,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
       ProofImage: proofImage,
       Status: 'Pending',
       SubmittedAt: new Date().toISOString(),
-      isLiveAdded: true,
+      Source: 'Live',
     } as any;
 
     if (onSaveDonation) {

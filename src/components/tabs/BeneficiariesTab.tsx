@@ -25,6 +25,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import Papa from 'papaparse';
+import { generateUUID } from '../../utils/uuid';
 import { Beneficiary, PortalSettings } from '../../types';
 import { INITIAL_SETTINGS } from '../../data/initialData';
 import {
@@ -309,7 +310,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
     const parsedAmount = parseAmount(amount);
 
     const newBeneficiary: Beneficiary = {
-      id: editingId || `ben-live-${Date.now()}`,
+      id: editingId || generateUUID(),
       Date: date,
       'Beneficiary Name': name.trim(),
       'Father Name': fatherName.trim(),
@@ -323,7 +324,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
       Remarks: remarks.trim(),
       VerifiedBy: 'Verification Committee',
       Status: 'Allotted',
-      isLiveAdded: true,
+      Source: 'Live',
     } as any;
 
     onSaveBeneficiary(newBeneficiary);
@@ -530,7 +531,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
           }
 
           const newBeneficiary: Beneficiary = {
-            id: `ben-csv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            id: generateUUID(),
             Date: rawDate,
             'Beneficiary Name': benName,
             'Father Name': (row['Father Name'] || row.Father || '').toString().trim(),
@@ -544,6 +545,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
             Remarks: (row.Remarks || 'Bulk CSV Import').toString().trim(),
             VerifiedBy: 'Verification Committee',
             Status: 'Allotted',
+            Source: 'Live',
           };
 
           onSaveBeneficiary(newBeneficiary);

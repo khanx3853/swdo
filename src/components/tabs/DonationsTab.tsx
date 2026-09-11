@@ -32,6 +32,7 @@ import {
   Mail,
   Landmark,
 } from 'lucide-react';
+import { generateUUID } from '../../utils/uuid';
 import { Donation } from '../../types';
 import { formatPKR, formatNIC, formatContact } from '../../utils/formatters';
 import { compressImageFile } from '../../utils/imageUtils';
@@ -241,7 +242,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     }
 
     const newDonation: Donation = {
-      id: editingId || `don-live-${Date.now()}`,
+      id: editingId || generateUUID(),
       Date: date,
       'Donor Name': donorName.trim(),
       'NIC No': nicNo.trim(),
@@ -255,9 +256,9 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Remarks: remarks.trim() || 'General Welfare Fund',
       EnteredBy: currentUsername || 'admin',
       Status: status,
+      Source: 'Live',
       ...(proofImage ? { ProofImage: proofImage } : {}),
       ...(status === 'Approved' ? { ApprovedBy: currentUsername || 'admin', ApprovedAt: new Date().toISOString() } : {}),
-      isLiveAdded: true,
     } as any;
 
     onSaveDonation(newDonation);
@@ -324,7 +325,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
           }
 
           const newDonation: Donation = {
-            id: `don-csv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            id: generateUUID(),
             Date: rawDate,
             'Donor Name': donor,
             'NIC No': (row['NIC No'] || row.NIC || '').toString().trim(),
@@ -336,6 +337,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             Remarks: (row.Remarks || 'Bulk CSV Import').toString().trim(),
             EnteredBy: currentUsername || 'admin',
             Status: 'Approved',
+            Source: 'Live',
             ApprovedBy: currentUsername || 'admin',
             ApprovedAt: new Date().toISOString(),
           };

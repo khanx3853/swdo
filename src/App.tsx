@@ -84,71 +84,80 @@ export default function App() {
   const [settings, setSettings] = useState<PortalSettings>(INITIAL_SETTINGS);
   const [quotaExceeded, setQuotaExceeded] = useState(isQuotaExceeded());
 
-  // Firestore Data Initialization (single reads to save quota)
+  // Firestore Data Initialization & Real-time Subscriptions
   useEffect(() => {
     // If the config was just changed, we should try a fresh fetch
     resetQuotaFlag(); 
     setQuotaExceeded(false);
 
-    async function initData() {
-      if (isQuotaExceeded()) {
-        console.warn("App starting in offline mode due to previous quota exhaustion.");
-        return;
-      }
-      try {
-        const donationsData = await fetchCollection<Donation>('donations');
-        setDonations(donationsData.length > 0 ? donationsData : INITIAL_DONATIONS);
-        
-        const benData = await fetchCollection<Beneficiary>('beneficiaries');
-        setBeneficiaries(benData.length > 0 ? benData : INITIAL_BENEFICIARIES);
-        
-        const memData = await fetchCollection<Member>('members');
-        setMembers(memData.length > 0 ? memData : INITIAL_MEMBERS);
-        
-        const userData = await fetchCollection<UserAccount>('users');
-        setUsers(userData.length > 0 ? userData : INITIAL_USERS);
-        
-        const settingsData = await fetchDocument<PortalSettings>('settings', 'portalSettings');
-        if (settingsData) {
-          let needsUpdate = false;
-          const updated = { ...settingsData };
+    const unsubDonations = subscribeCollection<Donation>(
+      'donations',
+      (data) => setDonations(data),
+      INITIAL_DONATIONS
+    );
 
-          if (!settingsData.Address || settingsData.Address.includes("Batkot") || settingsData.Address.includes("Lelai") || !settingsData.Address.includes("Barbatkot")) {
+    const unsubBeneficiaries = subscribeCollection<Beneficiary>(
+      'beneficiaries',
+      (data) => setBeneficiaries(data),
+      INITIAL_BENEFICIARIES
+    );
+
+    const unsubMembers = subscribeCollection<Member>(
+      'members',
+      (data) => setMembers(data),
+      INITIAL_MEMBERS
+    );
+
+    const unsubUsers = subscribeCollection<UserAccount>(
+      'users',
+      (data) => setUsers(data),
+      INITIAL_USERS
+    );
+
+    const unsubSettings = subscribeDocument<PortalSettings>(
+      'settings',
+      'portalSettings',
+      (data) => {
+        if (data) {
+          let needsUpdate = false;
+          const updated = { ...data };
+
+          if (!data.Address || data.Address.includes("Batkot") || data.Address.includes("Lelai") || !data.Address.includes("Barbatkot")) {
             updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
             needsUpdate = true;
           }
 
-          if (settingsData.Chairperson === "Fazal Rahim" || !settingsData.Chairperson) {
+          if (data.Chairperson === "Fazal Rahim" || !data.Chairperson) {
             updated.Chairperson = "Ali Bahadur";
             needsUpdate = true;
           }
 
-          if (settingsData.Secretary === "Muhammad Zada" || !settingsData.Secretary) {
+          if (data.Secretary === "Muhammad Zada" || !data.Secretary) {
             updated.Secretary = "Muhammad Parvez";
             needsUpdate = true;
           }
 
-          if (settingsData['Easypaisa Title'] === "Shangla Welfare Org" || !settingsData['Easypaisa Title']) {
+          if (data['Easypaisa Title'] === "Shangla Welfare Org" || !data['Easypaisa Title']) {
             updated['Easypaisa Title'] = "ALI BAHADUR";
             needsUpdate = true;
           }
 
-          if (settingsData['Bank Title'] === "Askari Bank - SWDO Official" || !settingsData['Bank Title']) {
+          if (data['Bank Title'] === "Askari Bank - SWDO Official" || !data['Bank Title']) {
             updated['Bank Title'] = "MEEZAN BANK";
             needsUpdate = true;
           }
 
-          if (settingsData['Account Title'] === "Shangla Welfare & Development Org" || !settingsData['Account Title']) {
+          if (data['Account Title'] === "Shangla Welfare & Development Org" || !data['Account Title']) {
             updated['Account Title'] = "ALI BAHADUR";
             needsUpdate = true;
           }
 
-          if (settingsData['Bank Account No'] === "12345678901234" || !settingsData['Bank Account No']) {
+          if (data['Bank Account No'] === "12345678901234" || !data['Bank Account No']) {
             updated['Bank Account No'] = "00300110485989";
             needsUpdate = true;
           }
 
-          if (settingsData['Bank No'] === "12345678901234" || !settingsData['Bank No']) {
+          if (data['Bank No'] === "12345678901234" || !data['Bank No']) {
             updated['Bank No'] = "PK34MEZN0000300110485989";
             needsUpdate = true;
           }
@@ -157,16 +166,20 @@ export default function App() {
             setSettings(updated);
             saveDocToFirestore('settings', 'portalSettings', updated);
           } else {
-            setSettings(settingsData);
+            setSettings(data);
           }
-        } else {
-          setSettings(INITIAL_SETTINGS);
         }
-      } catch (err) {
-        console.error("Error initializing data:", err);
-      }
-    }
-    initData();
+      },
+      INITIAL_SETTINGS
+    );
+
+    return () => {
+      unsubDonations();
+      unsubBeneficiaries();
+      unsubMembers();
+      unsubUsers();
+      unsubSettings();
+    };
   }, []);
 
 
@@ -303,6 +316,18 @@ export default function App() {
   const handleSaveDonation = async (donation: Donation) => {
     console.log('Saving donation:', donation);
     playSuccessChime();
+
+    // Optimistic update
+    setDonations(prev => {
+      const index = prev.findIndex(d => d.id === donation.id);
+      if (index >= 0) {
+        const newDonations = [...prev];
+        newDonations[index] = donation;
+        return newDonations;
+      }
+      return [donation, ...prev];
+    });
+
     try {
       await saveToFirestore('donations', donation);
       if (donation.Status === 'Pending') {
@@ -395,8 +420,19 @@ export default function App() {
     showToast('All donation and donator records have been removed.', 'info');
   };
 
-  const handleSaveBeneficiary = (beneficiary: Beneficiary) => {
-    saveToFirestore('beneficiaries', beneficiary);
+  const handleSaveBeneficiary = async (beneficiary: Beneficiary) => {
+    // Optimistic update
+    setBeneficiaries(prev => {
+      const index = prev.findIndex(b => b.id === beneficiary.id);
+      if (index >= 0) {
+        const newBeneficiaries = [...prev];
+        newBeneficiaries[index] = beneficiary;
+        return newBeneficiaries;
+      }
+      return [beneficiary, ...prev];
+    });
+
+    await saveToFirestore('beneficiaries', beneficiary);
     showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved!`);
   };
 
@@ -405,8 +441,19 @@ export default function App() {
     showToast('All beneficiary records have been removed.', 'info');
   };
 
-  const handleSaveMember = (member: Member) => {
-    saveToFirestore('members', member);
+  const handleSaveMember = async (member: Member) => {
+    // Optimistic update
+    setMembers(prev => {
+      const index = prev.findIndex(m => m.id === member.id);
+      if (index >= 0) {
+        const newMembers = [...prev];
+        newMembers[index] = member;
+        return newMembers;
+      }
+      return [member, ...prev];
+    });
+
+    await saveToFirestore('members', member);
     showToast(`Council member ${member.Name} updated!`);
   };
 
@@ -415,8 +462,19 @@ export default function App() {
     showToast('All members have been removed from the directory.', 'info');
   };
 
-  const handleSaveUser = (user: UserAccount) => {
-    saveToFirestore('users', user);
+  const handleSaveUser = async (user: UserAccount) => {
+    // Optimistic update
+    setUsers(prev => {
+      const index = prev.findIndex(u => u.id === user.id);
+      if (index >= 0) {
+        const newUsers = [...prev];
+        newUsers[index] = user;
+        return newUsers;
+      }
+      return [user, ...prev];
+    });
+
+    await saveToFirestore('users', user);
     showToast(`User account ${user.username} configured!`);
   };
 

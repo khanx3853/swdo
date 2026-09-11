@@ -70,16 +70,13 @@ export function getRealTimeFinancialMetrics(
   const newlyApprovedDonations = donations.filter(
     (d) =>
       d.Status === 'Approved' &&
-      (d.id.startsWith('don-live-') ||
-        d.id.startsWith('live-') ||
-        d.id.startsWith('online-') ||
+      (d.Source === 'Live' ||
         (d as any).isLiveAdded === true)
   );
 
   const newBeneficiaries = beneficiaries.filter(
     (b) =>
-      b.id.startsWith('ben-live-') ||
-      b.id.startsWith('live-') ||
+      b.Source === 'Live' ||
       (b as any).isLiveAdded === true
   );
 
