@@ -5,6 +5,7 @@ import {
   deleteDoc,
   onSnapshot,
   getDocs,
+  getDoc,
   writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -87,8 +88,7 @@ export function subscribeCollection<T extends { id: string }>(
             amount === 5569866 ||
             amount === 4309798
           ) {
-            batch.delete(docSnap.ref);
-            batchNeedsCommit = true;
+            console.warn('Erroneous record detected, not deleting:', data);
             return;
           }
         }
@@ -189,6 +189,29 @@ export function subscribeDocument<T>(
 }
 
 // Helper methods to write data to Firestore
+export async function fetchCollection<T extends { id: string }>(
+  collectionName: string
+): Promise<T[]> {
+  const colRef = collection(db, collectionName);
+  const snapshot = await getDocs(colRef);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  }) as T);
+}
+
+export async function fetchDocument<T>(
+  collectionName: string,
+  docId: string
+): Promise<T | null> {
+  const docRef = doc(db, collectionName, docId);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data() as T;
+  }
+  return null;
+}
+
 export async function saveToFirestore<T extends { id: string }>(
   collectionName: string,
   item: T

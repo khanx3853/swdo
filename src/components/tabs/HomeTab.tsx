@@ -49,7 +49,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { compressImageFile } from '../../utils/imageUtils';
 import { Donation, Beneficiary, TabType, PortalSettings } from '../../types';
@@ -124,44 +124,24 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   const [slideshowPlaying, setSlideshowPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
 
-  // Subscribe to real-time gallery changes in Firestore
+  // Fetch gallery data from Firestore (single read to save quota)
   useEffect(() => {
-    const qPics = query(collection(db, 'gallery_pictures'));
-    const unsubPics = onSnapshot(qPics, (snapshot) => {
-      const list: any[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      if (list.length === 0) {
+    async function fetchGallery() {
+      try {
+        const picSnapshot = await getDocs(query(collection(db, 'gallery_pictures')));
+        const picList = picSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
+
+        const vidSnapshot = await getDocs(query(collection(db, 'gallery_videos')));
+        const vidList = vidSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
+      } catch (err) {
+        console.error("Error fetching gallery data:", err);
         setPictures(DEFAULT_PICTURES);
-      } else {
-        setPictures(list);
-      }
-    }, (err) => {
-      console.error("Error subscribing to gallery_pictures:", err);
-      setPictures(DEFAULT_PICTURES);
-    });
-
-    const qVids = query(collection(db, 'gallery_videos'));
-    const unsubVids = onSnapshot(qVids, (snapshot) => {
-      const list: any[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      if (list.length === 0) {
         setVideos(DEFAULT_VIDEOS);
-      } else {
-        setVideos(list);
       }
-    }, (err) => {
-      console.error("Error subscribing to gallery_videos:", err);
-      setVideos(DEFAULT_VIDEOS);
-    });
-
-    return () => {
-      unsubPics();
-      unsubVids();
-    };
+    }
+    fetchGallery();
   }, []);
 
   // Slideshow interval

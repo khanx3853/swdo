@@ -43,6 +43,8 @@ import { playSuccessChime } from './utils/audio';
 import {
   subscribeCollection,
   subscribeDocument,
+  fetchCollection,
+  fetchDocument,
   saveToFirestore,
   deleteFromFirestore,
   saveDocToFirestore,
