@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { patchSource } from '../utils/sourcePatch';
 import {
   Donation,
   Beneficiary,
@@ -35,8 +36,8 @@ export function sanitizeForDb<T>(data: T): T {
   try {
     const sanitized = JSON.parse(JSON.stringify(data));
     
-    // List of fields to exclude from database persistence (client-side only)
-    const excludeFields = ['isLiveAdded'];
+    // List of fields to exclude from database persistence (client-side only or schema-missing)
+    const excludeFields = ['isLiveAdded', 'Source'];
     
     if (typeof sanitized === 'object' && sanitized !== null) {
       excludeFields.forEach(field => {
@@ -151,7 +152,7 @@ export async function fetchCollection<T extends { id: string }>(
       .select('*');
     
     if (error) throw error;
-    return (data || []) as T[];
+    return (data || []).map(item => patchSource(item)) as T[];
   } catch (err) {
     handleDbError(err, `fetching collection ${collectionName}`);
     return [];
@@ -170,7 +171,7 @@ export async function fetchDocument<T>(
       .maybeSingle();
     
     if (error) throw error;
-    return data as T;
+    return data ? patchSource(data) : null as T | null;
   } catch (err) {
     handleDbError(err, `fetching document ${collectionName}/${docId}`);
     return null;
