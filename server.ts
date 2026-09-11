@@ -1,51 +1,13 @@
 import express from "express";
 import path from "path";
-import { initializeApp, cert, applicationDefault, getApps } from "firebase-admin/app";
-import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { createClient } from "@supabase/supabase-js";
 
 const PORT = Number(process.env.PORT) || 3000;
-let dbInstance: Firestore | null = null;
 
-function getDb(): Firestore {
-  if (dbInstance) return dbInstance;
-
-  let projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "gen-lang-client-0625537224";
-  const databaseId = "ai-studio-swdoportal-eaf4db89-dc05-4466-b5e1-0f0575777bc2";
-  let credential;
-  const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || process.env.FIREBASE_SERVICE_ACCOUNT;
-
-  if (serviceAccountVar) {
-    try {
-      const trimmed = serviceAccountVar.trim();
-      if (trimmed.startsWith("{")) {
-        const sa = JSON.parse(trimmed);
-        credential = cert(sa);
-        if (sa.project_id) {
-          projectId = sa.project_id;
-        }
-      } else {
-        credential = cert(trimmed);
-      }
-    } catch (e) {
-      console.warn("Falling back to applicationDefault credentials:", e);
-      credential = applicationDefault();
-    }
-  } else {
-    credential = applicationDefault();
-  }
-
-  process.env.GOOGLE_CLOUD_PROJECT = projectId;
-  process.env.GCLOUD_PROJECT = projectId;
-
-  const existingApps = getApps();
-  const adminApp = existingApps.length > 0 ? existingApps[0] : initializeApp({
-    credential,
-    projectId,
-  });
-
-  dbInstance = getFirestore(adminApp, databaseId);
-  return dbInstance;
-}
+// Initialize Supabase Client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://wnhealllbmvxhxpvgvjm.supabase.co';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduaGVhbGxsYm12eGh4cHZndmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMDM5ODcsImV4cCI6MjEwNDY3OTk4N30.U4YA-7_7VIScGiLm8wkeCmimqJyjBoXYE3GAKIhzDeg';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function startServer() {
   const app = express();
@@ -63,23 +25,21 @@ async function startServer() {
     console.log(`Received approval request for: ${donationId} by ${adminUsername}`);
     
     try {
-      const db = getDb();
-      const donationRef = db.collection("donations").doc(donationId);
-      const doc = await donationRef.get();
+      const { data, error } = await supabase
+        .from("donations")
+        .update({
+          Status: "Approved",
+          ApprovedBy: adminUsername || "Admin",
+          ApprovedAt: new Date().toISOString(),
+        })
+        .eq("id", donationId);
       
-      if (!doc.exists) {
-        console.error(`Donation ${donationId} not found in Firestore collection`);
-        return res.status(404).json({ error: "Donation not found in Firestore" });
+      if (error) {
+        console.error(`Supabase update error:`, error);
+        return res.status(500).json({ error: error.message });
       }
 
-      // Update Firestore
-      await donationRef.update({
-        Status: "Approved",
-        ApprovedBy: adminUsername || "Admin",
-        ApprovedAt: new Date().toISOString(),
-      });
-      console.log("Firestore update successful");
-
+      console.log("Supabase update successful");
       res.json({ success: true });
     } catch (error) {
       console.error("Backend approval error:", error);
@@ -511,7 +471,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*all", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

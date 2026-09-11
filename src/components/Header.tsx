@@ -10,6 +10,8 @@ interface HeaderProps {
   onToggleTheme: () => void;
   onLogout: () => void;
   onRequestLogin?: () => void;
+  isQuotaExceeded?: boolean;
+  onResetQuota?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onLogout,
   onRequestLogin,
+  isQuotaExceeded,
+  onResetQuota,
 }) => {
   return (
     <header className="sticky top-0 z-40 dark:bg-slate-950/90 bg-white/90 backdrop-blur-md dark:border-purple-500/30 border-purple-200 border-b px-3 sm:px-4 py-3 flex items-center justify-between shadow-lg">
@@ -40,11 +44,26 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2.5">
+        {/* Quota Exceeded Warning / Retry */}
+        {isQuotaExceeded && (
+          <button
+            type="button"
+            onClick={onResetQuota}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] font-bold text-amber-500 hover:bg-amber-500/20 transition-all cursor-pointer"
+            title="Database limit reached. Click to try reconnecting."
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Limited Mode (Retry)</span>
+          </button>
+        )}
+
         {/* Sync Indicator */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-500">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-[11px]">System Live</span>
-        </div>
+        {!isQuotaExceeded && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-500">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[11px]">System Live</span>
+          </div>
+        )}
 
         {/* Dedicated Prominent Theme Toggle */}
         <button

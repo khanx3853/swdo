@@ -49,8 +49,12 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import {
+  addDocToFirestore,
+  deleteFromFirestore,
+  fetchCollection,
+  isQuotaExceeded
+} from '../../lib/firestoreSync';
 import { compressImageFile } from '../../utils/imageUtils';
 import { Donation, Beneficiary, TabType, PortalSettings } from '../../types';
 import { formatPKR, parseAmount } from '../../utils/formatters';
@@ -126,13 +130,16 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   // Fetch gallery data from Firestore (single read to save quota)
   const fetchGallery = async () => {
+    if (isQuotaExceeded()) {
+      setPictures(DEFAULT_PICTURES);
+      setVideos(DEFAULT_VIDEOS);
+      return;
+    }
     try {
-      const picSnapshot = await getDocs(query(collection(db, 'gallery_pictures')));
-      const picList = picSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      const picList = await fetchCollection<any>('gallery_pictures');
       setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
 
-      const vidSnapshot = await getDocs(query(collection(db, 'gallery_videos')));
-      const vidList = vidSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      const vidList = await fetchCollection<any>('gallery_videos');
       setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
     } catch (err) {
       console.error("Error fetching gallery data:", err);
@@ -161,11 +168,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       setIsUploadingPic(true);
       const base64 = await compressImageFile(file, 1000, 0.8);
       const captionInput = prompt("Enter a caption for this picture (optional):") || "";
-      await addDoc(collection(db, 'gallery_pictures'), {
+      await addDocToFirestore('gallery_pictures', {
         url: base64,
         caption: captionInput,
         createdAt: new Date().toISOString()
       });
+      fetchGallery(); // Refresh after upload
     } catch (err) {
       console.error("Error uploading picture:", err);
       alert("Failed to upload image. Please try a smaller file.");
@@ -190,11 +198,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         try {
           const base64 = event.target?.result as string;
           const captionInput = prompt("Enter a title for this video (optional):") || "";
-          await addDoc(collection(db, 'gallery_videos'), {
+          await addDocToFirestore('gallery_videos', {
             url: base64,
             caption: captionInput,
             createdAt: new Date().toISOString()
           });
+          fetchGallery(); // Refresh after upload
         } catch (innerErr) {
           console.error("Failed to save video doc:", innerErr);
           alert("Error saving video document to the cloud. The video might be too large.");
@@ -222,7 +231,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     }
     if (!confirm("Are you sure you want to delete this picture from the slideshow?")) return;
     try {
-      await deleteDoc(doc(db, 'gallery_pictures', id));
+      await deleteFromFirestore('gallery_pictures', id);
+      fetchGallery(); // Refresh after delete
       setActivePicIndex(0);
     } catch (err) {
       console.error("Error deleting picture:", err);
@@ -237,7 +247,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     }
     if (!confirm("Are you sure you want to delete this video from the playlist?")) return;
     try {
-      await deleteDoc(doc(db, 'gallery_videos', id));
+      await deleteFromFirestore('gallery_videos', id);
+      fetchGallery(); // Refresh after delete
       setActiveVidIndex(0);
     } catch (err) {
       console.error("Error deleting video:", err);

@@ -48,6 +48,8 @@ import {
   saveToFirestore,
   deleteFromFirestore,
   saveDocToFirestore,
+  isQuotaExceeded,
+  resetQuotaFlag,
 } from './lib/firestoreSync';
 import { MessageCircle, ExternalLink, Mail, Facebook, Heart, ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -80,10 +82,19 @@ export default function App() {
   const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
   const [settings, setSettings] = useState<PortalSettings>(INITIAL_SETTINGS);
+  const [quotaExceeded, setQuotaExceeded] = useState(isQuotaExceeded());
 
   // Firestore Data Initialization (single reads to save quota)
   useEffect(() => {
+    // If the config was just changed, we should try a fresh fetch
+    resetQuotaFlag(); 
+    setQuotaExceeded(false);
+
     async function initData() {
+      if (isQuotaExceeded()) {
+        console.warn("App starting in offline mode due to previous quota exhaustion.");
+        return;
+      }
       try {
         const donationsData = await fetchCollection<Donation>('donations');
         setDonations(donationsData.length > 0 ? donationsData : INITIAL_DONATIONS);
@@ -499,6 +510,12 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleResetQuota = () => {
+    resetQuotaFlag();
+    setQuotaExceeded(false);
+    window.location.reload(); // Reload to retry everything
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans transition-colors duration-200">
       {/* Header (Pinned) */}
@@ -509,6 +526,8 @@ export default function App() {
         onToggleTheme={handleToggleTheme}
         onLogout={handleLogout}
         onRequestLogin={() => setAdminLoginModalOpen(true)}
+        isQuotaExceeded={quotaExceeded}
+        onResetQuota={handleResetQuota}
       />
 
       {/* Main App Container */}
