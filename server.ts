@@ -29,7 +29,7 @@ async function startServer() {
         .from("donations")
         .update({
           Status: "Approved",
-          ApprovedBy: adminUsername || "Admin",
+          ApprovedBy: (adminUsername && adminUsername.toLowerCase() !== 'admin') ? adminUsername : "Ali",
           ApprovedAt: new Date().toISOString(),
         })
         .eq("id", donationId);

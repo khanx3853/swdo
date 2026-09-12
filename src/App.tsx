@@ -383,7 +383,11 @@ export default function App() {
     const item = donations.find((d) => d.id === id);
     if (item) {
       try {
-        const rawApprover = customApprover || currentUser?.username || 'Admin';
+        // Default to 'Ali' if no specific username is provided
+        const rawApprover = customApprover || 
+                           (currentUser?.username && currentUser.username.toLowerCase() !== 'admin' 
+                             ? currentUser.username 
+                             : 'Ali');
         const formattedApprover = rawApprover.charAt(0).toUpperCase() + rawApprover.slice(1);
         const updated: Donation = {
           ...item,

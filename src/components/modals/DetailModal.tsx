@@ -56,8 +56,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showProofLightbox, setShowProofLightbox] = useState(false);
-  const [isEditingApprover, setIsEditingApprover] = useState(false);
-  const [approverInput, setApproverInput] = useState('');
 
   if (!item || !type) return null;
 
@@ -248,9 +246,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const currentName = currentUser?.username
+                          const currentName = currentUser?.username && !['admin', 'guest donator'].includes(currentUser.username.toLowerCase())
                             ? (currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1))
-                            : 'Admin';
+                            : 'Ali';
                           onApproveDonation(donation.id, currentName);
                           onClose();
                         }}
@@ -322,101 +320,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 <span className="text-slate-400">Remarks:</span>
                 <span className="text-right">{donation.Remarks || '-'}</span>
               </div>
-              {donation.ApprovedBy ? (
+              {donation.ApprovedBy && (
                 <div className="flex justify-between items-center py-1.5 border-b dark:border-purple-900/20 border-purple-50">
                   <span className="text-slate-400 text-xs">Approved By:</span>
-                  {isEditingApprover ? (
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        type="text"
-                        value={approverInput}
-                        onChange={(e) => setApproverInput(e.target.value)}
-                        placeholder="Admin name"
-                        className="px-2 py-0.5 text-xs rounded bg-slate-800 border border-purple-500/40 text-emerald-400 font-semibold focus:outline-none focus:border-emerald-500 w-28"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            if (approverInput.trim() && onUpdateDonationApprover) {
-                              onUpdateDonationApprover(donation.id, approverInput.trim());
-                              setIsEditingApprover(false);
-                            }
-                          } else if (e.key === 'Escape') {
-                            setIsEditingApprover(false);
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (approverInput.trim() && onUpdateDonationApprover) {
-                            onUpdateDonationApprover(donation.id, approverInput.trim());
-                            setIsEditingApprover(false);
-                          }
-                        }}
-                        className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold cursor-pointer"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingApprover(false)}
-                        className="px-1.5 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 text-[11px] cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-emerald-400 text-xs sm:text-sm">
-                        {donation.ApprovedBy.charAt(0).toUpperCase() + donation.ApprovedBy.slice(1)}
-                      </span>
-                      {isAdmin && onUpdateDonationApprover && (
-                        <div className="flex items-center gap-1">
-                          {currentUser?.username && donation.ApprovedBy.toLowerCase() !== currentUser.username.toLowerCase() && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const myName = currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1);
-                                onUpdateDonationApprover(donation.id, myName);
-                              }}
-                              className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors font-medium cursor-pointer"
-                              title={`Click to set approver as ${currentUser.username}`}
-                            >
-                              Set as {currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1)}
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setApproverInput(donation.ApprovedBy || '');
-                              setIsEditingApprover(true);
-                            }}
-                            className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60 transition-colors cursor-pointer"
-                            title="Edit approver name"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                donation.Status === 'Approved' && isAdmin && onUpdateDonationApprover && (
-                  <div className="flex justify-between items-center py-1.5 border-b dark:border-purple-900/20 border-purple-50">
-                    <span className="text-slate-400 text-xs">Approved By:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const myName = currentUser?.username ? (currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1)) : 'Admin';
-                        onUpdateDonationApprover(donation.id, myName);
-                      }}
-                      className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-pointer"
-                    >
-                      Assign Approver ({currentUser?.username ? (currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1)) : 'Admin'})
-                    </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-emerald-400 text-xs sm:text-sm">
+                      {donation.ApprovedBy.charAt(0).toUpperCase() + donation.ApprovedBy.slice(1)}
+                    </span>
                   </div>
-                )
+                </div>
               )}
               <div className="flex justify-between pt-2 text-[11px] text-slate-500">
                 <span>Submitted / Entered By:</span>

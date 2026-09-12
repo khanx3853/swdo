@@ -138,6 +138,11 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [txId, setTxId] = useState(`TXN-${Math.floor(100000 + Math.random() * 900000)}`);
   const [remarks, setRemarks] = useState('Sadaqah & Welfare');
   const [status, setStatus] = useState<'Approved' | 'Pending'>('Pending');
+  const [approvedBy, setApprovedBy] = useState(
+    currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase()) 
+      ? currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1) 
+      : 'Ali'
+  );
   const [proofImage, setProofImage] = useState<string>('');
   const [isProcessingProof, setIsProcessingProof] = useState(false);
   const formFileInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +161,11 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       setTxId(editingItem['Transaction ID'] || '');
       setRemarks(editingItem.Remarks || '');
       setStatus(editingItem.Status as any || 'Approved');
+      setApprovedBy(editingItem.ApprovedBy || (
+        currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase()) 
+          ? currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1) 
+          : 'Ali'
+      ));
       setProofImage(editingItem.ProofImage || '');
       setEditingId(editingItem.id);
       setShowForm(true);
@@ -174,6 +184,11 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     setTxId(`TXN-${Math.floor(100000 + Math.random() * 900000)}`);
     setRemarks('');
     setStatus('Pending');
+    setApprovedBy(
+      currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase()) 
+        ? currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1) 
+        : 'Ali'
+    );
     setProofImage('');
     setEditingId(null);
     if (onClearEdit) onClearEdit();
@@ -259,9 +274,9 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Source: 'Live',
       ...(proofImage ? { ProofImage: proofImage } : {}),
       ...(status === 'Approved' ? {
-        ApprovedBy: currentUsername && currentUsername !== 'Guest Donator'
+        ApprovedBy: approvedBy || (currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase())
           ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
-          : 'Admin',
+          : 'Ali'),
         ApprovedAt: new Date().toISOString(),
       } : {}),
     } as any;
@@ -1421,17 +1436,10 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                               {isPending && onApproveDonation && (
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    const approver = currentUsername && currentUsername !== 'Guest Donator'
-                                      ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
-                                      : 'Admin';
-                                    onApproveDonation(d.id, approver);
-                                  }}
-                                  title={`Approve as ${currentUsername && currentUsername !== 'Guest Donator' ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1)) : 'Admin'} & Add to Ledger`}
-                                  className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
+                                  onClick={() => onApproveDonation(d.id)}
+                                  className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-all cursor-pointer"
                                 >
-                                  <Check className="w-3 h-3" />
-                                  <span>Approve</span>
+                                  Approve
                                 </button>
                               )}
 
