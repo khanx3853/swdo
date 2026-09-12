@@ -1277,15 +1277,15 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                   <th className="py-3 px-3 font-semibold">Donor Name</th>
                   <th className="py-3 px-3 font-semibold text-center">Status</th>
                   {isAdmin && <th className="py-3 px-3 font-semibold text-center">Proof</th>}
-                  <th className="py-3 px-3 font-semibold hidden md:table-cell">Contact</th>
+                  {isAdmin && <th className="py-3 px-3 font-semibold hidden md:table-cell">Contact</th>}
                   <th className="py-3 px-3 font-semibold text-right">Amount</th>
-                  <th className="py-3 px-3 font-semibold text-right">Actions</th>
+                  {isAdmin && <th className="py-3 px-3 font-semibold text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-purple-900/30 divide-purple-100">
                 {filteredDonations.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 8 : 6} className="text-center py-8 text-slate-400">
+                    <td colSpan={isAdmin ? 8 : 4} className="text-center py-8 text-slate-400">
                       No donations found for selected filter
                     </td>
                   </tr>
@@ -1298,14 +1298,20 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                     return (
                       <tr
                         key={d.id}
-                        className={`transition-colors cursor-pointer ${
+                        className={`transition-colors ${
+                          isAdmin ? 'cursor-pointer hover:bg-purple-500/10' : ''
+                        } ${
                           isPending
                             ? 'bg-amber-500/5 hover:bg-amber-500/15'
                             : isRejected
                             ? 'bg-red-500/5 hover:bg-red-500/15'
-                            : 'hover:bg-purple-500/10'
+                            : ''
                         } ${selectedIds.has(d.id) ? 'bg-emerald-500/10' : ''}`}
-                        onClick={() => onSelectDonation(d)}
+                        onClick={() => {
+                          if (isAdmin) {
+                            onSelectDonation(d);
+                          }
+                        }}
                       >
                         {isAdmin && (
                           <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
@@ -1377,73 +1383,75 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                           </td>
                         )}
 
-                        <td className="py-3 px-3 font-mono text-slate-400 hidden md:table-cell">
-                          {d['Contact No'] || '-'}
-                        </td>
+                        {/* Contact No - Admin Only */}
+                        {isAdmin && (
+                          <td className="py-3 px-3 font-mono text-slate-400 hidden md:table-cell">
+                            {d['Contact No'] || '-'}
+                          </td>
+                        )}
 
                         <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {formatPKR(d.Amount)}
                         </td>
 
-                        <td
-                          className="py-3 px-3 text-right whitespace-nowrap"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center justify-end gap-1.5">
-                            {isAdmin && isPending && onApproveDonation && (
-                              <button
-                                type="button"
-                                onClick={() => onApproveDonation(d.id)}
-                                title="Approve & Add to Ledger"
-                                className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
-                              >
-                                <Check className="w-3 h-3" />
-                                <span>Approve</span>
-                              </button>
-                            )}
-
-                            {isAdmin && (
-                              <>
+                        {/* Actions - Admin Only */}
+                        {isAdmin && (
+                          <td
+                            className="py-3 px-3 text-right whitespace-nowrap"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-end gap-1.5">
+                              {isPending && onApproveDonation && (
                                 <button
                                   type="button"
-                                  onClick={() => onExportReceipt(d)}
-                                  title="Generate PDF Receipt"
-                                  className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                                  onClick={() => onApproveDonation(d.id)}
+                                  title="Approve & Add to Ledger"
+                                  className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
                                 >
-                                  <FileText className="w-3.5 h-3.5" />
+                                  <Check className="w-3 h-3" />
+                                  <span>Approve</span>
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleDuplicateDonation(e, d)}
-                                  title="Add Another Donation for this Person"
-                                  className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 transition-colors cursor-pointer"
-                                >
-                                  <CopyPlus className="w-3.5 h-3.5" />
-                                </button>
-                              </>
-                            )}
+                              )}
 
-                            <button
-                              type="button"
-                              onClick={() => onSelectDonation(d)}
-                              title="View Details"
-                              className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-
-                            {isAdmin && onDeleteDonation && (
                               <button
                                 type="button"
-                                onClick={() => onDeleteDonation(d.id)}
-                                title="Delete Record"
-                                className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
+                                onClick={() => onExportReceipt(d)}
+                                title="Generate PDF Receipt"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors cursor-pointer"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <FileText className="w-3.5 h-3.5" />
                               </button>
-                            )}
-                          </div>
-                        </td>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDuplicateDonation(e, d)}
+                                title="Add Another Donation for this Person"
+                                className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 transition-colors cursor-pointer"
+                              >
+                                <CopyPlus className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => onSelectDonation(d)}
+                                title="View Details"
+                                className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+
+                              {onDeleteDonation && (
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteDonation(d.id)}
+                                  title="Delete Record"
+                                  className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
@@ -1455,8 +1463,8 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                       <span className="text-emerald-700 dark:text-emerald-300 text-sm font-bold uppercase tracking-wider">Total</span>
                     </td>
                     <td className="py-4 px-3"></td>
-                    <td className="py-4 px-3"></td>
-                    <td className="py-4 px-3 hidden md:table-cell"></td>
+                    {isAdmin && <td className="py-4 px-3"></td>}
+                    {isAdmin && <td className="py-4 px-3 hidden md:table-cell"></td>}
                     <td className="py-4 px-3 text-right">
                       <span className="text-emerald-600 dark:text-emerald-400 font-mono text-base whitespace-nowrap">
                         {formatPKR(
@@ -1464,7 +1472,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                         )}
                       </span>
                     </td>
-                    <td className="py-4 px-3"></td>
+                    {isAdmin && <td className="py-4 px-3"></td>}
                   </tr>
                 )}
               </tbody>

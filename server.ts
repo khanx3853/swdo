@@ -354,7 +354,7 @@ async function startServer() {
                   Your contribution is now published in our public ledger and is actively providing medical relief, education support, and food aid to underprivileged families in District Shangla.
                 </p>
 
-                <a href="${process.env.APP_URL || 'https://ais-dev-oeeigrz5owddw4vhrihztj-539654624355.asia-southeast1.run.app'}" class="button">View Live Public Ledger</a>
+                <a href="https://www.shanglawelfare.org" class="button">View Live Public Ledger</a>
               </div>
               <div class="footer">
                 May Allah (SWT) reward you abundantly for your generous contribution!<br>

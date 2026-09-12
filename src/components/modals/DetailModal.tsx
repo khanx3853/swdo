@@ -267,18 +267,22 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 </span>
                 <span className="font-bold">{donation['Donor Name']}</span>
               </div>
-              <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <IdCard className="w-3.5 h-3.5 text-emerald-500" /> NIC No:
-                </span>
-                <span className="font-mono">{donation['NIC No'] || '-'}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-purple-500" /> Contact:
-                </span>
-                <span className="font-mono">{donation['Contact No'] || '-'}</span>
-              </div>
+              {isAdmin && (
+                <>
+                  <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">
+                    <span className="text-slate-400 flex items-center gap-1.5">
+                      <IdCard className="w-3.5 h-3.5 text-emerald-500" /> NIC No:
+                    </span>
+                    <span className="font-mono">{donation['NIC No'] || '-'}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">
+                    <span className="text-slate-400 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-purple-500" /> Contact:
+                    </span>
+                    <span className="font-mono">{donation['Contact No'] || '-'}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">
                 <span className="text-slate-400 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-amber-500" /> Address:
