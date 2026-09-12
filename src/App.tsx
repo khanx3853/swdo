@@ -34,7 +34,6 @@ import { DeleteModal } from './components/modals/DeleteModal';
 import { AdminLoginModal } from './components/modals/AdminLoginModal';
 import { DonateModal } from './components/modals/DonateModal';
 import { Toast, ToastMessage } from './components/Toast';
-import { ActivityNotification } from './components/ActivityNotification';
 import {
   generateDonationReceiptPDF,
   generateMonkeyFilePDF,
@@ -380,20 +379,30 @@ export default function App() {
     }
   };
 
-  const handleApproveDonation = async (id: string) => {
+  const handleApproveDonation = async (id: string, customApprover?: string) => {
     const item = donations.find((d) => d.id === id);
     if (item) {
       try {
+        const rawApprover = customApprover || currentUser?.username || 'Admin';
+        const formattedApprover = rawApprover.charAt(0).toUpperCase() + rawApprover.slice(1);
         const updated: Donation = {
           ...item,
           Status: 'Approved',
-          ApprovedBy: currentUser?.username || 'admin',
+          ApprovedBy: formattedApprover,
           ApprovedAt: new Date().toISOString(),
         };
         
         // Update local state optimistically
         setDonations(prev => prev.map(d => d.id === id ? updated : d));
         
+        // Update detail modal if currently viewing this donation
+        setSelectedDetail(prev => {
+          if (prev.item && (prev.item as Donation).id === id) {
+            return { ...prev, item: updated };
+          }
+          return prev;
+        });
+
         // Save to Firestore directly
         await saveToFirestore('donations', updated);
 
@@ -405,7 +414,7 @@ export default function App() {
         }).catch((e) => console.error('Failed to trigger approval email:', e));
         
         showToast(
-          `Approved donation of Rs. ${item.Amount} from ${item['Donor Name']}.`,
+          `Approved donation of Rs. ${item.Amount} from ${item['Donor Name']} (Approved by ${formattedApprover}).`,
           'success'
         );
       } catch (error) {
@@ -413,6 +422,33 @@ export default function App() {
         // Revert local state on failure
         setDonations(prev => prev.map(d => d.id === id ? item : d));
         showToast('Failed to approve donation.', 'error');
+      }
+    }
+  };
+
+  const handleUpdateDonationApprover = async (id: string, newApprover: string) => {
+    const item = donations.find((d) => d.id === id);
+    if (item) {
+      try {
+        const trimmed = newApprover.trim();
+        const formattedApprover = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        const updated: Donation = {
+          ...item,
+          ApprovedBy: formattedApprover,
+        };
+        
+        setDonations(prev => prev.map(d => d.id === id ? updated : d));
+        setSelectedDetail(prev => {
+          if (prev.item && (prev.item as Donation).id === id) {
+            return { ...prev, item: updated };
+          }
+          return prev;
+        });
+        await saveToFirestore('donations', updated);
+        showToast(`Approver updated to "${formattedApprover}"`, 'success');
+      } catch (error) {
+        console.error('Failed to update approver:', error);
+        showToast('Failed to update approver.', 'error');
       }
     }
   };
@@ -923,6 +959,8 @@ export default function App() {
           type={selectedDetail.type}
           settings={settings}
           isAdmin={isAdmin}
+          currentUser={currentUser}
+          onUpdateDonationApprover={handleUpdateDonationApprover}
           onRequestLogin={() => setAdminLoginModalOpen(true)}
           onClose={() => setSelectedDetail({ item: null, type: null })}
           onApproveDonation={handleApproveDonation}
@@ -981,7 +1019,6 @@ export default function App() {
       />
 
       {/* Floating Notifications */}
-      <ActivityNotification donations={donations} beneficiaries={beneficiaries} />
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );

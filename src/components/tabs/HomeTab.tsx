@@ -171,8 +171,8 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     if (!file) return;
     
     // Hard limit for base64 storage
-    if (file.size > 10 * 1024 * 1024) {
-      alert("Image is too large! Please select an image under 10MB.");
+    if (file.size > 500 * 1024 * 1024) {
+      alert("Image is too large! Please select an image under 500MB.");
       return;
     }
 
@@ -199,9 +199,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     if (!file) return;
     
     // Hard limit for base64 storage in Postgres row
-    const MAX_BASE64_SIZE = 12 * 1024 * 1024; // 12MB limit for safety
+    const MAX_BASE64_SIZE = 500 * 1024 * 1024; // 500MB limit requested by user
     if (file.size > MAX_BASE64_SIZE) {
-      alert("Video file is too large for database storage! Please select a video under 12MB. For larger videos, please contact the developer to enable Cloud Storage.");
+      alert("Video file is too large for database storage! Please select a video under 500MB.");
       return;
     }
 

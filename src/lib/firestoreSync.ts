@@ -93,11 +93,11 @@ export function sanitizeForDb<T>(data: T): T {
     }
     
     // Check for massive fields that might cause "Load failed" (Payload Too Large)
-    // We enforce a 10MB limit for base64 strings to prevent connection resets
-    const SIZE_LIMIT = 10 * 1024 * 1024;
+    // We enforce a 500MB limit for base64 strings as requested by user
+    const SIZE_LIMIT = 500 * 1024 * 1024;
     Object.entries(sanitized).forEach(([key, value]) => {
       if (typeof value === 'string' && value.length > SIZE_LIMIT) {
-        throw new Error(`Field "${key}" exceeds the maximum allowed size of 10MB. Please use a smaller file or a link instead.`);
+        throw new Error(`Field "${key}" exceeds the maximum allowed size of 500MB. Please use a smaller file or a link instead.`);
       }
     });
     

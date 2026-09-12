@@ -43,7 +43,7 @@ interface DonationsTabProps {
   onRequestLogin?: () => void;
   onOpenDonateModal?: () => void;
   onSaveDonation: (donation: Donation) => void;
-  onApproveDonation?: (id: string) => void;
+  onApproveDonation?: (id: string, approverName?: string) => void;
   onRejectDonation?: (id: string, reason?: string) => void;
   onPromptRejectDonation?: (donation: Donation) => void;
   onSelectDonation: (donation: Donation) => void;
@@ -258,7 +258,12 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Status: status,
       Source: 'Live',
       ...(proofImage ? { ProofImage: proofImage } : {}),
-      ...(status === 'Approved' ? { ApprovedBy: currentUsername || 'admin', ApprovedAt: new Date().toISOString() } : {}),
+      ...(status === 'Approved' ? {
+        ApprovedBy: currentUsername && currentUsername !== 'Guest Donator'
+          ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
+          : 'Admin',
+        ApprovedAt: new Date().toISOString(),
+      } : {}),
     } as any;
 
     onSaveDonation(newDonation);
@@ -318,7 +323,9 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             EnteredBy: currentUsername || 'admin',
             Status: 'Approved',
             Source: 'Live',
-            ApprovedBy: currentUsername || 'admin',
+            ApprovedBy: currentUsername && currentUsername !== 'Guest Donator'
+              ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
+              : 'Admin',
             ApprovedAt: new Date().toISOString(),
           };
 
@@ -744,13 +751,16 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                     type="button"
                     onClick={() => {
                       if (onApproveDonation) {
-                        onApproveDonation(pending.id);
+                        const approver = currentUsername && currentUsername !== 'Guest Donator'
+                          ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
+                          : 'Admin';
+                        onApproveDonation(pending.id, approver);
                       }
                     }}
                     className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>Approve & Add to Ledger</span>
+                    <span>Approve{currentUsername && currentUsername !== 'Guest Donator' ? ` as ${currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1)}` : ''} & Add to Ledger</span>
                   </button>
 
                   {onPromptRejectDonation && (
@@ -1353,9 +1363,16 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                               <XCircle className="w-3 h-3" /> Rejected
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
-                              <CheckCircle2 className="w-3 h-3" /> Approved
-                            </span>
+                            <div className="flex flex-col items-center">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                                <CheckCircle2 className="w-3 h-3" /> Approved
+                              </span>
+                              {d.ApprovedBy && (
+                                <span className="text-[9px] text-emerald-400/90 font-medium mt-0.5" title={`Approved by ${d.ApprovedBy}`}>
+                                  by {d.ApprovedBy.charAt(0).toUpperCase() + d.ApprovedBy.slice(1)}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </td>
 
@@ -1404,8 +1421,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                               {isPending && onApproveDonation && (
                                 <button
                                   type="button"
-                                  onClick={() => onApproveDonation(d.id)}
-                                  title="Approve & Add to Ledger"
+                                  onClick={() => {
+                                    const approver = currentUsername && currentUsername !== 'Guest Donator'
+                                      ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
+                                      : 'Admin';
+                                    onApproveDonation(d.id, approver);
+                                  }}
+                                  title={`Approve as ${currentUsername && currentUsername !== 'Guest Donator' ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1)) : 'Admin'} & Add to Ledger`}
                                   className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
                                 >
                                   <Check className="w-3 h-3" />

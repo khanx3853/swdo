@@ -208,6 +208,7 @@ export async function exportDonationReceiptPDF(donation: Donation, settings: Por
     ['Profession:', donation.Profession || 'N/A'],
     ['Donation Amount:', formatPKR(donation.Amount)],
     ['Purpose / Remarks:', donation.Remarks || 'General Donation / Zakat'],
+    ...(donation.ApprovedBy ? [['Approved By:', donation.ApprovedBy.charAt(0).toUpperCase() + donation.ApprovedBy.slice(1)]] : []),
     ['Entered In System By:', donation.EnteredBy || 'Portal Operator'],
   ];
 

@@ -11,8 +11,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function startServer() {
   const app = express();
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  app.use(express.json({ limit: '500mb' }));
+  app.use(express.urlencoded({ limit: '500mb', extended: true }));
 
   // Health check route for Cloud Run and monitoring
   app.get("/api/health", (req, res) => {
@@ -348,6 +348,7 @@ async function startServer() {
                   <tr><td class="label">Donor Name</td><td class="value">${donation['Donor Name'] || 'Anonymous'}</td></tr>
                   <tr><td class="label">Cause / Purpose</td><td class="value">${donation.Remarks || 'General Relief Fund'}</td></tr>
                   <tr><td class="label">Date Verified</td><td class="value">${donation.Date || new Date().toISOString().split('T')[0]}</td></tr>
+                  ${donation.ApprovedBy ? `<tr><td class="label">Approved By</td><td class="value" style="color: #059669; font-weight: bold;">${donation.ApprovedBy}</td></tr>` : ''}
                 </table>
 
                 <p style="color: #475569; font-size: 13px; line-height: 1.6;">
