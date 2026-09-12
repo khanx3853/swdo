@@ -464,6 +464,12 @@ async function startServer() {
     }
   });
 
+  // Serve Google AdSense ads.txt
+  app.get("/ads.txt", (req, res) => {
+    res.type("text/plain");
+    res.send("google.com, pub-6372292848734846, DIRECT, f08c47fec0942fa0\n");
+  });
+
   // Vite middleware for development vs static files for production
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import("vite");
