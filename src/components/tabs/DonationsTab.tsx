@@ -43,6 +43,8 @@ import { generateUUID } from '../../utils/uuid';
 import { Donation, Beneficiary, PortalSettings } from '../../types';
 import { formatPKR, formatNIC, formatContact, exportBeneficiariesReportPDF, exportDonationsReportPDF, parseDateRange } from '../../utils/formatters';
 import { compressImageFile } from '../../utils/imageUtils';
+import { parsePhoneWithCountry } from '../../utils/countries';
+import { CountrySelect } from '../CountrySelect';
 
 const isMasajidBeneficiary = (b: Beneficiary) => {
   const name = (b['Beneficiary Name'] || '').toLowerCase();
@@ -294,6 +296,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [category, setCategory] = useState('Masajid Donations');
   const [donorName, setDonorName] = useState('');
   const [nicNo, setNicNo] = useState('');
+  const [countryCode, setCountryCode] = useState('+92');
   const [contactNo, setContactNo] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -316,7 +319,11 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       setDate(editingItem.Date);
       setDonorName(editingItem['Donor Name']);
       setNicNo(editingItem['NIC No'] || '');
-      setContactNo(editingItem['Contact No'] || '');
+      
+      const parsedContact = parsePhoneWithCountry(editingItem['Contact No'] || '');
+      setCountryCode(parsedContact.countryCode);
+      setContactNo(parsedContact.number);
+      
       setDonorEmail(editingItem.DonorEmail || '');
       setAddress(editingItem['Permanent Address'] || '');
       setProfession(editingItem.Profession || '');
@@ -424,7 +431,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Date: date,
       'Donor Name': donorName.trim(),
       'NIC No': nicNo.trim(),
-      'Contact No': contactNo.trim(),
+      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
       DonorEmail: donorEmail.trim(),
       'Permanent Address': address.trim() || 'District Shangla, KP',
       Profession: profession.trim() || 'Contributor',
@@ -1021,18 +1028,29 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             </div>
 
             {/* Contact No */}
-            <div className="field-box">
-              <input
-                type="text"
-                value={contactNo}
-                onChange={(e) => setContactNo(formatContact(e.target.value))}
-                maxLength={12}
-                className="field-input font-mono"
-                placeholder=" "
-                autoComplete="off"
-              />
-              <Phone className="field-icon text-purple-500 w-4 h-4" />
-              <label className="field-label">Contact No (03xx-xxxxxxx)</label>
+            <div className="flex gap-2 w-full">
+              <div className="field-box w-28 mb-0 flex-shrink-0">
+                <CountrySelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  className="field-input !pl-0 text-xs font-mono font-bold text-emerald-500"
+                  style={{ paddingTop: '1.25rem' }}
+                />
+                <label className="field-label !left-3" style={{ left: '0.75rem', pointerEvents: 'none' }}>Code</label>
+              </div>
+
+              <div className="field-box flex-1 mb-0">
+                <input
+                  type="text"
+                  value={contactNo}
+                  onChange={(e) => setContactNo(e.target.value.replace(/[^\d-]/g, '').slice(0, 15))}
+                  className="field-input font-mono"
+                  placeholder=" "
+                  autoComplete="off"
+                />
+                <Phone className="field-icon text-purple-500 w-4 h-4" />
+                <label className="field-label">Contact No</label>
+              </div>
             </div>
 
             {/* Donor Email */}

@@ -1,3 +1,4 @@
+import { CountrySelect } from '../CountrySelect';
 import React, { useState, useMemo } from 'react';
 import {
   IdCard,
@@ -88,6 +89,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
   const [designation, setDesignation] = useState('Executive Member');
   const [nicNo, setNicNo] = useState('');
   const [address, setAddress] = useState('');
+  const [countryCode, setCountryCode] = useState('+92');
   const [contactNo, setContactNo] = useState('');
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split('T')[0]);
   const [expiryDate, setExpiryDate] = useState(
@@ -210,7 +212,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
       Designation: designation,
       'N.I.C No': nicNo.trim(),
       Address: address.trim(),
-      'Contact No': contactNo.trim(),
+      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
       'Joining Date': joiningDate,
       'Expiry Date': expiryDate,
       Remarks: remarks.trim(),
@@ -519,17 +521,29 @@ export const MembersTab: React.FC<MembersTabProps> = ({
             </div>
 
             {/* Contact */}
-            <div className="field-box">
-              <input
-                type="text"
-                value={contactNo}
-                onChange={(e) => setContactNo(formatContact(e.target.value))}
-                maxLength={12}
-                className="field-input font-mono"
-                placeholder=" "
-              />
-              <Phone className="field-icon text-purple-500 w-4 h-4" />
-              <label className="field-label">Contact Phone No</label>
+            <div className="flex gap-2 w-full">
+              <div className="field-box w-28 mb-0 flex-shrink-0">
+                <CountrySelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  className="field-input !pl-0 text-xs font-mono font-bold text-emerald-500"
+                  style={{ paddingTop: '1.25rem' }}
+                />
+                <label className="field-label !left-3" style={{ left: '0.75rem', pointerEvents: 'none' }}>Code</label>
+              </div>
+
+              <div className="field-box flex-1 mb-0">
+                <input
+                  type="text"
+                  value={contactNo}
+                  onChange={(e) => setContactNo(e.target.value.replace(/[^\d-]/g, '').slice(0, 15))}
+                  className="field-input font-mono"
+                  placeholder=" "
+                  autoComplete="off"
+                />
+                <Phone className="field-icon text-purple-500 w-4 h-4" />
+                <label className="field-label">Contact Phone No</label>
+              </div>
             </div>
 
             {/* Permanent Address */}

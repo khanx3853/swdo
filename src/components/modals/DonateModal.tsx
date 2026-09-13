@@ -28,6 +28,7 @@ import { Donation, PortalSettings } from '../../types';
 import { formatPKR } from '../../utils/formatters';
 import { compressImageFile } from '../../utils/imageUtils';
 import { playSuccessChime } from '../../utils/audio';
+import { CountrySelect } from '../CountrySelect';
 
 interface DonateModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
   const [amount, setAmount] = useState<string>('');
   const [donorName, setDonorName] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
+  const [countryCode, setCountryCode] = useState('+92');
   const [contactNo, setContactNo] = useState('');
   const [purpose, setPurpose] = useState('Sadaqah');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -172,7 +174,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
       Date: new Date().toISOString().split('T')[0],
       'Donor Name': donorName.trim() || 'Anonymous (فی سبیل اللہ)',
       'NIC No': '',
-      'Contact No': contactNo.trim(),
+      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
       DonorEmail: donorEmail.trim(),
       'Permanent Address': 'District Shangla, KP',
       Profession: 'Contributor / Philanthropist',
@@ -640,13 +642,20 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                     <label className="text-[11px] font-semibold text-slate-400 block mb-1">
                       Contact / Mobile No
                     </label>
-                    <input
-                      type="tel"
-                      value={contactNo}
-                      onChange={(e) => setContactNo(e.target.value)}
-                      placeholder="e.g. 0347-1234567"
-                      className="w-full py-2 px-3 rounded-xl bg-slate-900/80 border border-purple-900/50 text-white text-xs font-mono focus:border-emerald-500 focus:outline-none"
-                    />
+                    <div className="flex gap-2">
+                      <CountrySelect
+                        value={countryCode}
+                        onChange={setCountryCode}
+                        className="w-[110px] bg-slate-900/80 border border-purple-900/50 rounded-xl focus-within:border-emerald-500"
+                      />
+                      <input
+                        type="tel"
+                        value={contactNo}
+                        onChange={(e) => setContactNo(e.target.value.replace(/[^\d-]/g, '').slice(0, 15))}
+                        placeholder="e.g. 347-1234567"
+                        className="flex-1 w-full py-2 px-3 rounded-xl bg-slate-900/80 border border-purple-900/50 text-white text-xs font-mono focus:border-emerald-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 

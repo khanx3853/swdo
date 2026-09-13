@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import Papa from 'papaparse';
 import { generateUUID } from '../../utils/uuid';
+import { parsePhoneWithCountry } from '../../utils/countries';
+import { CountrySelect } from '../CountrySelect';
 import { Beneficiary, PortalSettings } from '../../types';
 import { INITIAL_SETTINGS } from '../../data/initialData';
 import {
@@ -211,6 +213,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
   const [name, setName] = useState('');
   const [fatherName, setFatherName] = useState('');
   const [nicNo, setNicNo] = useState('');
+  const [countryCode, setCountryCode] = useState('+92');
   const [contactNo, setContactNo] = useState('');
   const [address, setAddress] = useState('');
   const [profession, setProfession] = useState('');
@@ -249,7 +252,9 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
       setName(editingItem['Beneficiary Name']);
       setFatherName(editingItem['Father Name'] || '');
       setNicNo(editingItem['NIC No'] || '');
-      setContactNo(editingItem['Contact No'] || '');
+      const parsedContact = parsePhoneWithCountry(editingItem['Contact No'] || '');
+      setCountryCode(parsedContact.countryCode);
+      setContactNo(parsedContact.number);
       setAddress(editingItem['Permanent Address'] || '');
       setProfession(editingItem.Profession || '');
       setPurpose(editingItem.Purpose || 'Medical Relief & Surgery Support');
@@ -317,7 +322,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
       'Beneficiary Name': name.trim(),
       'Father Name': fatherName.trim(),
       'NIC No': nicNo.trim(),
-      'Contact No': contactNo.trim(),
+      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
       'Permanent Address': address.trim(),
       Profession: profession.trim(),
       Purpose: purpose.trim(),
@@ -776,17 +781,29 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
             </div>
 
             {/* Contact */}
-            <div className="field-box">
-              <input
-                type="text"
-                value={contactNo}
-                onChange={(e) => setContactNo(formatContact(e.target.value))}
-                maxLength={12}
-                className="field-input font-mono"
-                placeholder=" "
-              />
-              <Phone className="field-icon text-purple-500 w-4 h-4" />
-              <label className="field-label">Contact Phone No</label>
+            <div className="flex gap-2 w-full">
+              <div className="field-box w-28 mb-0 flex-shrink-0">
+                <CountrySelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  className="field-input !pl-0 text-xs font-mono font-bold text-emerald-500"
+                  style={{ paddingTop: '1.25rem' }}
+                />
+                <label className="field-label !left-3" style={{ left: '0.75rem', pointerEvents: 'none' }}>Code</label>
+              </div>
+
+              <div className="field-box flex-1 mb-0">
+                <input
+                  type="text"
+                  value={contactNo}
+                  onChange={(e) => setContactNo(e.target.value.replace(/[^\d-]/g, '').slice(0, 15))}
+                  className="field-input font-mono"
+                  placeholder=" "
+                  autoComplete="off"
+                />
+                <Phone className="field-icon text-purple-500 w-4 h-4" />
+                <label className="field-label">Contact Phone No</label>
+              </div>
             </div>
 
             {/* Permanent Address */}
