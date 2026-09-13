@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useRef } from 'react';
-import Papa from 'papaparse';
 import {
   HandCoins,
   Plus,
@@ -42,7 +41,7 @@ import {
 } from 'lucide-react';
 import { generateUUID } from '../../utils/uuid';
 import { Donation, Beneficiary, PortalSettings } from '../../types';
-import { formatPKR, formatNIC, formatContact, exportBeneficiariesReportPDF, parseDateRange } from '../../utils/formatters';
+import { formatPKR, formatNIC, formatContact, exportBeneficiariesReportPDF, exportDonationsReportPDF, parseDateRange } from '../../utils/formatters';
 import { compressImageFile } from '../../utils/imageUtils';
 
 const isMasajidBeneficiary = (b: Beneficiary) => {
@@ -311,7 +310,6 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [proofImage, setProofImage] = useState<string>('');
   const [isProcessingProof, setIsProcessingProof] = useState(false);
   const formFileInputRef = useRef<HTMLInputElement>(null);
-  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (editingItem) {
@@ -452,97 +450,21 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     setShowForm(false);
   };
 
-  const handleCSVExport = () => {
+  
+  const handlePDFExport = async () => {
     try {
-      const dataToExport = categoryFilter === 'all' 
-        ? filteredDonations 
-        : ['direct-aid', 'wheelchairs', 'orphans', 'ration', 'blood'].includes(categoryFilter)
-          ? filteredBeneficiaries
-          : filteredDonations;
-
-      const csv = Papa.unparse(dataToExport);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `swdo_${categoryFilter}_ledger_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error('CSV Export Error:', err);
-    }
-  };
-
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const data = results.data as any[];
-        let importedCount = 0;
-        let skippedCount = 0;
-
-        data.forEach((row) => {
-          const rawAmount = row.Amount || row['Amount'] || '0';
-          const parsedAmount = parseFloat(rawAmount.toString().replace(/[^0-9.]/g, '')) || 0;
-          const rawDate = row.Date || row['Date'] || new Date().toISOString().split('T')[0];
-          const donor = (row['Donor Name'] || row.Name || row.Donor || '').toString().trim();
-          
-          if (!donor || parsedAmount <= 0) {
-            skippedCount++;
-            return;
-          }
-
-          // Deduplication check
-          const monthYear = rawDate.slice(0, 7);
-          const isDuplicate = donations.some(
-            (d) =>
-              d['Donor Name'].toLowerCase() === donor.toLowerCase() &&
-              d.Amount === parsedAmount &&
-              d.Date.slice(0, 7) === monthYear
-          );
-
-          if (isDuplicate) {
-            skippedCount++;
-            return;
-          }
-
-          const newDonation: Donation = {
-            id: generateUUID(),
-            Date: rawDate,
-            'Donor Name': donor,
-            'NIC No': (row['NIC No'] || row.NIC || '').toString().trim(),
-            'Contact No': (row['Contact No'] || row.Contact || '').toString().trim(),
-            'Permanent Address': (row['Permanent Address'] || row.Address || 'District Shangla, KP').toString().trim(),
-            Profession: (row.Profession || 'Contributor').toString().trim(),
-            Amount: parsedAmount,
-            'Transaction ID': (row['Transaction ID'] || row.TXID || `TXN-CSV-${Math.floor(100000 + Math.random() * 900000)}`).toString().trim(),
-            Remarks: (row.Remarks || 'Bulk CSV Import').toString().trim(),
-            EnteredBy: currentUsername || 'admin',
-            Status: 'Approved',
-            Source: 'Live',
-            ApprovedBy: currentUsername && currentUsername !== 'Guest Donator'
-              ? (currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1))
-              : 'Admin',
-            ApprovedAt: new Date().toISOString(),
-          };
-
-          onSaveDonation(newDonation);
-          importedCount++;
-        });
-
-        alert(`CSV Import Complete:\n- Imported: ${importedCount}\n- Skipped (Duplicates/Invalid): ${skippedCount}`);
-        if (csvFileInputRef.current) csvFileInputRef.current.value = '';
-      },
-      error: (error) => {
-        alert(`Error parsing CSV: ${error.message}`);
+      const isBeneficiaryView = ['direct-aid', 'wheelchairs', 'orphans', 'ration', 'blood'].includes(categoryFilter);
+      
+      if (isBeneficiaryView) {
+        const title = `SWDO ${categoryFilter.replace('-', ' ').toUpperCase()} RELIEF REPORT`;
+        await exportBeneficiariesReportPDF(filteredBeneficiaries, settings, title);
+      } else {
+        const title = `SWDO ${categoryFilter.toUpperCase()} DONATIONS LEDGER REPORT`;
+        await exportDonationsReportPDF(filteredDonations, settings, title);
       }
-    });
+    } catch (err) {
+      console.error('PDF Export Error:', err);
+    }
   };
 
   // Pending vs Approved lists
@@ -833,42 +755,21 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                 </button>
               )}
 
-              <input
-                type="file"
-                ref={csvFileInputRef}
-                onChange={handleCSVImport}
-                accept=".csv"
-                className="hidden"
-              />
               
-              <button
-                type="button"
-                onClick={handleCSVExport}
-                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors cursor-pointer"
-                title="Export Ledger to CSV"
-              >
-                <DownloadCloud className="w-4 h-4" />
-                <span className="hidden sm:inline">Export CSV</span>
-              </button>
+              
+              
 
               <button
                 type="button"
-                onClick={handleCSVExport}
-                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors cursor-pointer"
-                title="Export Ledger to CSV"
+                onClick={handlePDFExport}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors cursor-pointer"
+                title="Export Ledger to PDF"
               >
                 <DownloadCloud className="w-4 h-4" />
-                <span className="hidden sm:inline">Export CSV</span>
+                <span className="hidden sm:inline">Export PDF</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => csvFileInputRef.current?.click()}
-                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors cursor-pointer"
-              >
-                <UploadCloud className="w-4 h-4" />
-                <span className="hidden sm:inline">Import CSV</span>
-              </button>
+              
 
               <button
                 type="button"
