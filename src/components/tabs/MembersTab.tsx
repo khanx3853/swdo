@@ -601,7 +601,9 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                     <div className="flex items-center gap-3">
                       {nicImage && (
                         <div className="relative group/img">
-                          <img src={nicImage} alt="CNIC Front" className="w-16 h-10 object-cover rounded-lg border border-purple-500/30" />
+                          {!!nicImage && (
+                            <img src={nicImage || null} alt="CNIC Front" className="w-16 h-10 object-cover rounded-lg border border-purple-500/30" />
+                          )}
                           <button 
                             type="button" 
                             onClick={() => setNicImage(null)}
@@ -625,7 +627,9 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                     <div className="flex items-center gap-3">
                       {nicImageBack && (
                         <div className="relative group/img">
-                          <img src={nicImageBack} alt="CNIC Back" className="w-16 h-10 object-cover rounded-lg border border-purple-500/30" />
+                          {!!nicImageBack && (
+                            <img src={nicImageBack || null} alt="CNIC Back" className="w-16 h-10 object-cover rounded-lg border border-purple-500/30" />
+                          )}
                           <button 
                             type="button" 
                             onClick={() => setNicImageBack(null)}
@@ -768,7 +772,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
                   <div className="relative">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md text-sm overflow-hidden">
                       {m.NICImage ? (
-                        <img src={m.NICImage} alt={m.Name} className="w-full h-full object-cover" />
+                        <img src={m.NICImage || null} alt={m.Name} className="w-full h-full object-cover" />
                       ) : (
                         m.Name.slice(0, 2).toUpperCase()
                       )}

@@ -31,14 +31,148 @@ import {
   XCircle,
   Mail,
   Landmark,
+  PlusCircle,
+  Accessibility,
+  Baby,
+  Package,
+  Droplets,
+  DownloadCloud,
+  RefreshCw,
+  Link,
 } from 'lucide-react';
 import { generateUUID } from '../../utils/uuid';
-import { Donation } from '../../types';
-import { formatPKR, formatNIC, formatContact } from '../../utils/formatters';
+import { Donation, Beneficiary, PortalSettings } from '../../types';
+import { formatPKR, formatNIC, formatContact, exportBeneficiariesReportPDF, parseDateRange } from '../../utils/formatters';
 import { compressImageFile } from '../../utils/imageUtils';
+
+const isMasajidBeneficiary = (b: Beneficiary) => {
+  const name = (b['Beneficiary Name'] || '').toLowerCase();
+  const purpose = (b.Purpose || '').toLowerCase();
+  const remarks = (b.Remarks || '').toLowerCase();
+
+  return (
+    purpose.includes('masajid') ||
+    purpose.includes('mosque') ||
+    purpose.includes('masjid') ||
+    remarks.includes('masajid') ||
+    remarks.includes('mosque') ||
+    remarks.includes('masjid') ||
+    name.includes('masajid') ||
+    name.includes('mosque') ||
+    name.includes('masjid') ||
+    name.includes('madrasah') ||
+    purpose.includes('madrasah') ||
+    remarks.includes('madrasah')
+  );
+};
+
+const isWheelchairOrDisabled = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) {
+    return false;
+  }
+  const name = (b['Beneficiary Name'] || '').toLowerCase();
+  if (
+    name.includes('penaflex') ||
+    name.includes('sweet') ||
+    name.includes('cold drink') ||
+    name.includes('decuration') ||
+    name.includes('social media') ||
+    name.includes('alam zaib qari')
+  ) {
+    return false;
+  }
+  const id = (b.id || '').toLowerCase();
+  const tx = (b['Transaction ID'] || '').toLowerCase();
+  const p = (b.Purpose || '').toLowerCase();
+  const r = (b.Remarks || '').toLowerCase();
+
+  if (
+    id.startsWith('dir-') ||
+    tx.startsWith('dir-') ||
+    p.includes('direct financial')
+  ) {
+    return false;
+  }
+
+  return (
+    id.startsWith('dis-') ||
+    tx.startsWith('wheel-') ||
+    p.includes('disabled') ||
+    r.includes('disabled') ||
+    p.includes('wheelchair') ||
+    r.includes('wheelchair') ||
+    r.includes('disability') ||
+    r.includes('paralyzed') ||
+    r.includes('spinal') ||
+    id === 'dis-4' ||
+    tx === 'wheel-04' ||
+    name === 'muhammad zada' ||
+    name === 'kamran ali' ||
+    name === 'janan' ||
+    name.includes('zia/rasheed sister') ||
+    name.includes('safaid ahmed') ||
+    name.includes('shafi ullah') ||
+    name.includes('azaz')
+  );
+};
+
+const isDirectFinancialAid = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) return false;
+  if (isWheelchairOrDisabled(b)) return false;
+  
+  const name = (b['Beneficiary Name'] || '').toLowerCase();
+  if (
+    name.includes('penaflex') ||
+    name.includes('sweet') ||
+    name.includes('cold drink') ||
+    name.includes('decuration') ||
+    name.includes('social media')
+  ) return false;
+
+  const p = (b.Purpose || '').toLowerCase();
+  const r = (b.Remarks || '').toLowerCase();
+  
+  // Exclude other specific categories
+  if (p.includes('orphan') || r.includes('orphan') || p.includes('یتیم')) return false;
+  if (p.includes('ration') || r.includes('ration') || p.includes('آٹا')) return false;
+  if (p.includes('blood') || r.includes('blood')) return false;
+
+  return (
+    p.includes('direct financial') ||
+    p.includes('patient') ||
+    p.includes('incident') ||
+    p.includes('accident') ||
+    r.includes('patient') ||
+    r.includes('accident') ||
+    r.includes('incident')
+  );
+};
+
+const isOrphanBeneficiary = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) return false;
+  const p = (b.Purpose || '').toLowerCase();
+  const r = (b.Remarks || '').toLowerCase();
+  const n = (b['Beneficiary Name'] || '').toLowerCase();
+  return p.includes('orphan') || r.includes('orphan') || n.includes('orphan') || p.includes('یتیم') || r.includes('یتیم');
+};
+
+const isRationBeneficiary = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) return false;
+  const p = (b.Purpose || '').toLowerCase();
+  const r = (b.Remarks || '').toLowerCase();
+  return p.includes('ration') || r.includes('ration') || p.includes('food') || r.includes('food') || p.includes('آٹا') || r.includes('راشن');
+};
+
+const isBloodBeneficiary = (b: Beneficiary) => {
+  if (isMasajidBeneficiary(b)) return false;
+  const p = (b.Purpose || '').toLowerCase();
+  const r = (b.Remarks || '').toLowerCase();
+  return p.includes('blood') || r.includes('blood') || p.includes('خون');
+};
 
 interface DonationsTabProps {
   donations: Donation[];
+  beneficiaries?: Beneficiary[];
   isAdmin?: boolean;
   onRequestLogin?: () => void;
   onOpenDonateModal?: () => void;
@@ -47,6 +181,7 @@ interface DonationsTabProps {
   onRejectDonation?: (id: string, reason?: string) => void;
   onPromptRejectDonation?: (donation: Donation) => void;
   onSelectDonation: (donation: Donation) => void;
+  onSelectBeneficiary?: (beneficiary: Beneficiary) => void;
   onDeleteDonation?: (id: string) => void;
   onDeleteMultipleDonations?: (ids: string[]) => void;
   onClearAllDonations?: () => void;
@@ -54,10 +189,12 @@ interface DonationsTabProps {
   currentUsername: string;
   editingItem?: Donation | null;
   onClearEdit?: () => void;
+  settings?: PortalSettings;
 }
 
 export const DonationsTab: React.FC<DonationsTabProps> = ({
   donations,
+  beneficiaries = [],
   isAdmin = false,
   onRequestLogin,
   onOpenDonateModal,
@@ -66,6 +203,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   onRejectDonation,
   onPromptRejectDonation,
   onSelectDonation,
+  onSelectBeneficiary,
   onDeleteDonation,
   onDeleteMultipleDonations,
   onClearAllDonations,
@@ -73,11 +211,14 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   currentUsername,
   editingItem,
   onClearEdit,
+  settings,
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'masajid' | 'sadaqah' | 'zakat'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'masajid' | 'sadaqah' | 'zakat' | 'direct-aid' | 'wheelchairs' | 'orphans' | 'ration' | 'blood'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -123,6 +264,30 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     }
 
     return rem.includes('zakat') || rem.includes('زکوۃ');
+  };
+
+  const isWheelchairDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+    return cat.includes('wheelchair') || rem.includes('wheelchair') || cat.includes('disabled') || rem.includes('disabled');
+  };
+
+  const isOrphanDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+    return cat.includes('orphan') || rem.includes('orphan') || cat.includes('یتیم') || rem.includes('یتیم');
+  };
+
+  const isRationDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+    return cat.includes('ration') || rem.includes('ration') || cat.includes('food') || rem.includes('food') || rem.includes('راشن');
+  };
+
+  const isBloodDonation = (d: Donation) => {
+    const cat = (d.Category || '').toLowerCase();
+    const rem = (d.Remarks || '').toLowerCase();
+    return cat.includes('blood') || rem.includes('blood');
   };
 
   // Form state
@@ -287,6 +452,29 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     setShowForm(false);
   };
 
+  const handleCSVExport = () => {
+    try {
+      const dataToExport = categoryFilter === 'all' 
+        ? filteredDonations 
+        : ['direct-aid', 'wheelchairs', 'orphans', 'ration', 'blood'].includes(categoryFilter)
+          ? filteredBeneficiaries
+          : filteredDonations;
+
+      const csv = Papa.unparse(dataToExport);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `swdo_${categoryFilter}_ledger_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('CSV Export Error:', err);
+    }
+  };
+
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -383,6 +571,15 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   }, [masajidDonationsList]);
 
   // Filtered donations based on search, status, and category
+  const handleExportDirectAidPDF = async () => {
+    try {
+      const title = 'Direct financial beneficiaries (patients, incidents, accidents) Report';
+      await exportBeneficiariesReportPDF(filteredBeneficiaries, settings, title);
+    } catch (err) {
+      console.error('Failed to export Direct Aid PDF:', err);
+    }
+  };
+
   const filteredDonations = useMemo(() => {
     // Hide rejected items from the main lists entirely for both Admin and normal users
     let list = isAdmin 
@@ -404,12 +601,29 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       list = list.filter(isSadaqahDonation);
     } else if (categoryFilter === 'zakat') {
       list = list.filter(isZakatDonation);
+    } else if (categoryFilter === 'wheelchairs') {
+      list = list.filter(isWheelchairDonation);
+    } else if (categoryFilter === 'orphans') {
+      list = list.filter(isOrphanDonation);
+    } else if (categoryFilter === 'ration') {
+      list = list.filter(isRationDonation);
+    } else if (categoryFilter === 'blood') {
+      list = list.filter(isBloodDonation);
     } else if (categoryFilter === 'all') {
-      // Exclude Masajid donations from the 'all' view
+      // Exclude specific categories from "All" to keep it clean if requested, 
+      // but usually All should show everything except those with separate sections.
       list = list.filter(d => !isMasajidDonation(d));
     }
 
     let result = list;
+
+    if (fromDate || toDate) {
+      result = result.filter(d => {
+        const { start, end } = parseDateRange(d.Date || '');
+        return (!fromDate || (end || start) >= fromDate) && (!toDate || (start || end) <= toDate);
+      });
+    }
+
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase().trim();
       const numQ = Number(q);
@@ -461,7 +675,36 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
 
       return b.id.localeCompare(a.id);
     });
-  }, [donations, statusFilter, categoryFilter, searchTerm, pendingDonations, approvedDonations, nonRejectedDonations, isAdmin]);
+  }, [donations, statusFilter, categoryFilter, searchTerm, fromDate, toDate, pendingDonations, approvedDonations, nonRejectedDonations, isAdmin]);
+
+  const filteredBeneficiaries = useMemo(() => {
+    let list = beneficiaries;
+    
+    if (categoryFilter === 'direct-aid') list = list.filter(isDirectFinancialAid);
+    else if (categoryFilter === 'wheelchairs') list = list.filter(isWheelchairOrDisabled);
+    else if (categoryFilter === 'orphans') list = list.filter(isOrphanBeneficiary);
+    else if (categoryFilter === 'ration') list = list.filter(isRationBeneficiary);
+    else if (categoryFilter === 'blood') list = list.filter(isBloodBeneficiary);
+
+    if (fromDate || toDate) {
+      list = list.filter(b => {
+        const { start, end } = parseDateRange(b.Date || '');
+        return (!fromDate || (end || start) >= fromDate) && (!toDate || (start || end) <= toDate);
+      });
+    }
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      list = list.filter(b => 
+        (b['Beneficiary Name'] || '').toLowerCase().includes(q) ||
+        (b['Transaction ID'] || '').toLowerCase().includes(q) ||
+        (b.Purpose || '').toLowerCase().includes(q) ||
+        (b.Remarks || '').toLowerCase().includes(q)
+      );
+    }
+
+    return list.sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime());
+  }, [beneficiaries, categoryFilter, searchTerm, fromDate, toDate]);
 
   // Category scoped counts for status buttons
   const categoryScopedApprovedCount = useMemo(() => {
@@ -600,6 +843,26 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               
               <button
                 type="button"
+                onClick={handleCSVExport}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors cursor-pointer"
+                title="Export Ledger to CSV"
+              >
+                <DownloadCloud className="w-4 h-4" />
+                <span className="hidden sm:inline">Export CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCSVExport}
+                className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 transition-colors cursor-pointer"
+                title="Export Ledger to CSV"
+              >
+                <DownloadCloud className="w-4 h-4" />
+                <span className="hidden sm:inline">Export CSV</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => csvFileInputRef.current?.click()}
                 className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors cursor-pointer"
               >
@@ -724,11 +987,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                       className="relative w-20 h-24 rounded-lg overflow-hidden border border-amber-500/40 bg-black shrink-0 cursor-pointer group shadow-md"
                       title="Click to zoom screenshot"
                     >
-                      <img
-                        src={pending.ProofImage}
-                        alt="Payment Proof"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+                      {!!pending.ProofImage && (
+                        <img
+                          src={pending.ProofImage || null}
+                          alt="Payment Proof"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] gap-0.5">
                         <Eye className="w-4 h-4 text-amber-300" />
                         <span>Inspect</span>
@@ -973,6 +1238,10 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                 <option value="Sadaqah & Welfare">💚 Sadaqah & Welfare</option>
                 <option value="Zakat Fund">📖 Zakat Fund</option>
                 <option value="Emergency Medical Relief">🏥 Emergency Medical Relief</option>
+                <option value="Wheelchairs / Disabled">♿ Wheelchairs / Disabled</option>
+                <option value="Orphans Care">🧸 Orphans Care</option>
+                <option value="Ration / Food">📦 Ration / Food</option>
+                <option value="Blood Bank">🩸 Blood Bank</option>
                 <option value="General Welfare">General Welfare</option>
               </select>
               <Landmark className="field-icon text-emerald-400 w-4 h-4" />
@@ -1105,6 +1374,86 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
           <Coins className="w-3.5 h-3.5" />
           <span>📖 Zakat Fund</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('direct-aid')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'direct-aid'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-md shadow-amber-600/20 ring-2 ring-amber-400/30'
+              : 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 border border-amber-500/20'
+          }`}
+        >
+          <PlusCircle className="w-3.5 h-3.5 text-amber-500" />
+          <span>🚑 Direct Financial Relief</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300">
+            {beneficiaries.filter(isDirectFinancialAid).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('wheelchairs')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'wheelchairs'
+              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+              : 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10'
+          }`}
+        >
+          <Accessibility className="w-3.5 h-3.5" />
+          <span>♿ Wheelchairs / Disabled</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+            {beneficiaries.filter(isWheelchairOrDisabled).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('orphans')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'orphans'
+              ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md'
+              : 'text-pink-400 hover:text-pink-300 hover:bg-pink-500/10'
+          }`}
+        >
+          <Baby className="w-3.5 h-3.5" />
+          <span>🧸 Orphans Care</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-pink-500/20 border border-pink-400/30 text-pink-300">
+            {beneficiaries.filter(isOrphanBeneficiary).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('ration')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'ration'
+              ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-md'
+              : 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
+          }`}
+        >
+          <Package className="w-3.5 h-3.5" />
+          <span>📦 Ration / Food</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300">
+            {beneficiaries.filter(isRationBeneficiary).length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoryFilter('blood')}
+          className={`px-3.5 py-2 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            categoryFilter === 'blood'
+              ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-md'
+              : 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
+          }`}
+        >
+          <Droplets className="w-3.5 h-3.5" />
+          <span>🩸 Blood Bank</span>
+          <span className="ml-1 text-[10px] font-mono px-2 py-0.2 rounded-full bg-red-500/20 border border-red-400/30 text-red-300">
+            {beneficiaries.filter(isBloodBeneficiary).length}
+          </span>
+        </button>
       </div>
 
       {/* DEDICATED MASAJID DONATIONS SECTION SPOTLIGHT */}
@@ -1168,6 +1517,49 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
         </div>
       )}
 
+      {/* DEDICATED DIRECT AID SECTION SPOTLIGHT */}
+      {categoryFilter === 'direct-aid' && (
+        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-950/60 via-slate-900/95 to-orange-950/50 border-2 border-amber-500/40 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-lg">
+                <PlusCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-bold text-amber-300">
+                    Direct financial beneficiaries (patients, incidents, accidents)
+                  </h3>
+                  <span className="text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                    Emergency Relief Ledger
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                  Disbursements and relief funds allocated for emergency medical aid, accident victims, and critical incidents across the community.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Grid for Direct Aid Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-amber-500/30">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Emergency Disbursed</p>
+              <p className="text-lg sm:text-xl font-extrabold text-amber-400 font-mono mt-0.5">
+                {formatPKR(beneficiaries.filter(isDirectFinancialAid).reduce((sum, b) => sum + (b.Amount || 0), 0))}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-orange-500/30">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Beneficiaries Assisted</p>
+              <p className="text-lg sm:text-xl font-extrabold text-orange-300 font-mono mt-0.5">
+                {beneficiaries.filter(isDirectFinancialAid).length} <span className="text-xs font-sans text-slate-400">Critical Cases</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Tabs & Search Bar */}
       <div className="glass-card p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-purple-500/30">
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1221,24 +1613,53 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
           )}
         </div>
 
-        {/* Search input */}
-        <div className="relative w-full sm:w-72">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by donor, NIC, slip no, date..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl dark:bg-slate-900/90 bg-white border dark:border-purple-900/40 border-purple-200 text-xs focus:outline-none focus:border-emerald-500"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-red-500 cursor-pointer"
-            >
-              ✕
-            </button>
-          )}
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+          {/* Date Picker */}
+          <div className="flex items-center gap-2 w-full sm:w-auto p-1 rounded-xl border dark:border-slate-800 bg-slate-900/40 shadow-inner">
+            <div className="relative flex-1 sm:w-32">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full py-1.5 px-2 pl-8 rounded-lg dark:bg-slate-950 bg-white border dark:border-purple-900/40 border-purple-200 font-mono text-[11px] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 outline-none transition-all"
+              />
+              <div className="absolute left-2.5 top-2 text-emerald-500">
+                <Calendar className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-slate-400 font-bold text-[10px] uppercase tracking-wider px-1">TO</div>
+            <div className="relative flex-1 sm:w-32">
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full py-1.5 px-2 pl-8 rounded-lg dark:bg-slate-950 bg-white border dark:border-purple-900/40 border-purple-200 font-mono text-[11px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 outline-none transition-all"
+              />
+              <div className="absolute left-2.5 top-2 text-blue-500">
+                <Calendar className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Search input */}
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by donor, NIC, slip no, date..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl dark:bg-slate-900/90 bg-white border dark:border-purple-900/40 border-purple-200 text-xs focus:outline-none focus:border-emerald-500"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-red-500 cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1280,6 +1701,156 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               </button>
             )
           )}
+        </div>
+      ) : ['direct-aid', 'wheelchairs', 'orphans', 'ration', 'blood'].includes(categoryFilter) ? (
+        /* Dynamic Beneficiary Ledger Table */
+        <div className={`glass-card shadow-2xl border-${
+          categoryFilter === 'direct-aid' ? 'amber' :
+          categoryFilter === 'wheelchairs' ? 'indigo' :
+          categoryFilter === 'orphans' ? 'pink' :
+          categoryFilter === 'ration' ? 'orange' : 'red'
+        }-500/30 overflow-hidden`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[680px]">
+              <thead className={`dark:bg-slate-900/90 bg-${
+                categoryFilter === 'direct-aid' ? 'amber' :
+                categoryFilter === 'wheelchairs' ? 'indigo' :
+                categoryFilter === 'orphans' ? 'pink' :
+                categoryFilter === 'ration' ? 'orange' : 'red'
+              }-100/60 border-b dark:border-${
+                categoryFilter === 'direct-aid' ? 'amber' :
+                categoryFilter === 'wheelchairs' ? 'indigo' :
+                categoryFilter === 'orphans' ? 'pink' :
+                categoryFilter === 'ration' ? 'orange' : 'red'
+              }-900/50 border-slate-200 text-slate-600 dark:text-slate-300 uppercase tracking-wider`}>
+                <tr>
+                  <th className="py-3 px-4 font-bold">Date</th>
+                  <th className="py-3 px-4 font-bold">Beneficiary Name & Ref</th>
+                  <th className="py-3 px-4 font-bold">Purpose / Details</th>
+                  <th className="py-3 px-4 font-bold text-right">Amount Disbursed</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y dark:divide-${
+                categoryFilter === 'direct-aid' ? 'amber' :
+                categoryFilter === 'wheelchairs' ? 'indigo' :
+                categoryFilter === 'orphans' ? 'pink' :
+                categoryFilter === 'ration' ? 'orange' : 'red'
+              }-900/20 divide-slate-100`}>
+                {(() => {
+                  if (filteredBeneficiaries.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={4} className="text-center py-12 text-slate-500 italic">
+                          No {categoryFilter.replace('-', ' ')} records found in this category.
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return (
+                    <>
+                      {filteredBeneficiaries
+                        .map((b) => (
+                          <tr
+                            key={b.id}
+                            className={`hover:bg-${
+                              categoryFilter === 'direct-aid' ? 'amber' :
+                              categoryFilter === 'wheelchairs' ? 'indigo' :
+                              categoryFilter === 'orphans' ? 'pink' :
+                              categoryFilter === 'ration' ? 'orange' : 'red'
+                            }-500/5 transition-colors cursor-pointer group`}
+                            onClick={() => onSelectBeneficiary && onSelectBeneficiary(b)}
+                          >
+                            <td className="py-4 px-4 font-mono text-slate-500 dark:text-slate-400">
+                              {b.Date}
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="font-extrabold dark:text-slate-200 text-slate-800 text-sm">
+                                {b['Beneficiary Name']}
+                              </div>
+                              <div className={`text-[10px] text-${
+                                categoryFilter === 'direct-aid' ? 'amber' :
+                                categoryFilter === 'wheelchairs' ? 'indigo' :
+                                categoryFilter === 'orphans' ? 'pink' :
+                                categoryFilter === 'ration' ? 'orange' : 'red'
+                              }-500/70 font-mono mt-0.5`}>
+                                ID: {b['Transaction ID'] || b.id}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="text-slate-700 dark:text-slate-300 font-medium">
+                                {b.Purpose}
+                              </div>
+                              {b.Remarks && (
+                                <div className="text-[10px] text-slate-500 italic mt-0.5 line-clamp-1">
+                                  {b.Remarks}
+                                </div>
+                              )}
+                            </td>
+                            <td className={`py-4 px-4 text-right font-mono font-black text-${
+                              categoryFilter === 'direct-aid' ? 'amber' :
+                              categoryFilter === 'wheelchairs' ? 'indigo' :
+                              categoryFilter === 'orphans' ? 'pink' :
+                              categoryFilter === 'ration' ? 'orange' : 'red'
+                            }-500 text-sm`}>
+                              {formatPKR(b.Amount)}
+                            </td>
+                          </tr>
+                        ))}
+                      <tr className={`bg-${
+                        categoryFilter === 'direct-aid' ? 'amber' :
+                        categoryFilter === 'wheelchairs' ? 'indigo' :
+                        categoryFilter === 'orphans' ? 'pink' :
+                        categoryFilter === 'ration' ? 'orange' : 'red'
+                      }-500/10 dark:bg-${
+                        categoryFilter === 'direct-aid' ? 'amber' :
+                        categoryFilter === 'wheelchairs' ? 'indigo' :
+                        categoryFilter === 'orphans' ? 'pink' :
+                        categoryFilter === 'ration' ? 'orange' : 'red'
+                      }-500/20 font-bold border-t-2 border-${
+                        categoryFilter === 'direct-aid' ? 'amber' :
+                        categoryFilter === 'wheelchairs' ? 'indigo' :
+                        categoryFilter === 'orphans' ? 'pink' :
+                        categoryFilter === 'ration' ? 'orange' : 'red'
+                      }-500/30`}>
+                        <td colSpan={2} className="py-4 px-4 text-right">
+                          <span className={`text-${
+                            categoryFilter === 'direct-aid' ? 'amber' :
+                            categoryFilter === 'wheelchairs' ? 'indigo' :
+                            categoryFilter === 'orphans' ? 'pink' :
+                            categoryFilter === 'ration' ? 'orange' : 'red'
+                          }-700 dark:text-${
+                            categoryFilter === 'direct-aid' ? 'amber' :
+                            categoryFilter === 'wheelchairs' ? 'indigo' :
+                            categoryFilter === 'orphans' ? 'pink' :
+                            categoryFilter === 'ration' ? 'orange' : 'red'
+                          }-300 text-sm font-bold uppercase tracking-wider`}>
+                            Total {categoryFilter.replace('-', ' ')} Relief
+                          </span>
+                        </td>
+                        <td></td>
+                        <td className="py-4 px-4 text-right">
+                          <span className={`text-${
+                            categoryFilter === 'direct-aid' ? 'amber' :
+                            categoryFilter === 'wheelchairs' ? 'indigo' :
+                            categoryFilter === 'orphans' ? 'pink' :
+                            categoryFilter === 'ration' ? 'orange' : 'red'
+                          }-600 dark:text-${
+                            categoryFilter === 'direct-aid' ? 'amber' :
+                            categoryFilter === 'wheelchairs' ? 'indigo' :
+                            categoryFilter === 'orphans' ? 'pink' :
+                            categoryFilter === 'ration' ? 'orange' : 'red'
+                          }-400 font-mono text-base whitespace-nowrap`}>
+                            {formatPKR(filteredBeneficiaries.reduce((sum, b) => sum + (b.Amount || 0), 0))}
+                          </span>
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })()}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         /* Donations Table */
@@ -1522,11 +2093,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             >
               <X className="w-4 h-4" /> Close
             </button>
-            <img
-              src={lightboxImage.url}
-              alt="Payment Screenshot"
-              className="max-h-[82vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
-            />
+            {!!lightboxImage.url && (
+              <img
+                src={lightboxImage.url || null}
+                alt="Payment Screenshot"
+                className="max-h-[82vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
+              />
+            )}
             <p className="text-xs text-slate-300 mt-2.5 font-medium flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>{lightboxImage.title}</span>

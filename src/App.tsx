@@ -23,7 +23,7 @@ import { Header } from './components/Header';
 import { Navbar } from './components/Navbar';
 import { HomeTab } from './components/tabs/HomeTab';
 import { DonationsTab } from './components/tabs/DonationsTab';
-import { BeneficiariesTab } from './components/tabs/BeneficiariesTab';
+import { BeneficiariesTab, isDirectFinancialAid } from './components/tabs/BeneficiariesTab';
 import { MembersTab } from './components/tabs/MembersTab';
 import { UsersTab } from './components/tabs/UsersTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
@@ -692,6 +692,7 @@ export default function App() {
           {activeTab === 'donations' && (
             <DonationsTab
               donations={donations}
+              beneficiaries={beneficiaries}
               isAdmin={isAdmin}
               onRequestLogin={() => setAdminLoginModalOpen(true)}
               onOpenDonateModal={() => setDonateModalOpen(true)}
@@ -700,27 +701,29 @@ export default function App() {
               onRejectDonation={handleRejectDonation}
               onPromptRejectDonation={(d) => handleDeleteTrigger(d, 'reject_donation')}
               onSelectDonation={(d) => setSelectedDetail({ item: d, type: 'donation' })}
-                onDeleteDonation={(id) => {
-                  const d = donations.find((x) => x.id === id);
-                  if (d) handleDeleteTrigger(d, 'donation');
-                }}
-                onDeleteMultipleDonations={(ids) => {
-                  if (window.confirm(`Permanently delete ${ids.length} selected records?`)) {
-                    ids.forEach((id) => deleteFromFirestore('donations', id));
-                    showToast(`${ids.length} records deleted successfully.`, 'info');
-                  }
-                }}
-                onClearAllDonations={handleClearAllDonations}
+              onSelectBeneficiary={(b) => setSelectedDetail({ item: b, type: 'beneficiary' })}
+              onDeleteDonation={(id) => {
+                const d = donations.find((x) => x.id === id);
+                if (d) handleDeleteTrigger(d, 'donation');
+              }}
+              onDeleteMultipleDonations={(ids) => {
+                if (window.confirm(`Permanently delete ${ids.length} selected records?`)) {
+                  ids.forEach((id) => deleteFromFirestore('donations', id));
+                  showToast(`${ids.length} records deleted successfully.`, 'info');
+                }
+              }}
+              onClearAllDonations={handleClearAllDonations}
               onExportReceipt={handleExportDonationReceipt}
               currentUsername={currentUser?.username || 'Guest Donator'}
               editingItem={editingItemState.type === 'donation' ? editingItemState.item : null}
               onClearEdit={() => setEditingItemState({ item: null, type: null })}
+              settings={settings}
             />
           )}
 
           {activeTab === 'beneficiaries' && (
             <BeneficiariesTab
-              beneficiaries={beneficiaries}
+              beneficiaries={beneficiaries.filter(b => !isDirectFinancialAid(b))}
               isAdmin={isAdmin}
               onRequestLogin={() => setAdminLoginModalOpen(true)}
               onSaveBeneficiary={handleSaveBeneficiary}

@@ -44,5 +44,5 @@ export const TransparentSignature: React.FC<TransparentSignatureProps> = ({ src,
     };
   }, [src]);
 
-  return <img src={processedSrc} alt={alt} className={className} />;
+  return !!processedSrc && <img src={processedSrc || null} alt={alt} className={className} />;
 };

@@ -9,6 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Scale,
+  Search,
 } from 'lucide-react';
 import { Donation, Beneficiary, PortalSettings } from '../../types';
 import { formatPKR, parseAmount, parseDateRange, getLogoDataUrl, addPdfWatermark } from '../../utils/formatters';
@@ -453,165 +454,175 @@ export const StatementTab: React.FC<StatementTabProps> = ({
           )}
         </div>
 
-        {/* Date Filter Controls with Quick Presets */}
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-slate-400">Statement Period & Range:</span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                type="button"
-                onClick={handleSetAllTime}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                  !fromDate && !toDate
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'dark:bg-slate-800 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                All Time
-              </button>
-              {availableYears.map((year) => {
-                const isSelected = fromDate === `${year}-01-01` && toDate === `${year}-12-31`;
-                return (
-                  <button
-                    key={year}
-                    type="button"
-                    onClick={() => handleSelectYear(year)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400'
-                        : 'dark:bg-slate-800 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {year}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={handleSetThisMonth}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold dark:bg-slate-800 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
-              >
-                This Month
-              </button>
-              <button
-                type="button"
-                onClick={handleSetThisYear}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold dark:bg-slate-800 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
-              >
-                This Year
-              </button>
-              <button
-                type="button"
-                onClick={handleSetToday}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold dark:bg-slate-800 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
-              >
-                Today
-              </button>
+      {/* Date Filter Controls with Quick Presets */}
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-end gap-4 p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/50 border dark:border-purple-900/30 border-purple-100 shadow-inner">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Date Range Selection Block */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Custom Date Range:</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full p-2.5 pl-9 rounded-xl dark:bg-slate-950 bg-white border dark:border-purple-900/40 border-purple-200 font-mono text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 outline-none transition-all"
+                  />
+                  <div className="absolute left-3 top-3 text-slate-400">
+                    <span className="text-[10px] font-bold">FROM</span>
+                  </div>
+                </div>
+                <div className="text-slate-400 font-bold">→</div>
+                <div className="relative flex-1">
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full p-2.5 pl-9 rounded-xl dark:bg-slate-950 bg-white border dark:border-purple-900/40 border-purple-200 font-mono text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 outline-none transition-all"
+                  />
+                  <div className="absolute left-3 top-3 text-slate-400">
+                    <span className="text-[10px] font-bold">TO</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Presets Block */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-purple-400" />
+                <span>Quick Filter Presets:</span>
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleSetAllTime}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                    !fromDate && !toDate
+                      ? 'bg-purple-600 text-white border-purple-400 shadow-md'
+                      : 'dark:bg-slate-800 bg-white hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 border-purple-900/20'
+                  }`}
+                >
+                  All Time
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSetToday}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                    fromDate === todayStr && toDate === todayStr
+                      ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
+                      : 'dark:bg-slate-800 bg-white hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 border-purple-900/20'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSetThisMonth}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold dark:bg-slate-800 bg-white hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 border-purple-900/20 transition-all cursor-pointer"
+                >
+                  This Month
+                </button>
+                <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-0.5" />
+                {availableYears.slice(-3).map((year) => {
+                  const isSelected = fromDate === `${year}-01-01` && toDate === `${year}-12-31`;
+                  return (
+                    <button
+                      key={year}
+                      type="button"
+                      onClick={() => handleSelectYear(year)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-400 shadow-md'
+                          : 'dark:bg-slate-800 bg-white hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 border-purple-900/20'
+                      }`}
+                    >
+                      {year}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            {/* From Date */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                From Date:
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full p-2 pl-8 rounded-xl dark:bg-slate-900 bg-white border dark:border-purple-900/40 border-purple-200 font-mono"
-                />
-                <Calendar className="w-3.5 h-3.5 text-emerald-500 absolute left-2.5 top-2.5" />
-              </div>
-            </div>
-
-            {/* To Date */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                To Date:
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full p-2 pl-8 rounded-xl dark:bg-slate-900 bg-white border dark:border-purple-900/40 border-purple-200 font-mono"
-                />
-                <Calendar className="w-3.5 h-3.5 text-blue-500 absolute left-2.5 top-2.5" />
-              </div>
-            </div>
-
-            {/* Search Party */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500 mb-1">
-                Filter by Party / Keyword:
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="e.g. Qayyum, Medical, TXN..."
-                  className="w-full p-2 pl-8 rounded-xl dark:bg-slate-900 bg-white border dark:border-purple-900/40 border-purple-200"
-                />
-                <Filter className="w-3.5 h-3.5 text-purple-400 absolute left-2.5 top-2.5" />
-              </div>
-            </div>
-
-            {/* Type Filter Buttons */}
-            <div className="md:col-span-4 border-t dark:border-purple-900/40 border-purple-200 pt-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[11px] font-bold text-slate-400">Transaction Filter:</span>
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIncludeDonations(true);
-                    setIncludeBeneficiaries(true);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    includeDonations && includeBeneficiaries
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  All Transactions (Combined)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIncludeDonations(true);
-                    setIncludeBeneficiaries(false);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                    includeDonations && !includeBeneficiaries
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'text-emerald-500/80 hover:text-emerald-400'
-                  }`}
-                >
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Donated Funds Only (Inflow)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIncludeDonations(false);
-                    setIncludeBeneficiaries(true);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                    !includeDonations && includeBeneficiaries
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'text-blue-500/80 hover:text-blue-400'
-                  }`}
-                >
-                  <TrendingDown className="w-3.5 h-3.5" />
-                  <span>Disbursed Funds Only (Outflow)</span>
-                </button>
-              </div>
+          {/* Search Party Block */}
+          <div className="w-full md:w-64 space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Search className="w-3.5 h-3.5 text-blue-400" />
+              <span>Search Party/Remark:</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Name, TXN ID, Remarks..."
+                className="w-full p-2.5 pl-9 rounded-xl dark:bg-slate-950 bg-white border dark:border-purple-900/40 border-purple-200 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/50 outline-none transition-all"
+              />
+              <Filter className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
             </div>
           </div>
         </div>
+
+        {/* Transaction Type Filter Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-1 rounded-2xl bg-slate-100/50 dark:bg-slate-950/30 border dark:border-purple-900/30 border-purple-100 shadow-sm">
+          <div className="flex items-center gap-1 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setIncludeDonations(true);
+                setIncludeBeneficiaries(true);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                includeDonations && includeBeneficiaries
+                  ? 'bg-white dark:bg-slate-800 text-purple-500 shadow-md ring-1 ring-purple-500/20'
+                  : 'text-slate-500 hover:text-slate-400'
+              }`}
+            >
+              <Scale className="w-3.5 h-3.5" />
+              <span>Full Combined Ledger</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIncludeDonations(true);
+                setIncludeBeneficiaries(false);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                includeDonations && !includeBeneficiaries
+                  ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-md ring-1 ring-emerald-500/20'
+                  : 'text-slate-500 hover:text-emerald-500/70'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Inflow Only (Donations)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIncludeDonations(false);
+                setIncludeBeneficiaries(true);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                !includeDonations && includeBeneficiaries
+                  ? 'bg-white dark:bg-slate-800 text-blue-500 shadow-md ring-1 ring-blue-500/20'
+                  : 'text-slate-500 hover:text-blue-500/70'
+              }`}
+            >
+              <TrendingDown className="w-3.5 h-3.5" />
+              <span>Outflow Only (Disbursements)</span>
+            </button>
+          </div>
+          <div className="px-4 text-[10px] font-bold text-slate-500 italic flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span>{ledgerEntries.length} Records currently in view</span>
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* Printable Statement Document */}
@@ -779,7 +790,7 @@ export const StatementTab: React.FC<StatementTabProps> = ({
             <div className="h-12 flex items-end justify-center mb-1">
               {settings.TreasurerSignature ? (
                 <img
-                  src={settings.TreasurerSignature}
+                  src={settings.TreasurerSignature || null}
                   alt="Junaid Khan Signature"
                   className="h-14 max-w-[130px] object-contain"
                 />

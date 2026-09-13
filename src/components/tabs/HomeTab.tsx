@@ -53,6 +53,7 @@ import {
   addDocToFirestore,
   deleteFromFirestore,
   fetchCollection,
+  fetchDocument,
   isQuotaExceeded
 } from '../../lib/firestoreSync';
 import { compressImageFile } from '../../utils/imageUtils';
@@ -121,8 +122,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   // Gallery States
-  const [pictures, setPictures] = useState<{ id: string; url: string; caption: string }[]>([]);
-  const [videos, setVideos] = useState<{ id: string; url: string; caption: string }[]>([]);
+  const [pictures, setPictures] = useState<{ id: string; url?: string; caption: string }[]>([]);
+  const [videos, setVideos] = useState<{ id: string; url?: string; caption: string }[]>([]);
+  const [activePicUrl, setActivePicUrl] = useState<string>('');
+  const [activeVidUrl, setActiveVidUrl] = useState<string>('');
+  const [isLoadingActivePic, setIsLoadingActivePic] = useState(false);
+  const [isLoadingActiveVid, setIsLoadingActiveVid] = useState(false);
   const [activePicIndex, setActivePicIndex] = useState(0);
   const [activeVidIndex, setActiveVidIndex] = useState(0);
   const [isUploadingPic, setIsUploadingPic] = useState(false);
@@ -138,12 +143,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       return;
     }
     try {
-      // First try to fetch metadata only to see if we have many items
-      // If it fails with Load failed, it's likely too much data
-      const picList = await fetchCollection<any>('gallery_pictures');
+      // Fetch metadata only to avoid timeout on large base64 payloads
+      const picList = await fetchCollection<any>('gallery_pictures', 'id, caption, createdAt');
       setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
 
-      const vidList = await fetchCollection<any>('gallery_videos');
+      const vidList = await fetchCollection<any>('gallery_videos', 'id, caption, createdAt');
       setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
     } catch (err) {
       console.error("Error fetching gallery data:", err);
@@ -152,6 +156,76 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       setVideos(DEFAULT_VIDEOS);
     }
   };
+
+  // Lazy load active picture
+  useEffect(() => {
+    if (!pictures[activePicIndex]) return;
+    
+    const pic = pictures[activePicIndex];
+    if (pic.url) {
+      setActivePicUrl(pic.url);
+      return;
+    }
+
+    if (pic.id.startsWith('default-')) {
+      const def = DEFAULT_PICTURES.find(p => p.id === pic.id);
+      if (def) setActivePicUrl(def.url);
+      return;
+    }
+
+    const loadPic = async () => {
+      try {
+        setIsLoadingActivePic(true);
+        const doc = await fetchDocument<any>('gallery_pictures', pic.id);
+        if (doc && doc.url) {
+          setActivePicUrl(doc.url);
+          // Optional: cache it in the list to avoid re-fetching
+          setPictures(prev => prev.map(p => p.id === pic.id ? { ...p, url: doc.url } : p));
+        }
+      } catch (err) {
+        console.error("Failed to load active picture:", err);
+      } finally {
+        setIsLoadingActivePic(false);
+      }
+    };
+
+    loadPic();
+  }, [activePicIndex, pictures]);
+
+  // Lazy load active video
+  useEffect(() => {
+    if (!videos[activeVidIndex]) return;
+    
+    const vid = videos[activeVidIndex];
+    if (vid.url) {
+      setActiveVidUrl(vid.url);
+      return;
+    }
+
+    if (vid.id.startsWith('default-')) {
+      const def = DEFAULT_VIDEOS.find(v => v.id === vid.id);
+      if (def) setActiveVidUrl(def.url);
+      return;
+    }
+
+    const loadVid = async () => {
+      try {
+        setIsLoadingActiveVid(true);
+        const doc = await fetchDocument<any>('gallery_videos', vid.id);
+        if (doc && doc.url) {
+          setActiveVidUrl(doc.url);
+          // Cache it
+          setVideos(prev => prev.map(v => v.id === vid.id ? { ...v, url: doc.url } : v));
+        }
+      } catch (err) {
+        console.error("Failed to load active video:", err);
+      } finally {
+        setIsLoadingActiveVid(false);
+      }
+    };
+
+    loadVid();
+  }, [activeVidIndex, videos]);
 
   useEffect(() => {
     fetchGallery();
@@ -517,12 +591,24 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             {/* Slideshow Display Area */}
             {pictures.length > 0 ? (
               <div className="relative flex-1 rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
-                <img
-                  src={pictures[activePicIndex]?.url}
-                  alt={pictures[activePicIndex]?.caption || "SWDO Gallery Picture"}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover select-none"
-                />
+                {isLoadingActivePic ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                    <span className="text-[10px] text-slate-500">Loading High-Res Image...</span>
+                  </div>
+                ) : activePicUrl ? (
+                  <img
+                    src={activePicUrl || null}
+                    alt={pictures[activePicIndex]?.caption || "SWDO Gallery Picture"}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover select-none"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <ImageIcon className="w-6 h-6 text-slate-600" />
+                    <span className="text-[10px] text-slate-500">No Image Data</span>
+                  </div>
+                )}
                 
                 {/* Delete overlay for admin users */}
                 {isAdmin && (
@@ -649,20 +735,32 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             {/* Video Player Display Area */}
             {videos.length > 0 ? (
               <div className="relative flex-1 rounded-xl overflow-hidden aspect-video bg-black flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
-                <video
-                  key={videos[activeVidIndex]?.id || activeVidIndex}
-                  src={videos[activeVidIndex]?.url}
-                  autoPlay
-                  controls
-                  muted={isMuted}
-                  playsInline
-                  referrerPolicy="no-referrer"
-                  onEnded={() => {
-                    // Automatically play next video in the loop when ended!
-                    setActiveVidIndex((prev) => (prev + 1) % videos.length);
-                  }}
-                  className="w-full h-full object-cover select-none"
-                />
+                {isLoadingActiveVid ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 text-orange-400 animate-spin" />
+                    <span className="text-[10px] text-slate-500">Loading Video Stream...</span>
+                  </div>
+                ) : activeVidUrl ? (
+                  <video
+                    key={videos[activeVidIndex]?.id || activeVidIndex}
+                    src={activeVidUrl || null}
+                    autoPlay
+                    controls
+                    muted={isMuted}
+                    playsInline
+                    referrerPolicy="no-referrer"
+                    onEnded={() => {
+                      // Automatically play next video in the loop when ended!
+                      setActiveVidIndex((prev) => (prev + 1) % videos.length);
+                    }}
+                    className="w-full h-full object-cover select-none"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <VideoIcon className="w-6 h-6 text-slate-600" />
+                    <span className="text-[10px] text-slate-500">No Video Data</span>
+                  </div>
+                )}
 
                 {/* Delete overlay for admin users */}
                 {isAdmin && (

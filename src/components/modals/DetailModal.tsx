@@ -209,11 +209,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     onClick={() => setShowProofLightbox(true)}
                     className="relative rounded-lg overflow-hidden border border-slate-700 bg-black cursor-pointer group max-h-40 flex items-center justify-center"
                   >
-                    <img
-                      src={donation.ProofImage}
-                      alt="Payment Proof"
-                      className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
-                    />
+                    {!!donation.ProofImage && (
+                      <img
+                        src={donation.ProofImage || null}
+                        alt="Payment Proof"
+                        className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
                       <Eye className="w-4 h-4" /> Click to enlarge
                     </div>
@@ -410,11 +412,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     onClick={() => setShowProofLightbox(true)}
                     className="relative rounded-lg overflow-hidden border border-slate-700 bg-black cursor-pointer group max-h-40 flex items-center justify-center"
                   >
-                    <img
-                      src={(item as Member).NICImage}
-                      alt="CNIC Document"
-                      className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
-                    />
+                    {!!(item as Member).NICImage && (
+                      <img
+                        src={(item as Member).NICImage || null}
+                        alt="CNIC Document"
+                        className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
                       <Eye className="w-4 h-4" /> Click to enlarge
                     </div>
@@ -485,11 +489,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     onClick={() => setShowProofLightbox(true)}
                     className="relative rounded-lg overflow-hidden border border-slate-700 bg-black cursor-pointer group max-h-40 flex items-center justify-center"
                   >
-                    <img
-                      src={(item as Member).NICImage}
-                      alt="CNIC Document"
-                      className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
-                    />
+                    {!!(item as Member).NICImage && (
+                      <img
+                        src={(item as Member).NICImage || null}
+                        alt="CNIC Document"
+                        className="w-full object-contain max-h-40 group-hover:opacity-90 transition-opacity"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
                       <Eye className="w-4 h-4" /> Click to enlarge
                     </div>
@@ -551,11 +557,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             >
               <X className="w-4 h-4" /> Close
             </button>
-            <img
-              src={donation?.ProofImage || (item as Member).NICImage}
-              alt="Document Preview"
-              className="max-h-[82vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
-            />
+            {(donation?.ProofImage || (item as Member).NICImage) && (
+              <img
+                src={donation?.ProofImage || (item as Member).NICImage || null}
+                alt="Document Preview"
+                className="max-h-[82vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
+              />
+            )}
             <p className="text-xs text-slate-300 mt-2 font-mono">
               {donation 
                 ? `Proof of Payment from ${donation['Donor Name']}` 

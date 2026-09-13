@@ -288,11 +288,13 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                   onClick={() => setPreviewModalOpen(true)}
                   className="relative rounded-lg overflow-hidden border border-slate-700 bg-black cursor-pointer group max-h-36 flex items-center justify-center"
                 >
-                  <img
-                    src={submittedDonation.ProofImage}
-                    alt="Payment Proof"
-                    className="w-full object-contain max-h-36 group-hover:opacity-90 transition-opacity"
-                  />
+                  {!!submittedDonation.ProofImage && (
+                    <img
+                      src={submittedDonation.ProofImage || null}
+                      alt="Payment Proof"
+                      className="w-full object-contain max-h-36 group-hover:opacity-90 transition-opacity"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1.5">
                     <Maximize2 className="w-4 h-4" /> Click to enlarge
                   </div>
@@ -671,11 +673,13 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                       className="w-full py-2 px-3 rounded-xl bg-slate-900/80 border border-purple-900/50 text-white text-xs focus:border-emerald-500 focus:outline-none"
                     >
                       <option value="Masajid Donations">🕌 Masajid Donations (مسجد تعمیر و دیکھ بھال)</option>
-                      <option value="Sadaqah">Sadaqah & Welfare</option>
-                      <option value="Zakat">Zakat Fund</option>
-                      <option value="Orphan Care">Orphan & Widow Relief</option>
-                      <option value="Medical Relief">Emergency Medical Relief</option>
-                      <option value="Ration Package">Ramadan / Food Ration</option>
+                      <option value="Sadaqah">💚 Sadaqah & Welfare</option>
+                      <option value="Zakat">📖 Zakat Fund</option>
+                      <option value="Medical Relief">🏥 Emergency Medical Relief</option>
+                      <option value="Wheelchairs">♿ Wheelchairs / Disabled</option>
+                      <option value="Orphan Care">🧸 Orphan & Widow Relief</option>
+                      <option value="Ration Package">📦 Ramadan / Food Ration</option>
+                      <option value="Blood Bank">🩸 Blood Bank</option>
                       <option value="General Donation">General Welfare Fund</option>
                     </select>
                   </div>
@@ -755,11 +759,13 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                         onClick={() => setPreviewModalOpen(true)}
                         className="relative w-16 h-16 rounded-lg overflow-hidden border border-emerald-500/30 bg-black cursor-pointer shrink-0 group"
                       >
-                        <img
-                          src={proofImage}
-                          alt="Screenshot Preview"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
+                        {!!proofImage && (
+                          <img
+                            src={proofImage || null}
+                            alt="Screenshot Preview"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                           <Eye className="w-4 h-4" />
                         </div>
@@ -866,11 +872,13 @@ export const DonateModal: React.FC<DonateModalProps> = ({
             >
               <X className="w-4 h-4" /> Close Preview
             </button>
-            <img
-              src={submittedDonation?.ProofImage || proofImage}
-              alt="Payment Proof Full"
-              className="max-h-[80vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
-            />
+            {(submittedDonation?.ProofImage || proofImage) && (
+              <img
+                src={submittedDonation?.ProofImage || proofImage || null}
+                alt="Payment Proof Full"
+                className="max-h-[80vh] w-auto max-w-full rounded-xl border border-slate-700 shadow-2xl object-contain"
+              />
+            )}
             <p className="text-xs text-slate-400 mt-2 font-mono">
               Proof of Payment Screenshot
             </p>
