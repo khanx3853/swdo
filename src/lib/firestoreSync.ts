@@ -105,6 +105,9 @@ const TABLE_COLUMNS: Record<string, string[]> = {
   ],
   gallery_videos: [
     'id', 'url', 'caption', 'createdAt'
+  ],
+  sms_logs: [
+    'id', 'recipient', 'message', 'type', 'status', 'timestamp', 'response'
   ]
 };
 

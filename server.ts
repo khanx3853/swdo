@@ -157,7 +157,27 @@ async function startServer() {
         return { raw: text };
       });
 
-      if (data && data.STATUS === "SUCCESSFUL") {
+      const isSuccess = data && data.STATUS === "SUCCESSFUL";
+      const logRecord = {
+        id: 'sms_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        recipient: formattedNum,
+        message: options.message,
+        type: (options as any).type || "Automated SMS",
+        status: isSuccess ? "Delivered" : "Failed",
+        timestamp: new Date().toISOString(),
+        response: JSON.stringify(data || {})
+      };
+      try {
+        const { error: insertErr } = await supabase.from("sms_logs").insert(logRecord);
+        if (insertErr) {
+          // Ignore missing table error
+          console.log("ℹ️ sms_logs table note:", insertErr.message || insertErr);
+        }
+      } catch (logErr) {
+        // Suppress
+      }
+
+      if (isSuccess) {
         console.log(`✅ [VeevoTech SMS] Delivered to ${formattedNum}. MsgID: ${data.MESSAGE_ID}, Charged: ${data.CHARGED_BALANCE}`);
         return { success: true, messageId: data.MESSAGE_ID, charged: data.CHARGED_BALANCE, data };
       } else {
@@ -181,16 +201,30 @@ async function startServer() {
       }
     } catch (err: any) {
       console.warn(`⚠️ [VeevoTech SMS] Network/API exception for ${formattedNum}:`, err.message || err);
+      
+      const failRecord = {
+        id: 'sms_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        recipient: formattedNum,
+        message: options.message,
+        type: (options as any).type || "Automated SMS",
+        status: "Failed",
+        timestamp: new Date().toISOString(),
+        response: JSON.stringify({ error: err.message || "Failed to reach Veevo Tech gateway" })
+      };
+      try {
+        await supabase.from("sms_logs").insert(failRecord);
+      } catch (logErr) {
+        // Suppress
+      }
+
       return { success: false, error: err.message || "Failed to reach Veevo Tech gateway" };
     }
   }
 
-  // Helper to ensure clean single-part GSM SMS text
+  // Helper to ensure clean SMS text while preserving Urdu/Arabic script
   function sanitizeForGsmSms(text: string): string {
     if (!text) return "";
     return text
-      // Replace Arabic / Urdu characters that force 70-char UCS-2 multi-part
-      .replace(/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g, '')
       .replace(/[()]/g, '')
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u201C\u201D]/g, '"')
@@ -347,7 +381,6 @@ async function startServer() {
         await transporter.sendMail(mailOptions);
         console.log(`✅ Admin email notification sent successfully to ${adminEmail}`);
 
-        // Also send instant submission confirmation receipt email to the donor if an email address was provided
         if (donorEmail && donorEmail.includes('@')) {
           const donorMailOptions: any = {
             from: `"Shangla Welfare Org" <${smtpUser}>`,
@@ -426,6 +459,59 @@ async function startServer() {
         console.error("❌ High-speed admin notification dispatch error:", err);
       }
     })();
+  });
+
+  // API route to send automated SMS when beneficiary is saved/registered
+  app.post("/api/notify-beneficiary", async (req, res) => {
+    const beneficiary = req.body;
+    console.log("⚡ High-speed beneficiary SMS notification triggered:", beneficiary['Beneficiary Name']);
+
+    let smsResult: any = null;
+
+    if (beneficiary['Contact No'] && beneficiary.SendSms !== false) {
+      try {
+        const rawName = (beneficiary['Beneficiary Name'] || 'Beneficiary').trim();
+        const benName = sanitizeForGsmSms(rawName) || 'Valued Beneficiary';
+        const amount = Number(beneficiary.Amount || 0).toLocaleString();
+        const purpose = (beneficiary.Purpose || 'Relief Aid').trim();
+        const txn = beneficiary['Transaction ID'] || 'N/A';
+        const org = "Shangla Welfare & Development Org (REG# 5514)";
+
+        let smsBody = beneficiary.SmsBeneficiaryTemplate ||
+          `Assalamu Alaikum {beneficiary},\n\nAlhamdulillah! {purpose} ke liye aap ki manzoree shuda raqam Rs. {amount} aap ko bhej di gayi hai.\nTransaction Ref: {txn}\nBhejne wala: {org}\n\nAllah is mein barkat de aur aap ke liye asaniyan paida farmaye. Ameen`;
+
+        smsBody = smsBody
+          .replace(/\{beneficiary\}/gi, benName)
+          .replace(/\{فائدہ کنندہ\}/gi, benName)
+          .replace(/\{amount\}/gi, amount)
+          .replace(/\{purpose\}/gi, purpose)
+          .replace(/\{txn\}/gi, txn)
+          .replace(/\{org\}/gi, org);
+
+        smsBody = sanitizeForGsmSms(smsBody);
+
+        smsResult = await sendVeevoSms({
+          to: beneficiary['Contact No'],
+          message: smsBody,
+          hash: beneficiary.VeevoSmsHash,
+          senderNum: beneficiary.VeevoSenderNum,
+        });
+      } catch (smsErr) {
+        console.warn("⚠️ Error in automatic Beneficiary SMS dispatch:", smsErr);
+        smsResult = { success: false, error: (smsErr as any).message || "SMS failed" };
+      }
+    }
+
+    res.json({
+      success: true,
+      status: "processed",
+      sms: smsResult ? {
+        sent: smsResult.success,
+        lowBalance: !!smsResult.lowBalance,
+        error: smsResult.error,
+        messageId: smsResult.messageId
+      } : null
+    });
   });
 
   // API route to send email notification to donor (and admin) when status changes to Approved or Rejected
@@ -586,14 +672,25 @@ async function startServer() {
             const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
             const amount = Number(donation.Amount || 0).toLocaleString();
             const txn = donation['Transaction ID'] || 'N/A';
-            const org = "SWDO Welfare (Reg# 5514)";
+            const purpose = (donation.Remarks || 'General Relief Fund').trim();
+            const org = "Shangla Welfare & Development Org (REG# 5514)";
 
             let approvalSms = donation.SmsApprovalTemplate ||
-              `Dear {donor}, your donation of Rs. {amount} (Trx: {txn}) has been verified & approved by {org}. May Allah reward you!`;
+              `Assalamu Alaikum {donor},
+
+JazakAllahu Khair!
+Aap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}
+
+Allah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko dono jahan ki bhalai ata kare. Ameen 🤲
+
+{org}`;
 
             approvalSms = approvalSms
               .replace(/\{donor\}/gi, donorName)
+              .replace(/\{عطیہ کنندہ\}/gi, donorName)
               .replace(/\{amount\}/gi, amount)
+              .replace(/\{purpose\}/gi, purpose)
+              .replace(/\{مقصد\}/gi, purpose)
               .replace(/\{txn\}/gi, txn)
               .replace(/\{org\}/gi, org);
 

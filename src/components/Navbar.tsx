@@ -7,7 +7,7 @@ import {
   UserCheck,
   Settings,
   FileSpreadsheet,
-  BookUser,
+  MessageSquare,
 } from 'lucide-react';
 import { TabType, UserAccount } from '../types';
 
@@ -30,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'users', label: 'Users', accessName: 'Users', icon: UserCheck },
     { id: 'settings', label: 'Settings', accessName: 'Settings', icon: Settings },
     { id: 'statement', label: 'Statement', accessName: 'Statement', icon: FileSpreadsheet },
+    { id: 'sms-logs', label: 'SMS Logs', accessName: 'SmsLogs', icon: MessageSquare },
   ];
 
   // Filter tabs according to user's permissions

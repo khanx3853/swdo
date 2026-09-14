@@ -5,7 +5,18 @@ export type TabType =
   | 'members'
   | 'users'
   | 'settings'
-  | 'statement';
+  | 'statement'
+  | 'sms-logs';
+
+export interface SmsLog {
+  id: string;
+  recipient: string;
+  message: string;
+  type: string;
+  status: string;
+  timestamp: string;
+  response?: string;
+}
 
 export interface Donation {
   id: string;
@@ -50,6 +61,7 @@ export interface Beneficiary {
   ProofLink?: string;
   Status?: 'Allotted' | 'Pending' | 'Verified';
   Source?: 'Audit' | 'Live';
+  SendSms?: boolean;
 }
 
 export interface Member {
@@ -95,10 +107,12 @@ export interface PortalSettings {
   TreasurerSignature?: string;
   AutoSmsSubmission?: boolean;
   AutoSmsApproval?: boolean;
+  AutoSmsBeneficiary?: boolean;
   VeevoSmsHash?: string;
   VeevoSenderNum?: string;
   SmsSubmissionTemplate?: string;
   SmsApprovalTemplate?: string;
+  SmsBeneficiaryTemplate?: string;
 }
 
 export interface ToastMessage {

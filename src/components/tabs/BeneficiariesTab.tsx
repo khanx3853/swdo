@@ -223,6 +223,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
   const [txId, setTxId] = useState(`BEN-${Math.floor(1000 + Math.random() * 9000)}`);
   const [remarks, setRemarks] = useState('');
   const [proofLink, setProofLink] = useState('');
+  const [sendSms, setSendSms] = useState(true);
 
   const [isEditingWcBanner, setIsEditingWcBanner] = useState(false);
   const [customWcCount, setCustomWcCount] = useState<string>(() => {
@@ -282,6 +283,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
     setTxId(`BEN-${Math.floor(1000 + Math.random() * 9000)}`);
     setRemarks('');
     setProofLink('');
+    setSendSms(true);
     setEditingId(null);
     if (onClearEdit) onClearEdit();
   };
@@ -358,6 +360,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
       VerifiedBy: 'Verification Committee',
       Status: 'Allotted',
       Source: 'Live',
+      SendSms: sendSms,
     } as any;
 
     onSaveBeneficiary(newBeneficiary);
@@ -965,6 +968,21 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
               />
               <FileCheck className="field-icon text-emerald-400 w-4 h-4" />
               <label className="field-label">Video Proof Link (Facebook, YouTube, etc.)</label>
+            </div>
+
+            {/* SMS Toggle */}
+            <div className="md:col-span-2 lg:col-span-3 flex items-center gap-3 py-2 px-3 rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-900/40 bg-slate-50">
+              <input
+                type="checkbox"
+                id="sendBeneficiarySms"
+                checked={sendSms}
+                onChange={(e) => setSendSms(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              />
+              <label htmlFor="sendBeneficiarySms" className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Send automated SMS notification to beneficiary upon saving</span>
+              </label>
             </div>
 
             {/* Buttons */}

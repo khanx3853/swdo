@@ -11229,9 +11229,11 @@ export const INITIAL_SETTINGS: PortalSettings = {
   "TreasurerSignature": "",
   "AutoSmsSubmission": true,
   "AutoSmsApproval": true,
+  "AutoSmsBeneficiary": true,
   "VeevoSmsHash": "d9eb3e26f4532bcbbca611804241635a",
   "VeevoSenderNum": "Default",
   "SmsSubmissionTemplate": "Dear {donor}, thank you for your donation of Rs. {amount} to Shangla Welfare & Development Org (REG# 5514). Trx ID: {txn}. Your contribution has been received for verification. May Allah reward you!",
-  "SmsApprovalTemplate": "Dear {donor}, your donation of Rs. {amount} (Trx ID: {txn}) has been verified & approved by Shangla Welfare & Development Org. Thank you for your support!"
+  "SmsApprovalTemplate": "Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko dono jahan ki bhalai ata kare. Ameen 🤲\n\n{org}",
+  "SmsBeneficiaryTemplate": "Assalamu Alaikum {beneficiary},\n\nAlhamdulillah! {purpose} ke liye aap ki manzoree shuda raqam Rs. {amount} aap ko bhej di gayi hai.\nTransaction Ref: {txn}\nBhejne wala: {org}\n\nAllah is mein barkat de aur aap ke liye asaniyan paida farmaye. Ameen"
 };
 

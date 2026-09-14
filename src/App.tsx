@@ -28,6 +28,7 @@ import { MembersTab } from './components/tabs/MembersTab';
 import { UsersTab } from './components/tabs/UsersTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { StatementTab } from './components/tabs/StatementTab';
+import { SmsLogsTab } from './components/tabs/SmsLogsTab';
 import { DetailModal } from './components/modals/DetailModal';
 import { MonkeyFileModal } from './components/modals/MonkeyFileModal';
 import { DeleteModal } from './components/modals/DeleteModal';
@@ -173,6 +174,16 @@ export default function App() {
             needsUpdate = true;
           }
 
+          if (!data.SmsBeneficiaryTemplate || !data.SmsBeneficiaryTemplate.includes('Alhamdulillah')) {
+            updated.SmsBeneficiaryTemplate = INITIAL_SETTINGS.SmsBeneficiaryTemplate;
+            needsUpdate = true;
+          }
+
+          if (!data.SmsApprovalTemplate || !data.SmsApprovalTemplate.includes('Assalamu Alaikum')) {
+            updated.SmsApprovalTemplate = INITIAL_SETTINGS.SmsApprovalTemplate;
+            needsUpdate = true;
+          }
+
           if (data['Bank Account No'] === "12345678901234" || !data['Bank Account No']) {
             updated['Bank Account No'] = "00300110485989";
             needsUpdate = true;
@@ -199,7 +210,8 @@ export default function App() {
             VeevoSmsHash: savedLocal?.VeevoSmsHash || INITIAL_SETTINGS.VeevoSmsHash,
             VeevoSenderNum: savedLocal?.VeevoSenderNum || INITIAL_SETTINGS.VeevoSenderNum,
             SmsSubmissionTemplate: savedLocal?.SmsSubmissionTemplate || INITIAL_SETTINGS.SmsSubmissionTemplate,
-            SmsApprovalTemplate: savedLocal?.SmsApprovalTemplate || INITIAL_SETTINGS.SmsApprovalTemplate,
+            SmsApprovalTemplate: (savedLocal?.SmsApprovalTemplate && savedLocal.SmsApprovalTemplate.includes('Assalamu Alaikum')) ? savedLocal.SmsApprovalTemplate : INITIAL_SETTINGS.SmsApprovalTemplate,
+            SmsBeneficiaryTemplate: (savedLocal?.SmsBeneficiaryTemplate && savedLocal.SmsBeneficiaryTemplate.includes('Alhamdulillah')) ? savedLocal.SmsBeneficiaryTemplate : INITIAL_SETTINGS.SmsBeneficiaryTemplate,
           };
 
           if (needsUpdate) {
@@ -560,8 +572,42 @@ export default function App() {
       return [beneficiary, ...prev];
     });
 
-    await saveToFirestore('beneficiaries', beneficiary);
-    showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved!`);
+    try {
+      await saveToFirestore('beneficiaries', beneficiary);
+
+      const shouldSendSms = beneficiary.SendSms !== false && (settings?.AutoSmsBeneficiary !== false);
+      if (shouldSendSms && beneficiary['Contact No']) {
+        try {
+          const res = await fetch('/api/notify-beneficiary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...beneficiary,
+              SendSms: shouldSendSms,
+              VeevoSmsHash: settings?.VeevoSmsHash,
+              VeevoSenderNum: settings?.VeevoSenderNum,
+              SmsBeneficiaryTemplate: settings?.SmsBeneficiaryTemplate,
+            }),
+          });
+          const data = await res.json().catch(() => null);
+          if (data?.sms?.sent) {
+            showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved & SMS dispatched!`, 'success');
+          } else if (data?.sms?.lowBalance) {
+            showToast(`Beneficiary saved, but SMS failed (Low balance).`, 'info');
+          } else {
+            showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved!`);
+          }
+        } catch (smsErr) {
+          console.warn('Error dispatching beneficiary SMS:', smsErr);
+          showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved!`);
+        }
+      } else {
+        showToast(`Beneficiary record for ${beneficiary['Beneficiary Name']} saved!`);
+      }
+    } catch (err: any) {
+      console.error('Failed to save beneficiary:', err);
+      showToast(`Failed to save beneficiary: ${err.message || 'Unknown error'}`, 'error');
+    }
   };
 
   const handleClearAllBeneficiaries = () => {
@@ -920,6 +966,37 @@ export default function App() {
               settings={settings}
               isAdmin={isAdmin}
             />
+          )}
+
+          {activeTab === 'sms-logs' && (
+            isAdmin ? (
+              <SmsLogsTab
+                isAdmin={isAdmin}
+                settings={settings}
+                onSaveSettings={(newSettings) => {
+                  saveDocToFirestore('settings', 'portalSettings', newSettings);
+                  setSettings(newSettings);
+                  showToast('SMS Hub settings saved successfully!');
+                }}
+              />
+            ) : (
+              <div className="glass-card p-8 text-center max-w-md mx-auto my-12 border-purple-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-xl">🔒</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-100 mb-1">Administrator Access Required</h3>
+                <p className="text-xs text-slate-400 mb-4">
+                  SMS delivery logs and gateway audit history are restricted to administrators.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setAdminLoginModalOpen(true)}
+                  className="glow-button px-4 py-2 rounded-xl text-xs font-bold"
+                >
+                  Admin Login
+                </button>
+              </div>
+            )
           )}
 
           {/* Global Footer (At end of content flow) */}
