@@ -384,16 +384,16 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                   </div>
                 )}
                 {smsDeliveryState.status === 'low_balance' && (
-                  <div className="p-3 rounded-xl text-xs bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1.5">
+                  <div className="p-3 rounded-xl text-xs bg-slate-800/60 border border-slate-700/60 text-slate-300 space-y-1">
                     <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="font-semibold text-amber-200">SMS Gateway Balance Notice</p>
-                        <p className="text-[11px] text-amber-300/90 leading-relaxed">
-                          SMS receipt could not be delivered to <span className="font-mono font-bold text-white">{submittedDonation['Contact No']}</span> because the Veevo Tech SMS account balance is <strong>exhausted (LOW_BALANCE)</strong>.
+                      <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-slate-200">SMS Notification Notice</p>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                          SMS receipt to <span className="font-mono text-slate-200">{submittedDonation['Contact No']}</span> could not be dispatched: gateway reported balance allocation required for this service.
                         </p>
-                        <p className="text-[10px] text-amber-400/80">
-                          Your donation proof was recorded safely! Administration must recharge SMS credits at <a href="https://oneid.veevotech.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-amber-200 hover:text-white">oneid.veevotech.com</a> for automatic SMS dispatch.
+                        <p className="text-[10px] text-slate-500">
+                          Your donation proof was recorded safely. Please download your official pending receipt below.
                         </p>
                       </div>
                     </div>

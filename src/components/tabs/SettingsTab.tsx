@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings as SettingsIcon,
   Save,
@@ -18,6 +18,7 @@ import {
   HelpCircle,
   AlertTriangle,
   ExternalLink,
+  Info,
 } from 'lucide-react';
 import { PortalSettings } from '../../types';
 
@@ -34,6 +35,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const [formData, setFormData] = useState<PortalSettings>({ ...settings });
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Sync formData whenever settings prop updates from Firestore/Parent
+  useEffect(() => {
+    setFormData({ ...settings });
+  }, [settings]);
 
   // SMS Test state
   const [testPhone, setTestPhone] = useState('');
@@ -109,7 +115,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg sm:text-2xl font-bold dark:text-emerald-300 text-emerald-700 flex items-center gap-2">
             <SettingsIcon className="w-6 h-6 text-emerald-500" />
@@ -120,12 +126,27 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </p>
         </div>
 
-        {savedSuccess && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-semibold">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Changes Saved!</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {savedSuccess && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-semibold animate-pulse">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Changes Saved!</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onSaveSettings(formData);
+              setSavedSuccess(true);
+              setTimeout(() => setSavedSuccess(false), 3000);
+            }}
+            className="glow-button px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-lg"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Save Settings</span>
+          </button>
+        </div>
       </div>
 
       {/* Settings Form Card */}
@@ -348,47 +369,140 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {/* Automation Toggles */}
               <div className="p-4 rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-900/60 bg-slate-50/60 space-y-3">
-                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
-                  Automation Triggers
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+                    Automation Triggers
+                  </h4>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Tap to toggle ON / OFF
+                  </span>
+                </div>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.AutoSmsSubmission !== false}
-                    onChange={(e) =>
-                      setFormData({ ...formData, AutoSmsSubmission: e.target.checked })
+                {/* 1. Donation Submission SMS Trigger */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    const nextVal = !(formData.AutoSmsSubmission !== false);
+                    setFormData((prev) => ({ ...prev, AutoSmsSubmission: nextVal }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      const nextVal = !(formData.AutoSmsSubmission !== false);
+                      setFormData((prev) => ({ ...prev, AutoSmsSubmission: nextVal }));
                     }
-                    className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <div>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                      Send SMS upon Donation Submission
-                    </span>
+                  }}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 ${
+                    formData.AutoSmsSubmission !== false
+                      ? 'bg-emerald-500/10 border-emerald-500/40 shadow-sm'
+                      : 'bg-slate-800/40 border-slate-700/60 opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Send SMS upon Donation Submission
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          formData.AutoSmsSubmission !== false
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-slate-700 text-slate-400 border border-slate-600'
+                        }`}
+                      >
+                        {formData.AutoSmsSubmission !== false ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </div>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight block">
                       Immediately sends an SMS acknowledgment to the donor when donation proof is uploaded.
                     </span>
                   </div>
-                </label>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={formData.AutoSmsApproval !== false}
-                    onChange={(e) =>
-                      setFormData({ ...formData, AutoSmsApproval: e.target.checked })
+                  {/* iOS Style Switch Pill */}
+                  <div
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                      formData.AutoSmsSubmission !== false ? 'bg-emerald-500' : 'bg-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                        formData.AutoSmsSubmission !== false ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Admin Approval SMS Trigger */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    const nextVal = !(formData.AutoSmsApproval !== false);
+                    setFormData((prev) => ({ ...prev, AutoSmsApproval: nextVal }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      const nextVal = !(formData.AutoSmsApproval !== false);
+                      setFormData((prev) => ({ ...prev, AutoSmsApproval: nextVal }));
                     }
-                    className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <div>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block">
-                      Send SMS upon Admin Approval
-                    </span>
+                  }}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 ${
+                    formData.AutoSmsApproval !== false
+                      ? 'bg-emerald-500/10 border-emerald-500/40 shadow-sm'
+                      : 'bg-slate-800/40 border-slate-700/60 opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Send SMS upon Admin Approval
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                          formData.AutoSmsApproval !== false
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-slate-700 text-slate-400 border border-slate-600'
+                        }`}
+                      >
+                        {formData.AutoSmsApproval !== false ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </div>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight block">
                       Sends a verified confirmation SMS once the admin reviews and approves the donation into ledger.
                     </span>
                   </div>
-                </label>
+
+                  {/* iOS Style Switch Pill */}
+                  <div
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                      formData.AutoSmsApproval !== false ? 'bg-emerald-500' : 'bg-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                        formData.AutoSmsApproval !== false ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onSaveSettings(formData);
+                      setSavedSuccess(true);
+                      setTimeout(() => setSavedSuccess(false), 3000);
+                    }}
+                    className="px-3 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 shadow-sm transition-all"
+                  >
+                    <Save className="w-3 h-3" />
+                    <span>Save Trigger Preferences</span>
+                  </button>
+                </div>
               </div>
 
               {/* API Credentials */}
@@ -423,6 +537,24 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   />
                   <Phone className="field-icon text-purple-500 w-4 h-4" />
                   <label className="field-label">Masking / Sender ID (e.g. Default)</label>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300 space-y-1">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    <span>Veevo Tech Balance & Service Guide:</span>
+                  </p>
+                  <ul className="list-disc pl-4 space-y-0.5 text-[10.5px] opacity-90">
+                    <li>
+                      <strong>Service Allocation:</strong> In the Veevo Tech (OneID) portal, deposited funds often sit in <em>Main Wallet</em>. Allocate or assign funds to the <strong>SMS Service / CPaaS</strong>.
+                    </li>
+                    <li>
+                      <strong>Masking vs Default:</strong> If you purchased <em>Masked SMS</em> (branded with your org name, e.g. SWDO), replace <code className="font-mono bg-blue-500/20 px-1 rounded">Default</code> with your approved brand name above.
+                    </li>
+                    <li>
+                      <strong>API Key Match:</strong> Verify that the Hash above corresponds to the active account/project containing your SMS credits.
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
