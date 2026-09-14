@@ -27,6 +27,7 @@ import {
   Sparkles,
   Filter,
   CopyPlus,
+  Edit2,
   XCircle,
   Mail,
   Landmark,
@@ -311,6 +312,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       : 'Ali'
   );
   const [proofImage, setProofImage] = useState<string>('');
+  const [sendSms, setSendSms] = useState<boolean>(true);
   const [isProcessingProof, setIsProcessingProof] = useState(false);
   const formFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -360,6 +362,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
         : 'Ali'
     );
     setProofImage('');
+    setSendSms(true);
     setEditingId(null);
     if (onClearEdit) onClearEdit();
   };
@@ -392,6 +395,33 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleEditDonation = (e: React.MouseEvent, item: Donation) => {
+    e.stopPropagation();
+    setDate(item.Date);
+    setDonorName(item['Donor Name']);
+    setNicNo(item['NIC No'] || '');
+    const parsedContact = parsePhoneWithCountry(item['Contact No'] || '');
+    setCountryCode(parsedContact.countryCode);
+    setContactNo(parsedContact.number);
+    setDonorEmail(item.DonorEmail || '');
+    setAddress(item['Permanent Address'] || '');
+    setProfession(item.Profession || '');
+    setAmount(item.Amount.toString());
+    setTxId(item['Transaction ID'] || '');
+    setCategory(item.Category || 'Masajid Donations');
+    setRemarks(item.Remarks || '');
+    setStatus((item.Status as any) || 'Approved');
+    setApprovedBy(item.ApprovedBy || (
+      currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase()) 
+        ? currentUsername.charAt(0).toUpperCase() + currentUsername.slice(1) 
+        : 'Ali'
+    ));
+    setProofImage(item.ProofImage || '');
+    setEditingId(item.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleFormProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -412,18 +442,23 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
 
     const parsedAmount = parseFloat(amount.replace(/[^0-9.]/g, '')) || 0;
 
-    // Check for duplicate
+    // Check for duplicate (exclude current record if editing)
     const monthYear = date.slice(0, 7); // YYYY-MM
     const isDuplicate = donations.some(
       (d) =>
-        d['Donor Name'] === donorName.trim() &&
+        d.id !== editingId &&
+        d['Donor Name']?.trim().toLowerCase() === donorName.trim().toLowerCase() &&
         d.Amount === parsedAmount &&
-        d.Date.slice(0, 7) === monthYear
+        d.Date?.slice(0, 7) === monthYear
     );
 
     if (isDuplicate) {
-      alert('A donation for this donor with the same amount in the same month already exists.');
-      return;
+      const proceed = window.confirm(
+        'A donation for this donor with the same amount in the same month already exists. Do you want to proceed and save this record anyway?'
+      );
+      if (!proceed) {
+        return;
+      }
     }
 
     const newDonation: Donation = {
@@ -442,6 +477,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       EnteredBy: currentUsername || 'admin',
       Status: status,
       Source: 'Live',
+      SendSms: sendSms,
       ...(proofImage ? { ProofImage: proofImage } : {}),
       ...(status === 'Approved' ? {
         ApprovedBy: approvedBy || (currentUsername && !['admin', 'guest donator'].includes(currentUsername.toLowerCase())
@@ -1256,6 +1292,30 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               <label className="field-label">Payment Screenshot (Optional)</label>
             </div>
 
+            {/* Automated SMS Dispatch Option */}
+            <div className="md:col-span-2 lg:col-span-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div>
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 block">
+                    Automated SMS Notification (Veevo Tech Gateway)
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                    Automatically dispatch an official SMS receipt to the donor's mobile number
+                  </span>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sendSms}
+                  onChange={(e) => setSendSms(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-400 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Send SMS to Donor</span>
+              </label>
+            </div>
+
             {/* Actions */}
             <div className="md:col-span-2 lg:col-span-3 flex items-center justify-end gap-3 pt-2">
               <button
@@ -1920,6 +1980,8 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                           )}
                         </td>
 
+
+
                         {/* Proof Thumbnail - Admin Only */}
                         {isAdmin && (
                           <td className="py-3 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -1943,13 +2005,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                             )}
                           </td>
                         )}
-
                         {/* Contact No - Admin Only */}
                         {isAdmin && (
                           <td className="py-3 px-3 text-center align-middle">
                             {renderContact(d['Contact No'])}
                           </td>
                         )}
+
 
                         <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {formatPKR(d.Amount)}
@@ -1991,9 +2053,18 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
 
                               <button
                                 type="button"
+                                onClick={(e) => handleEditDonation(e, d)}
+                                title="Edit Donation Record"
+                                className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:text-blue-400 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={() => onSelectDonation(d)}
                                 title="View Details"
-                                className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors cursor-pointer"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </button>

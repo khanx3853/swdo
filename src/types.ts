@@ -28,6 +28,9 @@ export interface Donation {
   RejectionReason?: string;
   DonorEmail?: string;
   Source?: 'Audit' | 'Live';
+  SendSms?: boolean;
+  SmsSent?: boolean;
+  SmsMessageId?: string;
 }
 
 export interface Beneficiary {
@@ -90,6 +93,12 @@ export interface PortalSettings {
   'Account Title'?: string;
   Currency: string;
   TreasurerSignature?: string;
+  AutoSmsSubmission?: boolean;
+  AutoSmsApproval?: boolean;
+  VeevoSmsHash?: string;
+  VeevoSenderNum?: string;
+  SmsSubmissionTemplate?: string;
+  SmsApprovalTemplate?: string;
 }
 
 export interface ToastMessage {

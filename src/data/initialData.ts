@@ -11226,6 +11226,12 @@ export const INITIAL_SETTINGS: PortalSettings = {
   "Bank Account No": "00300110485989",
   "Account Title": "ALI BAHADUR",
   "Currency": "PKR",
-  "TreasurerSignature": ""
+  "TreasurerSignature": "",
+  "AutoSmsSubmission": true,
+  "AutoSmsApproval": true,
+  "VeevoSmsHash": "d9eb3e26f4532bcbbca611804241635a",
+  "VeevoSenderNum": "Default",
+  "SmsSubmissionTemplate": "Dear {donor}, thank you for your donation of Rs. {amount} to Shangla Welfare & Development Org (REG# 5514). Trx ID: {txn}. Your contribution has been received for verification. May Allah reward you!",
+  "SmsApprovalTemplate": "Dear {donor}, your donation of Rs. {amount} (Trx ID: {txn}) has been verified & approved by Shangla Welfare & Development Org. Thank you for your support!"
 };
 

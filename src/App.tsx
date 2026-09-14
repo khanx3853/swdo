@@ -81,7 +81,17 @@ export default function App() {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(INITIAL_BENEFICIARIES);
   const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
   const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
-  const [settings, setSettings] = useState<PortalSettings>(INITIAL_SETTINGS);
+  const [settings, setSettings] = useState<PortalSettings>(() => {
+    try {
+      const saved = localStorage.getItem('alkhair_settings');
+      if (saved) {
+        return { ...INITIAL_SETTINGS, ...JSON.parse(saved) };
+      }
+    } catch {
+      // ignore
+    }
+    return INITIAL_SETTINGS;
+  });
   const [quotaExceeded, setQuotaExceeded] = useState(isQuotaExceeded());
   const [dbStatus, setDbStatus] = useState<{ ok: boolean; error?: string } | undefined>();
 
@@ -173,11 +183,30 @@ export default function App() {
             needsUpdate = true;
           }
 
+          const savedLocal = (() => {
+            try {
+              const s = localStorage.getItem('alkhair_settings');
+              return s ? JSON.parse(s) : null;
+            } catch { return null; }
+          })();
+
+          const fullUpdated: PortalSettings = {
+            ...INITIAL_SETTINGS,
+            ...(savedLocal || {}),
+            ...updated,
+            AutoSmsSubmission: savedLocal?.AutoSmsSubmission ?? INITIAL_SETTINGS.AutoSmsSubmission,
+            AutoSmsApproval: savedLocal?.AutoSmsApproval ?? INITIAL_SETTINGS.AutoSmsApproval,
+            VeevoSmsHash: savedLocal?.VeevoSmsHash || INITIAL_SETTINGS.VeevoSmsHash,
+            VeevoSenderNum: savedLocal?.VeevoSenderNum || INITIAL_SETTINGS.VeevoSenderNum,
+            SmsSubmissionTemplate: savedLocal?.SmsSubmissionTemplate || INITIAL_SETTINGS.SmsSubmissionTemplate,
+            SmsApprovalTemplate: savedLocal?.SmsApprovalTemplate || INITIAL_SETTINGS.SmsApprovalTemplate,
+          };
+
           if (needsUpdate) {
-            setSettings(updated);
-            saveDocToFirestore('settings', 'portalSettings', updated);
+            setSettings(fullUpdated);
+            saveDocToFirestore('settings', 'portalSettings', fullUpdated);
           } else {
-            setSettings(data);
+            setSettings(fullUpdated);
           }
         }
       },
@@ -358,14 +387,28 @@ export default function App() {
     try {
       await saveToFirestore('donations', donation);
       
-      // Trigger background email notification for newly created Live donations awaiting approval
-      // This ensures admins are notified of public submissions without being spammed during bulk imports
-      if (donation.Source === 'Live' && donation.Status === 'Pending') {
-        fetch('/api/notify-donation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(donation),
-        }).catch((err) => console.error('Error dispatching notification email:', err));
+      // Trigger background email & SMS notification for newly created donations
+      const shouldSendSms = donation.SendSms !== false && (settings?.AutoSmsSubmission !== false);
+      const isPublicSubmission = donation.Source === 'Live' && donation.Status === 'Pending';
+      
+      let notifResult: any = null;
+      if (isPublicSubmission || shouldSendSms) {
+        try {
+          const res = await fetch('/api/notify-donation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...donation,
+              SendSms: shouldSendSms,
+              VeevoSmsHash: settings?.VeevoSmsHash,
+              VeevoSenderNum: settings?.VeevoSenderNum,
+              SmsSubmissionTemplate: settings?.SmsSubmissionTemplate,
+            }),
+          });
+          notifResult = await res.json().catch(() => null);
+        } catch (err) {
+          console.warn('Error dispatching notification email/sms:', err);
+        }
       }
 
       if (donation.Status === 'Pending') {
@@ -373,6 +416,8 @@ export default function App() {
       } else {
         showToast(`Donation from ${donation['Donor Name']} saved!`, 'success');
       }
+
+      return { success: true, notifResult };
     } catch (err: any) {
       console.error('Save error:', err);
       showToast(`Failed to save donation: ${err.message || 'Unknown error'}`, 'error');
@@ -410,12 +455,22 @@ export default function App() {
         // Save to Firestore directly
         await saveToFirestore('donations', updated);
 
-        // Trigger email notification for status change to Approved
+        // Trigger email & automated SMS notification for status change to Approved
+        const shouldSendApprovalSms = updated.SendSms !== false && (settings?.AutoSmsApproval !== false);
         fetch('/api/notify-donor-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ donation: updated, status: 'Approved' }),
-        }).catch((e) => console.error('Failed to trigger approval email:', e));
+          body: JSON.stringify({
+            donation: {
+              ...updated,
+              SendSms: shouldSendApprovalSms,
+              VeevoSmsHash: settings?.VeevoSmsHash,
+              VeevoSenderNum: settings?.VeevoSenderNum,
+              SmsApprovalTemplate: settings?.SmsApprovalTemplate,
+            },
+            status: 'Approved'
+          }),
+        }).catch((e) => console.error('Failed to trigger approval email/sms:', e));
         
         showToast(
           `Approved donation of Rs. ${item.Amount} from ${item['Donor Name']} (Approved by ${formattedApprover}).`,

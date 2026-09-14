@@ -73,16 +73,64 @@ function handleDbError(err: any, context: string) {
   }
 }
 
+// Known table columns in Supabase PostgreSQL schema to prevent PGRST204 errors
+const TABLE_COLUMNS: Record<string, string[]> = {
+  donations: [
+    'id', 'Date', 'Donor Name', 'NIC No', 'Contact No', 'Permanent Address',
+    'Profession', 'Amount', 'Transaction ID', 'Remarks', 'EnteredBy',
+    'Category', 'ProofImage', 'Status', 'SubmittedAt', 'ApprovedBy',
+    'ApprovedAt', 'RejectionReason', 'DonorEmail'
+  ],
+  settings: [
+    'id', 'Foundation Name', 'SubTitle', 'Address', 'Chairperson',
+    'Secretary', 'Treasurer', 'Easypaisa No', 'Easypaisa Title',
+    'Bank No', 'Bank Title', 'Bank Account No', 'Account Title',
+    'Currency', 'TreasurerSignature'
+  ],
+  beneficiaries: [
+    'id', 'Date', 'Beneficiary Name', 'Father Name', 'NIC No',
+    'Contact No', 'Permanent Address', 'Profession', 'Purpose',
+    'Amount', 'Transaction ID', 'Remarks', 'VerifiedBy', 'Status'
+  ],
+  members: [
+    'id', 'Name', 'Father Name', 'Designation', 'N.I.C No',
+    'Address', 'Contact No', 'Joining Date', 'Expiry Date',
+    'Remarks', 'NICImage', 'NICImageBack'
+  ],
+  users: [
+    'id', 'username', 'password', 'Rights', 'Access', 'Theme'
+  ],
+  gallery_pictures: [
+    'id', 'url', 'caption', 'createdAt'
+  ],
+  gallery_videos: [
+    'id', 'url', 'caption', 'createdAt'
+  ]
+};
+
 // Helper function to strip all undefined values and client-side only fields before sending to DB
-export function sanitizeForDb<T>(data: T): T {
+export function sanitizeForDb<T>(data: T, collectionName?: string): T {
   if (data === null || data === undefined) {
     return data;
   }
   try {
-    const sanitized = JSON.parse(JSON.stringify(data));
+    let sanitized = JSON.parse(JSON.stringify(data));
     
     // List of fields to exclude from database persistence (client-side only or schema-missing)
-    const excludeFields = ['isLiveAdded', 'Source', 'ProofLink'];
+    const excludeFields = [
+      'isLiveAdded',
+      'Source',
+      'ProofLink',
+      'SendSms',
+      'SmsSent',
+      'SmsMessageId',
+      'AutoSmsSubmission',
+      'AutoSmsApproval',
+      'VeevoSmsHash',
+      'VeevoSenderNum',
+      'SmsSubmissionTemplate',
+      'SmsApprovalTemplate'
+    ];
     
     // Pack ProofLink into Remarks so we don't lose it
     if (typeof sanitized === 'object' && sanitized !== null && 'ProofLink' in sanitized && sanitized.ProofLink) {
@@ -95,6 +143,18 @@ export function sanitizeForDb<T>(data: T): T {
           delete sanitized[field];
         }
       });
+
+      // If this collection has a known column schema, keep ONLY the recognized columns
+      if (collectionName && TABLE_COLUMNS[collectionName]) {
+        const allowedColumns = new Set(TABLE_COLUMNS[collectionName]);
+        const filtered: any = {};
+        for (const key of Object.keys(sanitized)) {
+          if (allowedColumns.has(key)) {
+            filtered[key] = sanitized[key];
+          }
+        }
+        sanitized = filtered;
+      }
     }
     
     // Check for massive fields that might cause "Load failed" (Payload Too Large)
@@ -117,7 +177,7 @@ export async function saveBulkToFirestore<T extends { id: string }>(
   items: T[]
 ) {
   try {
-    const sanitized = items.map(item => sanitizeForDb(item));
+    const sanitized = items.map(item => sanitizeForDb(item, collectionName));
     
     await withRetry(
       () => supabase.from(collectionName).upsert(sanitized) as any,
@@ -244,7 +304,7 @@ export async function saveToFirestore<T extends { id: string }>(
   item: T
 ) {
   try {
-    const sanitized = sanitizeForDb(item);
+    const sanitized = sanitizeForDb(item, collectionName);
     await withRetry(
       () => supabase.from(collectionName).upsert(sanitized) as any,
       2,
@@ -270,7 +330,7 @@ export async function deleteFromFirestore(collectionName: string, id: string) {
 
 export async function addDocToFirestore(collectionName: string, data: any) {
   try {
-    const sanitized = sanitizeForDb(data);
+    const sanitized = sanitizeForDb(data, collectionName);
     const result = await withRetry(
       () => supabase.from(collectionName).insert(sanitized).select().single() as any,
       2,
@@ -290,7 +350,7 @@ export async function saveDocToFirestore<T>(
   data: T
 ) {
   try {
-    const sanitized = sanitizeForDb(data);
+    const sanitized = sanitizeForDb(data, collectionName);
     // Ensure id matches docId for the upsert
     const payload = { ...sanitized, id: docId };
     await withRetry(

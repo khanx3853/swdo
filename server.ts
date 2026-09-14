@@ -85,19 +85,175 @@ async function startServer() {
     return { transporter: pooledTransporter, smtpUser, adminEmail };
   }
 
+  // Helper to format phone number for Veevo Tech SMS API (e.g. +923001234567)
+  function formatPhoneNumberForSms(phone: string): string | null {
+    if (!phone) return null;
+    let cleaned = phone.trim().replace(/[\s\-\(\)\.,]/g, '');
+    if (!cleaned || cleaned.includes('@')) return null;
 
-  // API route to send email notification to admin when new donation is submitted
-    app.post("/api/notify-donation", async (req, res) => {
-      const donation = req.body;
-      const origin = req.headers.origin || req.headers.referer || "";
-      const baseUrl = process.env.APP_URL || (origin.endsWith('/') ? origin.slice(0, -1) : origin) || "https://ais-dev-oeeigrz5owddw4vhrihztj-539654624355.asia-southeast1.run.app";
-      
-      console.log("⚡ High-speed donation notification triggered:", donation['Donor Name']);
+    // 03XXXXXXXXX -> +923XXXXXXXXX
+    if (/^03\d{9}$/.test(cleaned)) {
+      return '+92' + cleaned.substring(1);
+    }
+    // 3XXXXXXXXX -> +923XXXXXXXXX
+    if (/^3\d{9}$/.test(cleaned)) {
+      return '+92' + cleaned;
+    }
+    // 923XXXXXXXXX without + -> +923XXXXXXXXX
+    if (/^923\d{9}$/.test(cleaned)) {
+      return '+' + cleaned;
+    }
+    // 0092... -> +92...
+    if (cleaned.startsWith('00')) {
+      return '+' + cleaned.substring(2);
+    }
+    // Already starting with +
+    if (cleaned.startsWith('+')) {
+      const digitsOnly = cleaned.substring(1).replace(/\D/g, '');
+      if (digitsOnly.length >= 10) return '+' + digitsOnly;
+    }
+    const digitsOnly = cleaned.replace(/\D/g, '');
+    if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
+      return '+92' + digitsOnly.substring(1);
+    }
+    if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
+      return '+' + digitsOnly;
+    }
+    return null;
+  }
 
-    // Send instant HTTP response to client so UI remains blazingly fast
-    res.json({ success: true, status: "queued" });
+  // Veevo Tech SMS Dispatcher (oneid.veevotech.com / api.veevotech.com)
+  async function sendVeevoSms(options: {
+    to: string;
+    message: string;
+    hash?: string;
+    senderNum?: string;
+  }) {
+    const hash = options.hash || process.env.VEEVOTECH_SMS_HASH || "d9eb3e26f4532bcbbca611804241635a";
+    const senderNum = options.senderNum || process.env.VEEVOTECH_SENDER_NUM || "Default";
+    const formattedNum = formatPhoneNumberForSms(options.to);
 
-    // Asynchronously dispatch email in background via pooled connection
+    if (!formattedNum) {
+      console.warn("⚠️ [VeevoTech SMS] Skipped: Invalid or missing phone number:", options.to);
+      return { success: false, error: "Invalid phone number format" };
+    }
+
+    try {
+      const url = new URL("https://api.veevotech.com/v3/sendsms");
+      url.searchParams.set("hash", hash);
+      url.searchParams.set("receivernum", formattedNum);
+      url.searchParams.set("receivernetwork", "Receiver_Network");
+      url.searchParams.set("textmessage", options.message);
+      url.searchParams.set("sendernum", senderNum);
+
+      console.log(`📱 [VeevoTech SMS] Dispatching to ${formattedNum}...`);
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+
+      const data: any = await response.json().catch(async () => {
+        const text = await response.text();
+        return { raw: text };
+      });
+
+      if (data && data.STATUS === "SUCCESSFUL") {
+        console.log(`✅ [VeevoTech SMS] Delivered to ${formattedNum}. MsgID: ${data.MESSAGE_ID}, Charged: ${data.CHARGED_BALANCE}`);
+        return { success: true, messageId: data.MESSAGE_ID, charged: data.CHARGED_BALANCE, data };
+      } else {
+        const isLowBalance = data?.ERROR_FILTER === "LOW_BALANCE" || data?.ERROR_CODE === "TAPI-149730721";
+        const errorDesc = isLowBalance
+          ? "Veevo Tech account balance exhausted (LOW_BALANCE). Please recharge credits at oneid.veevotech.com to resume SMS dispatches."
+          : (data?.ERROR_DESCRIPTION || data?.ERROR_FILTER || "SMS transmission failed");
+
+        if (isLowBalance) {
+          console.warn(`⚠️ [VeevoTech SMS] Gateway low balance notice for ${formattedNum}: Recharge required at oneid.veevotech.com`);
+        } else {
+          console.warn(`⚠️ [VeevoTech SMS] Gateway status for ${formattedNum}: ${errorDesc}`);
+        }
+
+        return {
+          success: false,
+          lowBalance: isLowBalance,
+          error: errorDesc,
+          data
+        };
+      }
+    } catch (err: any) {
+      console.warn(`⚠️ [VeevoTech SMS] Network/API exception for ${formattedNum}:`, err.message || err);
+      return { success: false, error: err.message || "Failed to reach Veevo Tech gateway" };
+    }
+  }
+
+  // Helper to ensure clean single-part GSM SMS text
+  function sanitizeForGsmSms(text: string): string {
+    if (!text) return "";
+    return text
+      // Replace Arabic / Urdu characters that force 70-char UCS-2 multi-part
+      .replace(/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g, '')
+      .replace(/[()]/g, '')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // API route to send email and automated SMS when new donation is submitted
+  app.post("/api/notify-donation", async (req, res) => {
+    const donation = req.body;
+    const origin = req.headers.origin || req.headers.referer || "";
+    const baseUrl = process.env.APP_URL || (origin.endsWith('/') ? origin.slice(0, -1) : origin) || "https://ais-dev-oeeigrz5owddw4vhrihztj-539654624355.asia-southeast1.run.app";
+    
+    console.log("⚡ High-speed donation notification triggered:", donation['Donor Name']);
+
+    let smsResult: any = null;
+
+    // 1. Automated SMS dispatch to donor via Veevo Tech
+    if (donation['Contact No'] && donation.SendSms !== false) {
+      try {
+        const rawName = (donation['Donor Name'] || 'Contributor').trim();
+        const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
+        const amount = Number(donation.Amount || 0).toLocaleString();
+        const txn = donation['Transaction ID'] || 'N/A';
+        const org = "SWDO Welfare (Reg# 5514)";
+
+        let smsBody = donation.SmsSubmissionTemplate ||
+          `Dear {donor}, thank you for donating Rs. {amount} to {org}. Trx: {txn}. Received for verification. May Allah reward you!`;
+
+        smsBody = smsBody
+          .replace(/\{donor\}/gi, donorName)
+          .replace(/\{amount\}/gi, amount)
+          .replace(/\{txn\}/gi, txn)
+          .replace(/\{org\}/gi, org);
+
+        smsBody = sanitizeForGsmSms(smsBody);
+
+        smsResult = await sendVeevoSms({
+          to: donation['Contact No'],
+          message: smsBody,
+          hash: donation.VeevoSmsHash,
+          senderNum: donation.VeevoSenderNum,
+        });
+      } catch (smsErr) {
+        console.warn("⚠️ Error in automatic SMS dispatch:", smsErr);
+        smsResult = { success: false, error: (smsErr as any).message || "SMS failed" };
+      }
+    }
+
+    // Send instant response with accurate SMS dispatch status
+    res.json({
+      success: true,
+      status: "processed",
+      sms: smsResult ? {
+        sent: smsResult.success,
+        lowBalance: !!smsResult.lowBalance,
+        error: smsResult.error,
+        messageId: smsResult.messageId
+      } : null
+    });
+
+    // 2. Email dispatch via pooled SMTP connection in background (non-blocking)
     (async () => {
       try {
         const result = await getSmtpTransporter();
@@ -423,10 +579,96 @@ async function startServer() {
           console.log(`✅ Status update email sent for ${status} to ${recipients.join(', ')}`);
         }
 
+        // Send automated SMS to donor upon approval
+        if (isApproved && donation['Contact No'] && donation.SendSms !== false) {
+          try {
+            const rawName = (donation['Donor Name'] || 'Contributor').trim();
+            const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
+            const amount = Number(donation.Amount || 0).toLocaleString();
+            const txn = donation['Transaction ID'] || 'N/A';
+            const org = "SWDO Welfare (Reg# 5514)";
+
+            let approvalSms = donation.SmsApprovalTemplate ||
+              `Dear {donor}, your donation of Rs. {amount} (Trx: {txn}) has been verified & approved by {org}. May Allah reward you!`;
+
+            approvalSms = approvalSms
+              .replace(/\{donor\}/gi, donorName)
+              .replace(/\{amount\}/gi, amount)
+              .replace(/\{txn\}/gi, txn)
+              .replace(/\{org\}/gi, org);
+
+            approvalSms = sanitizeForGsmSms(approvalSms);
+
+            await sendVeevoSms({
+              to: donation['Contact No'],
+              message: approvalSms,
+              hash: donation.VeevoSmsHash,
+              senderNum: donation.VeevoSenderNum,
+            });
+          } catch (smsErr) {
+            console.warn("⚠️ Error sending status update SMS:", smsErr);
+          }
+        }
+
       } catch (err) {
-        console.error("❌ High-speed status update dispatch error:", err);
+        console.warn("⚠️ Status update notification dispatch notice:", err);
       }
     })();
+  });
+
+  // Dedicated API endpoint to send SMS via Veevo Tech
+  app.post("/api/send-sms", async (req, res) => {
+    const { to, message, hash, senderNum } = req.body;
+    if (!to || !message) {
+      return res.status(400).json({ success: false, error: "Recipient phone number ('to') and 'message' are required" });
+    }
+
+    const result = await sendVeevoSms({ to, message, hash, senderNum });
+    if (result.success) {
+      res.json({ success: true, messageId: result.messageId, charged: result.charged });
+    } else {
+      res.json({
+        success: false,
+        lowBalance: !!result.lowBalance,
+        error: result.error,
+        data: result.data
+      });
+    }
+  });
+
+  // Test SMS route e.g. /api/test-sms?to=+923001234567
+  app.get("/api/test-sms", async (req, res) => {
+    const targetPhone = (req.query.to as string) || "";
+    if (!targetPhone) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Missing required query parameter: 'to' (e.g. /api/test-sms?to=+923001234567 or 0347xxxxxxx)" 
+      });
+    }
+
+    const testMessage = `SWDO Welfare Portal: Veevo Tech SMS Gateway test successful! Time: ${new Date().toLocaleTimeString('en-US', { hour12: true })}`;
+    const result = await sendVeevoSms({
+      to: targetPhone,
+      message: testMessage,
+      hash: req.query.hash as string,
+      senderNum: req.query.sender as string
+    });
+
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        message: `Test SMS delivered to ${targetPhone} successfully!`, 
+        messageId: result.messageId,
+        charged: result.charged 
+      });
+    } else {
+      res.json({
+        success: false,
+        lowBalance: !!result.lowBalance,
+        error: result.error,
+        data: result.data
+      });
+    }
   });
 
   // Test email route supporting target address query parameter e.g. /api/test-email?to=user@email.com

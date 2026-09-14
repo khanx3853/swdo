@@ -19,6 +19,7 @@ import {
   Trash2,
   ShieldCheck,
   CopyPlus,
+  Edit2,
   UploadCloud,
   HeartPulse,
   FileDown,
@@ -309,6 +310,27 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
     setTxId(`BEN-${Math.floor(1000 + Math.random() * 9000)}`);
     setRemarks(item.Remarks || '');
     setEditingId(null);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditBeneficiary = (e: React.MouseEvent, item: Beneficiary) => {
+    e.stopPropagation();
+    setDate(item.Date);
+    setName(item['Beneficiary Name']);
+    setFatherName(item['Father Name'] || '');
+    setNicNo(item['NIC No'] || '');
+    const parsedContact = parsePhoneWithCountry(item['Contact No'] || '');
+    setCountryCode(parsedContact.countryCode);
+    setContactNo(parsedContact.number);
+    setAddress(item['Permanent Address'] || '');
+    setProfession(item.Profession || '');
+    setPurpose(item.Purpose || 'Medical Relief & Surgery Support');
+    setAmount(item.Amount.toString());
+    setTxId(item['Transaction ID'] || '');
+    setRemarks(item.Remarks || '');
+    setProofLink(item.ProofLink || '');
+    setEditingId(item.id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1156,8 +1178,9 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
                   <th className="py-3 px-3 font-semibold hidden md:table-cell">Father Name</th>
                   <th className="py-3 px-3 font-semibold hidden lg:table-cell">NIC No</th>
                   <th className="py-3 px-3 font-semibold">Relief Purpose</th>
-                  {isAdmin && <th className="py-3 px-3 font-semibold text-center">Contact</th>}<th className="py-3 px-3 font-semibold text-right">Aid Amount</th>
                   <th className="py-3 px-3 font-semibold text-center">Proof</th>
+                  {isAdmin && <th className="py-3 px-3 font-semibold text-center">Contact</th>}
+                  <th className="py-3 px-3 font-semibold text-right">Aid Amount</th>
                   <th className="py-3 px-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
@@ -1209,20 +1232,6 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
                           {b.Purpose}
                         </span>
                       </td>
-                      {isAdmin && (
-                        <td className="py-3 px-3 text-center align-middle">
-                          {renderContact(b['Contact No'])}
-                        </td>
-                      )}
-                      <td className="py-3 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                        {((b.Purpose || '').toLowerCase().includes('wheelchair') || (b.Remarks || '').toLowerCase().includes('wheelchair') || (b.Purpose || '').toLowerCase().includes('disabled')) ? (
-                          <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            {getWheelchairCountText(b)}
-                          </span>
-                        ) : (
-                          formatPKR(b.Amount)
-                        )}
-                      </td>
                       <td className="py-3 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         {b.ProofLink ? (
                           <button
@@ -1240,6 +1249,20 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
                           </button>
                         ) : (
                           <span className="text-slate-500 text-xs">-</span>
+                        )}
+                      </td>
+                      {isAdmin && (
+                        <td className="py-3 px-3 text-center align-middle">
+                          {renderContact(b['Contact No'])}
+                        </td>
+                      )}
+                      <td className="py-3 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                        {((b.Purpose || '').toLowerCase().includes('wheelchair') || (b.Remarks || '').toLowerCase().includes('wheelchair') || (b.Purpose || '').toLowerCase().includes('disabled')) ? (
+                          <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            {getWheelchairCountText(b)}
+                          </span>
+                        ) : (
+                          formatPKR(b.Amount)
                         )}
                       </td>
                       <td
@@ -1276,11 +1299,21 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
                               <CopyPlus className="w-3.5 h-3.5" />
                             </button>
                           )}
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleEditBeneficiary(e, b)}
+                              title="Edit Beneficiary Record"
+                              className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => onSelectBeneficiary(b)}
                             title="View Details"
-                            className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                            className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>

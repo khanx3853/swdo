@@ -23,6 +23,9 @@ import {
   Clock,
   CheckCircle2,
   Maximize2,
+  MessageSquare,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Donation, PortalSettings } from '../../types';
 import { formatPKR } from '../../utils/formatters';
@@ -34,7 +37,7 @@ interface DonateModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings?: PortalSettings;
-  onSaveDonation?: (donation: Donation) => void;
+  onSaveDonation?: (donation: Donation) => Promise<any> | any;
   currentUsername?: string;
   onExportReceipt?: (donation: Donation) => void;
 }
@@ -60,6 +63,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState('');
   const [txnId, setTxnId] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [receiveSms, setReceiveSms] = useState(true);
   
   // Payment Proof Screenshot state (Required)
   const [paymentMethodError, setPaymentMethodError] = useState<string>('');
@@ -73,6 +77,10 @@ export const DonateModal: React.FC<DonateModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [submittedDonation, setSubmittedDonation] = useState<Donation | null>(null);
+  const [smsDeliveryState, setSmsDeliveryState] = useState<{
+    status: 'idle' | 'sending' | 'sent' | 'low_balance' | 'failed';
+    message?: string;
+  }>({ status: 'idle' });
 
   if (!isOpen) return null;
 
@@ -187,10 +195,47 @@ export const DonateModal: React.FC<DonateModalProps> = ({
       Status: 'Pending',
       SubmittedAt: new Date().toISOString(),
       Source: 'Live',
+      SendSms: receiveSms,
     } as any;
 
     if (onSaveDonation) {
-      onSaveDonation(newDonation);
+      if (receiveSms && newDonation['Contact No']) {
+        setSmsDeliveryState({
+          status: 'sending',
+          message: `Dispatching automated SMS receipt to ${newDonation['Contact No']}...`,
+        });
+      } else {
+        setSmsDeliveryState({ status: 'idle' });
+      }
+
+      const resultPromise = onSaveDonation(newDonation);
+      if (resultPromise && typeof resultPromise.then === 'function') {
+        resultPromise
+          .then((res: any) => {
+            const sms = res?.notifResult?.sms;
+            if (sms) {
+              if (sms.sent) {
+                setSmsDeliveryState({
+                  status: 'sent',
+                  message: `Automated SMS receipt delivered to ${newDonation['Contact No']}`,
+                });
+              } else if (sms.lowBalance) {
+                setSmsDeliveryState({
+                  status: 'low_balance',
+                  message: 'Veevo Tech SMS gateway account has 0 balance (LOW_BALANCE). Please recharge credits at oneid.veevotech.com to send automatic SMS.',
+                });
+              } else {
+                setSmsDeliveryState({
+                  status: 'failed',
+                  message: sms.error || 'SMS gateway did not dispatch the message.',
+                });
+              }
+            }
+          })
+          .catch((err: any) => {
+            console.warn('SMS dispatch notification check error:', err);
+          });
+      }
     }
 
     // Play subtle notification chime for immediate audio feedback
@@ -201,6 +246,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
 
   const handleResetModal = () => {
     setSubmittedDonation(null);
+    setSmsDeliveryState({ status: 'idle' });
     setAmount('');
     setDonorName('');
     setDonorEmail('');
@@ -322,6 +368,51 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                 <span className="text-slate-300 truncate max-w-[200px]">{submittedDonation.Remarks}</span>
               </div>
             </div>
+
+            {submittedDonation['Contact No'] && receiveSms && (
+              <div className="mb-3.5 text-left">
+                {smsDeliveryState.status === 'sending' && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-blue-400 bg-blue-500/10 py-2.5 px-3 rounded-xl border border-blue-500/20">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400 shrink-0" />
+                    <span>Dispatching automated SMS receipt to <strong className="font-mono text-blue-300">{submittedDonation['Contact No']}</strong>...</span>
+                  </div>
+                )}
+                {smsDeliveryState.status === 'sent' && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 py-2.5 px-3 rounded-xl border border-emerald-500/20">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Automated SMS receipt dispatched to <strong className="font-mono text-emerald-300">{submittedDonation['Contact No']}</strong></span>
+                  </div>
+                )}
+                {smsDeliveryState.status === 'low_balance' && (
+                  <div className="p-3 rounded-xl text-xs bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-amber-200">SMS Gateway Balance Notice</p>
+                        <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                          SMS receipt could not be delivered to <span className="font-mono font-bold text-white">{submittedDonation['Contact No']}</span> because the Veevo Tech SMS account balance is <strong>exhausted (LOW_BALANCE)</strong>.
+                        </p>
+                        <p className="text-[10px] text-amber-400/80">
+                          Your donation proof was recorded safely! Administration must recharge SMS credits at <a href="https://oneid.veevotech.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-amber-200 hover:text-white">oneid.veevotech.com</a> for automatic SMS dispatch.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {smsDeliveryState.status === 'failed' && (
+                  <div className="flex items-center gap-2 text-xs text-rose-400 bg-rose-500/10 py-2.5 px-3 rounded-xl border border-rose-500/20">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span>SMS Delivery Notice: {smsDeliveryState.message}</span>
+                  </div>
+                )}
+                {smsDeliveryState.status === 'idle' && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-800/40 py-2 px-3 rounded-xl border border-slate-700/50">
+                    <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>SMS receipt queued for <strong className="font-mono text-slate-300">{submittedDonation['Contact No']}</strong></span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-2.5">
               {onExportReceipt && (
@@ -670,6 +761,32 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                     placeholder="e.g. donor@example.com"
                     className="w-full py-2 px-3 rounded-xl bg-slate-900/80 border border-purple-900/50 text-white text-xs focus:border-emerald-500 focus:outline-none"
                   />
+                </div>
+
+                {/* Instant SMS Receipt Option */}
+                <div className="bg-slate-900/70 border border-purple-900/40 rounded-xl p-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-slate-200 block">
+                        Instant SMS Receipt
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">
+                        Receive instant SMS confirmation & reference ID on your mobile
+                      </span>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={receiveSms}
+                      onChange={(e) => setReceiveSms(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
                 </div>
 
                 {/* Purpose and Payment Method */}
