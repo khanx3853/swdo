@@ -85,6 +85,7 @@ async function startServer() {
     return { transporter: pooledTransporter, smtpUser, adminEmail };
   }
 
+
   // API route to send email notification to admin when new donation is submitted
     app.post("/api/notify-donation", async (req, res) => {
       const donation = req.body;
@@ -264,6 +265,7 @@ async function startServer() {
           await transporter.sendMail(donorMailOptions);
           console.log(`✅ Donor confirmation email sent successfully to ${donorEmail}`);
         }
+
       } catch (err) {
         console.error("❌ High-speed admin notification dispatch error:", err);
       }
@@ -420,6 +422,7 @@ async function startServer() {
           });
           console.log(`✅ Status update email sent for ${status} to ${recipients.join(', ')}`);
         }
+
       } catch (err) {
         console.error("❌ High-speed status update dispatch error:", err);
       }

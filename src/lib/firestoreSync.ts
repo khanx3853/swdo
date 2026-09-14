@@ -82,7 +82,12 @@ export function sanitizeForDb<T>(data: T): T {
     const sanitized = JSON.parse(JSON.stringify(data));
     
     // List of fields to exclude from database persistence (client-side only or schema-missing)
-    const excludeFields = ['isLiveAdded', 'Source'];
+    const excludeFields = ['isLiveAdded', 'Source', 'ProofLink'];
+    
+    // Pack ProofLink into Remarks so we don't lose it
+    if (typeof sanitized === 'object' && sanitized !== null && 'ProofLink' in sanitized && sanitized.ProofLink) {
+      sanitized.Remarks = (sanitized.Remarks || '') + ' | PROOF: ' + sanitized.ProofLink;
+    }
     
     if (typeof sanitized === 'object' && sanitized !== null) {
       excludeFields.forEach(field => {

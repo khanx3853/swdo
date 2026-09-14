@@ -44,6 +44,7 @@ export interface Beneficiary {
   'Transaction ID': string;
   Remarks: string;
   VerifiedBy?: string;
+  ProofLink?: string;
   Status?: 'Allotted' | 'Pending' | 'Verified';
   Source?: 'Audit' | 'Live';
 }
