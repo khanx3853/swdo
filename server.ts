@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -117,6 +118,472 @@ async function startServer() {
       supabaseConfigured: isSupabaseConfigured,
       timestamp: Date.now()
     });
+  });
+
+  // Generic persistent data store helper
+  function getStoredCollection(fileName: string, fallback: any[] = []): any[] {
+    try {
+      const filePath = path.join(process.cwd(), fileName);
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn(`Failed to read ${fileName}`, e);
+    }
+    return fallback;
+  }
+
+  function saveStoredCollection(fileName: string, data: any) {
+    try {
+      const filePath = path.join(process.cwd(), fileName);
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.warn(`Failed to write ${fileName}`, e);
+    }
+  }
+
+  // Donations APIs
+  app.get("/api/donations", async (req, res) => {
+    let list = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from("donations").select("*").order("Date", { ascending: false });
+        if (!error && data && data.length > 0) {
+          saveStoredCollection("donations_store.json", data);
+          return res.json({ success: true, data });
+        }
+      } catch (err) {
+        console.warn("Supabase fetch donations warning:", err);
+      }
+    }
+    return res.json({ success: true, data: list });
+  });
+
+  app.post("/api/save-donation", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) {
+        return res.status(400).json({ error: "Missing donation ID or data" });
+      }
+
+      let current = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
+      const idx = current.findIndex((d: any) => d.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      saveStoredCollection("donations_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("donations").upsert(item);
+        } catch (dbErr) {
+          console.warn("Supabase save donation warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      console.error("Save donation error:", err);
+      return res.status(500).json({ error: err.message || "Failed to save donation" });
+    }
+  });
+
+  app.post("/api/delete-donation", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+
+      let current = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
+      current = current.filter((d: any) => d.id !== id);
+      saveStoredCollection("donations_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("donations").delete().eq("id", id);
+        } catch (dbErr) {
+          console.warn("Supabase delete donation warning:", dbErr);
+        }
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to delete donation" });
+    }
+  });
+
+  app.post("/api/save-bulk-donations", async (req, res) => {
+    try {
+      const { items } = req.body;
+      if (!Array.isArray(items)) return res.status(400).json({ error: "Invalid items" });
+
+      let current = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
+      const itemMap = new Map(current.map((d: any) => [d.id, d]));
+      for (const item of items) {
+        if (item && item.id) itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+      }
+      const updated = Array.from(itemMap.values());
+      saveStoredCollection("donations_store.json", updated);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("donations").upsert(items);
+        } catch (dbErr) {
+          console.warn("Supabase bulk save donations warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, count: items.length });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to bulk save donations" });
+    }
+  });
+
+  // Beneficiaries APIs
+  app.get("/api/beneficiaries", async (req, res) => {
+    let list = getStoredCollection("beneficiaries_store.json", []);
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from("beneficiaries").select("*").order("Date", { ascending: false });
+        if (!error && data && data.length > 0) {
+          saveStoredCollection("beneficiaries_store.json", data);
+          return res.json({ success: true, data });
+        }
+      } catch (err) {
+        console.warn("Supabase fetch beneficiaries warning:", err);
+      }
+    }
+    return res.json({ success: true, data: list });
+  });
+
+  app.post("/api/save-beneficiary", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) {
+        return res.status(400).json({ error: "Missing beneficiary ID or data" });
+      }
+
+      let current = getStoredCollection("beneficiaries_store.json", []);
+      const idx = current.findIndex((b: any) => b.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      saveStoredCollection("beneficiaries_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("beneficiaries").upsert(item);
+        } catch (dbErr) {
+          console.warn("Supabase save beneficiary warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      console.error("Save beneficiary error:", err);
+      return res.status(500).json({ error: err.message || "Failed to save beneficiary" });
+    }
+  });
+
+  app.post("/api/delete-beneficiary", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+
+      let current = getStoredCollection("beneficiaries_store.json", []);
+      current = current.filter((b: any) => b.id !== id);
+      saveStoredCollection("beneficiaries_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("beneficiaries").delete().eq("id", id);
+        } catch (dbErr) {
+          console.warn("Supabase delete beneficiary warning:", dbErr);
+        }
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to delete beneficiary" });
+    }
+  });
+
+  app.post("/api/save-bulk-beneficiaries", async (req, res) => {
+    try {
+      const { items } = req.body;
+      if (!Array.isArray(items)) return res.status(400).json({ error: "Invalid items" });
+
+      let current = getStoredCollection("beneficiaries_store.json", []);
+      const itemMap = new Map(current.map((b: any) => [b.id, b]));
+      for (const item of items) {
+        if (item && item.id) itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+      }
+      const updated = Array.from(itemMap.values());
+      saveStoredCollection("beneficiaries_store.json", updated);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("beneficiaries").upsert(items);
+        } catch (dbErr) {
+          console.warn("Supabase bulk save beneficiaries warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, count: items.length });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to bulk save beneficiaries" });
+    }
+  });
+
+  // Members APIs
+  app.get("/api/members", async (req, res) => {
+    let list = getStoredCollection("members_store.json", []);
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from("members").select("*").order("Joining Date", { ascending: false });
+        if (!error && data && data.length > 0) {
+          saveStoredCollection("members_store.json", data);
+          return res.json({ success: true, data });
+        }
+      } catch (err) {
+        console.warn("Supabase fetch members warning:", err);
+      }
+    }
+    return res.json({ success: true, data: list });
+  });
+
+  app.post("/api/save-member", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) return res.status(400).json({ error: "Missing member ID" });
+
+      let current = getStoredCollection("members_store.json", []);
+      const idx = current.findIndex((m: any) => m.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      saveStoredCollection("members_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("members").upsert(item);
+        } catch (dbErr) {
+          console.warn("Supabase save member warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to save member" });
+    }
+  });
+
+  app.post("/api/delete-member", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+
+      let current = getStoredCollection("members_store.json", []);
+      current = current.filter((m: any) => m.id !== id);
+      saveStoredCollection("members_store.json", current);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("members").delete().eq("id", id);
+        } catch (dbErr) {
+          console.warn("Supabase delete member warning:", dbErr);
+        }
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to delete member" });
+    }
+  });
+
+  // Settings APIs
+  app.get("/api/settings", async (req, res) => {
+    let settingsData = getStoredCollection("settings_store.json", []);
+    const item = settingsData.find((s: any) => s.id === "portalSettings") || settingsData[0] || null;
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from("settings").select("*").eq("id", "portalSettings").single();
+        if (!error && data) {
+          saveStoredCollection("settings_store.json", [data]);
+          return res.json({ success: true, data });
+        }
+      } catch (err) {
+        console.warn("Supabase fetch settings warning:", err);
+      }
+    }
+    return res.json({ success: true, data: item });
+  });
+
+  app.post("/api/save-settings", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item) return res.status(400).json({ error: "Missing settings" });
+      const settingObj = { ...item, id: item.id || "portalSettings" };
+      saveStoredCollection("settings_store.json", [settingObj]);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("settings").upsert(settingObj);
+        } catch (dbErr) {
+          console.warn("Supabase save settings warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: settingObj });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to save settings" });
+    }
+  });
+  const USERS_FILE_PATH = path.join(process.cwd(), "users_store.json");
+  
+  function getStoredUsers(): any[] {
+    try {
+      if (fs.existsSync(USERS_FILE_PATH)) {
+        const raw = fs.readFileSync(USERS_FILE_PATH, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to read users_store.json", e);
+    }
+    return [
+      {
+        id: "8e540699-e9d6-48a4-aa47-7126e373a82f",
+        username: "admin",
+        password: "admin123",
+        Rights: "Admin",
+        Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
+        Theme: "Dark"
+      },
+      {
+        id: "636e1d51-7189-48c3-a282-a6edcd4cab91",
+        username: "junaid",
+        password: "junaid123",
+        Rights: "Admin",
+        Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
+        Theme: "Dark"
+      },
+      {
+        id: "5534a01a-ae2e-4d0e-a84a-bbbc01055b9f",
+        username: "viewer",
+        password: "viewer123",
+        Rights: "Viewer",
+        Access: ["Home", "Statement"],
+        Theme: "Dark"
+      }
+    ];
+  }
+
+  function saveStoredUsers(usersList: any[]) {
+    try {
+      fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(usersList, null, 2), "utf-8");
+    } catch (e) {
+      console.warn("Failed to write users_store.json", e);
+    }
+  }
+
+  app.get("/api/users", async (req, res) => {
+    let usersList = getStoredUsers();
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from("users").select("*");
+        if (!error && data && data.length > 0) {
+          // Normalize fields (handle case sensitivity)
+          const normalized = data.map((u: any) => ({
+            id: u.id,
+            username: u.username,
+            password: u.password,
+            Rights: u.Rights || u.rights || "Operator",
+            Access: u.Access || u.access || ["Home", "Donations", "Beneficiaries", "Members"],
+            Theme: u.Theme || u.theme || "Dark"
+          }));
+          saveStoredUsers(normalized);
+          return res.json({ success: true, users: normalized });
+        }
+      } catch (err) {
+        console.warn("Supabase fetch users failed, using local store:", err);
+      }
+    }
+    return res.json({ success: true, users: usersList });
+  });
+
+  app.post("/api/save-user", async (req, res) => {
+    try {
+      const user = req.body;
+      if (!user || !user.username) {
+        return res.status(400).json({ error: "Invalid user data" });
+      }
+
+      const normalizedUser = {
+        id: user.id || `usr-${Date.now()}`,
+        username: user.username.trim(),
+        password: user.password || "password123",
+        Rights: user.Rights || user.rights || "Operator",
+        Access: user.Access || user.access || ["Home", "Donations", "Beneficiaries", "Members"],
+        Theme: user.Theme || user.theme || "Dark"
+      };
+
+      // 1. Update server file store
+      let currentUsers = getStoredUsers();
+      const idx = currentUsers.findIndex((u: any) => u.id === normalizedUser.id || u.username.toLowerCase() === normalizedUser.username.toLowerCase());
+      if (idx >= 0) {
+        currentUsers[idx] = { ...currentUsers[idx], ...normalizedUser };
+      } else {
+        currentUsers.unshift(normalizedUser);
+      }
+      saveStoredUsers(currentUsers);
+
+      // 2. Sync to Supabase if configured
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("users").upsert(normalizedUser);
+        } catch (dbErr) {
+          console.warn("Supabase save user failed:", dbErr);
+        }
+      }
+
+      console.log(`User login information updated for: ${normalizedUser.username}`);
+      return res.json({ success: true, user: normalizedUser });
+    } catch (err: any) {
+      console.error("Error saving user:", err);
+      return res.status(500).json({ error: err.message || "Failed to save user" });
+    }
+  });
+
+  app.post("/api/delete-user", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: "Missing user ID" });
+      }
+
+      // 1. Update server file store
+      let currentUsers = getStoredUsers();
+      currentUsers = currentUsers.filter((u: any) => u.id !== id);
+      saveStoredUsers(currentUsers);
+
+      // 2. Sync to Supabase if configured
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from("users").delete().eq("id", id);
+        } catch (dbErr) {
+          console.warn("Supabase delete user failed:", dbErr);
+        }
+      }
+
+      console.log(`User deleted with id: ${id}`);
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Error deleting user:", err);
+      return res.status(500).json({ error: err.message || "Failed to delete user" });
+    }
   });
 
   // API routes

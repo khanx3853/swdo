@@ -196,57 +196,92 @@ export function sanitizeForDb<T>(data: T, collectionName?: string): T {
   }
 }
 
-export async function saveBulkToFirestore<T extends { id: string }>(
-  collectionName: string,
-  items: T[]
-) {
-  if (!isSupabaseConfigured) return;
-  try {
-    const sanitized = items.map(item => sanitizeForDb(item, collectionName));
-    
-    await withRetry(
-      () => supabase.from(collectionName).upsert(sanitized) as any,
-      2,
-      `bulk save to ${collectionName}`
-    );
-  } catch (err) {
-    handleDbError(err, `bulk saving to ${collectionName}`);
-    throw err;
-  }
+// Map collection to API singular path
+function getApiSingularName(collectionName: string): string {
+  if (collectionName === 'donations') return 'donation';
+  if (collectionName === 'beneficiaries') return 'beneficiary';
+  if (collectionName === 'members') return 'member';
+  if (collectionName === 'users') return 'user';
+  if (collectionName === 'settings') return 'settings';
+  return collectionName.replace(/s$/, '');
 }
 
-// Real-time collection subscriptions (using Supabase Realtime)
+// Real-time collection subscriptions (using Local Cache + Backend Server + Supabase Realtime)
 export function subscribeCollection<T extends { id: string }>(
   collectionName: string,
   onData: (data: T[]) => void,
   initialDataIfEmpty?: T[]
 ): () => void {
+  const localKey = `swdo_${collectionName}`;
+  let hasLocalData = false;
+
+  // 1. Load from local cache immediately for zero-delay UI rendering
+  try {
+    const saved = localStorage.getItem(localKey);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        hasLocalData = true;
+        onData(parsed as T[]);
+      }
+    }
+  } catch (e) {}
+
+  if (!hasLocalData && initialDataIfEmpty && initialDataIfEmpty.length > 0) {
+    onData(initialDataIfEmpty);
+  }
+
+  // 2. Fetch latest data from backend server
+  const singular = getApiSingularName(collectionName);
+  const endpoint = `/api/${collectionName}`;
+  fetch(endpoint)
+    .then(res => res.json())
+    .then(result => {
+      const items = result?.data || result?.users;
+      if (Array.isArray(items) && items.length > 0) {
+        try {
+          localStorage.setItem(localKey, JSON.stringify(items));
+        } catch (e) {}
+        onData(items as T[]);
+      }
+    })
+    .catch(e => console.warn(`Backend fetch for ${collectionName} warning:`, e));
+
   if (!isSupabaseConfigured) {
-    if (initialDataIfEmpty) onData(initialDataIfEmpty);
     return () => {};
   }
-  // Initial fetch
+
+  // 3. Fetch from Supabase
   fetchCollection<T>(collectionName).then(data => {
     if (data.length === 0 && initialDataIfEmpty && initialDataIfEmpty.length > 0) {
-      // Show initial data immediately so UI isn't empty while seeding
-      onData(initialDataIfEmpty);
-      // Seed if empty using bulk upsert
+      if (!hasLocalData) {
+        onData(initialDataIfEmpty);
+      }
       saveBulkToFirestore(collectionName, initialDataIfEmpty)
         .catch(err => console.error(`Seeding failed for ${collectionName}:`, err));
-    } else {
+    } else if (data.length > 0) {
+      try {
+        localStorage.setItem(localKey, JSON.stringify(data));
+      } catch (e) {}
       onData(data);
     }
   });
 
-  // Subscribe to changes
+  // 4. Subscribe to Supabase realtime postgres changes
   const channel = supabase
     .channel(`${collectionName}_changes`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: collectionName },
       () => {
-        // Simple re-fetch on any change
-        fetchCollection<T>(collectionName).then(onData);
+        fetchCollection<T>(collectionName).then(data => {
+          if (data && data.length > 0) {
+            try {
+              localStorage.setItem(localKey, JSON.stringify(data));
+            } catch (e) {}
+            onData(data);
+          }
+        });
       }
     )
     .subscribe();
@@ -263,17 +298,55 @@ export function subscribeDocument<T>(
   onData: (data: T) => void,
   initialDataIfEmpty?: T
 ): () => void {
-  if (!isSupabaseConfigured) {
+  const localKey = `swdo_${collectionName}_${docId}`;
+  
+  try {
+    const saved = localStorage.getItem(localKey);
+    if (saved) {
+      onData(JSON.parse(saved));
+    } else if (initialDataIfEmpty) {
+      onData(initialDataIfEmpty);
+    }
+  } catch (e) {
     if (initialDataIfEmpty) onData(initialDataIfEmpty);
+  }
+
+  // Fetch from backend server
+  if (collectionName === 'settings') {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(result => {
+        if (result?.data) {
+          try {
+            localStorage.setItem(localKey, JSON.stringify(result.data));
+          } catch (e) {}
+          onData(result.data as T);
+        }
+      })
+      .catch(e => console.warn('Settings server fetch warning:', e));
+  }
+
+  if (!isSupabaseConfigured) {
     return () => {};
   }
-  // Initial fetch
+
+  // Fetch from Supabase
   fetchDocument<T>(collectionName, docId).then(data => {
     if (!data && initialDataIfEmpty) {
       saveDocToFirestore(collectionName, docId, initialDataIfEmpty)
         .then(() => fetchDocument<T>(collectionName, docId))
-        .then(seededData => seededData && onData(seededData));
+        .then(seededData => {
+          if (seededData) {
+            try {
+              localStorage.setItem(localKey, JSON.stringify(seededData));
+            } catch (e) {}
+            onData(seededData);
+          }
+        });
     } else if (data) {
+      try {
+        localStorage.setItem(localKey, JSON.stringify(data));
+      } catch (e) {}
       onData(data);
     }
   });
@@ -285,7 +358,14 @@ export function subscribeDocument<T>(
       'postgres_changes',
       { event: '*', schema: 'public', table: collectionName, filter: `id=eq.${docId}` },
       () => {
-        fetchDocument<T>(collectionName, docId).then(data => data && onData(data));
+        fetchDocument<T>(collectionName, docId).then(data => {
+          if (data) {
+            try {
+              localStorage.setItem(localKey, JSON.stringify(data));
+            } catch (e) {}
+            onData(data);
+          }
+        });
       }
     )
     .subscribe();
@@ -338,6 +418,31 @@ export async function saveToFirestore<T extends { id: string }>(
   collectionName: string,
   item: T
 ) {
+  const localKey = `swdo_${collectionName}`;
+
+  // 1. Update localStorage cache immediately
+  try {
+    const saved = localStorage.getItem(localKey);
+    let list = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(list)) list = [];
+    const idx = list.findIndex((x: any) => x.id === item.id || (collectionName === 'users' && x.username && (item as any).username && x.username.toLowerCase() === (item as any).username.toLowerCase()));
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...item };
+    } else {
+      list.unshift(item);
+    }
+    localStorage.setItem(localKey, JSON.stringify(list));
+  } catch (e) {}
+
+  // 2. Call backend server save API
+  const singular = getApiSingularName(collectionName);
+  fetch(`/api/save-${singular}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item),
+  }).catch(err => console.warn(`Failed to call /api/save-${singular}`, err));
+
+  // 3. Save to Supabase if configured
   if (!isSupabaseConfigured) return;
   try {
     const sanitized = sanitizeForDb(item, collectionName);
@@ -348,11 +453,35 @@ export async function saveToFirestore<T extends { id: string }>(
     );
   } catch (err) {
     handleDbError(err, `saving to ${collectionName}`);
-    throw err;
+    // Non-fatal if local cache and server route succeeded
+    console.warn(`Supabase upsert warning for ${collectionName}:`, err);
   }
 }
 
 export async function deleteFromFirestore(collectionName: string, id: string) {
+  const localKey = `swdo_${collectionName}`;
+
+  // 1. Remove from localStorage cache
+  try {
+    const saved = localStorage.getItem(localKey);
+    if (saved) {
+      let list = JSON.parse(saved);
+      if (Array.isArray(list)) {
+        list = list.filter((x: any) => x.id !== id);
+        localStorage.setItem(localKey, JSON.stringify(list));
+      }
+    }
+  } catch (e) {}
+
+  // 2. Call backend server delete API
+  const singular = getApiSingularName(collectionName);
+  fetch(`/api/delete-${singular}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  }).catch(err => console.warn(`Failed to call /api/delete-${singular}`, err));
+
+  // 3. Delete from Supabase if configured
   if (!isSupabaseConfigured) return;
   try {
     await withRetry(
@@ -366,20 +495,9 @@ export async function deleteFromFirestore(collectionName: string, id: string) {
 }
 
 export async function addDocToFirestore(collectionName: string, data: any) {
-  if (!isSupabaseConfigured) return null;
-  try {
-    const sanitized = sanitizeForDb(data, collectionName);
-    const result = await withRetry(
-      () => supabase.from(collectionName).insert(sanitized).select().single() as any,
-      2,
-      `add doc to ${collectionName}`
-    );
-    
-    return result;
-  } catch (err) {
-    handleDbError(err, `adding doc to ${collectionName}`);
-    throw err;
-  }
+  const item = { ...data, id: data.id || `doc-${Date.now()}` };
+  await saveToFirestore(collectionName, item);
+  return item;
 }
 
 export async function saveDocToFirestore<T>(
@@ -387,10 +505,22 @@ export async function saveDocToFirestore<T>(
   docId: string,
   data: T
 ) {
+  const localKey = `swdo_${collectionName}_${docId}`;
+  try {
+    localStorage.setItem(localKey, JSON.stringify(data));
+  } catch (e) {}
+
+  if (collectionName === 'settings') {
+    fetch('/api/save-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(err => console.warn('Failed to call /api/save-settings', err));
+  }
+
   if (!isSupabaseConfigured) return;
   try {
     const sanitized = sanitizeForDb(data, collectionName);
-    // Ensure id matches docId for the upsert
     const payload = { ...sanitized, id: docId };
     await withRetry(
       () => supabase.from(collectionName).upsert(payload) as any,
@@ -399,5 +529,45 @@ export async function saveDocToFirestore<T>(
     );
   } catch (err) {
     handleDbError(err, `saving doc to ${collectionName}/${docId}`);
+  }
+}
+
+export async function saveBulkToFirestore<T extends { id: string }>(
+  collectionName: string,
+  items: T[]
+) {
+  if (!items || items.length === 0) return;
+
+  const localKey = `swdo_${collectionName}`;
+  try {
+    const saved = localStorage.getItem(localKey);
+    let current = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(current)) current = [];
+    const itemMap = new Map(current.map((x: any) => [x.id, x]));
+    for (const it of items) {
+      if (it && it.id) {
+        itemMap.set(it.id, Object.assign({}, itemMap.get(it.id) || {}, it));
+      }
+    }
+    localStorage.setItem(localKey, JSON.stringify(Array.from(itemMap.values())));
+  } catch (e) {}
+
+  // Send to backend bulk save endpoint
+  fetch(`/api/save-bulk-${collectionName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  }).catch(err => console.warn(`Failed to call /api/save-bulk-${collectionName}`, err));
+
+  if (!isSupabaseConfigured) return;
+  try {
+    const sanitizedItems = items.map(item => sanitizeForDb(item, collectionName));
+    await withRetry(
+      () => supabase.from(collectionName).upsert(sanitizedItems) as any,
+      2,
+      `bulk save to ${collectionName}`
+    );
+  } catch (err) {
+    handleDbError(err, `bulk saving to ${collectionName}`);
   }
 }

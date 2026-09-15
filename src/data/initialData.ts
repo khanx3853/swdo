@@ -11227,7 +11227,7 @@ export const INITIAL_SETTINGS: PortalSettings = {
   "Account Title": "ALI BAHADUR",
   "Currency": "PKR",
   "TreasurerSignature": "",
-  "AutoSmsSubmission": true,
+  "AutoSmsSubmission": false,
   "AutoSmsApproval": true,
   "AutoSmsBeneficiary": true,
   "VeevoSmsHash": "d9eb3e26f4532bcbbca611804241635a",

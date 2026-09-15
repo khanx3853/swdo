@@ -1,0 +1,27 @@
+[
+  {
+    "Foundation Name": "Shangla Welfare & Development Org",
+    "SubTitle": "Serving Humanity & Community Welfare (REG# 5514)",
+    "Address": "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan",
+    "Chairperson": "Ali Bahadur",
+    "Secretary": "Muhammad Parvez",
+    "Treasurer": "Junaid Khan",
+    "Easypaisa No": "03472021703",
+    "Easypaisa Title": "ALI BAHADUR",
+    "Bank No": "PK34MEZN0000300110485989",
+    "Bank Title": "MEEZAN BANK",
+    "Bank Account No": "00300110485989",
+    "Account Title": "ALI BAHADUR",
+    "Currency": "PKR",
+    "TreasurerSignature": "",
+    "AutoSmsSubmission": false,
+    "AutoSmsApproval": true,
+    "AutoSmsBeneficiary": true,
+    "VeevoSmsHash": "d9eb3e26f4532bcbbca611804241635a",
+    "VeevoSenderNum": "Default",
+    "SmsSubmissionTemplate": "Dear {donor}, thank you for your donation of Rs. {amount} to Shangla Welfare & Development Org (REG# 5514). Trx ID: {txn}. Your contribution has been received for verification. May Allah reward you!",
+    "SmsApprovalTemplate": "Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko dono jahan ki bhalai ata kare. Ameen\n\n{org}",
+    "SmsBeneficiaryTemplate": "Assalamu Alaikum {beneficiary},\n\nAlhamdulillah! {purpose} ke liye aap ki manzoree shuda raqam Rs. {amount} aap ko bhej di gayi hai.\nTransaction Ref: {txn}\nBhejne wala: {org}\n\nAllah is mein barkat de aur aap ke liye asaniyan paida farmaye. Ameen",
+    "id": "portalSettings"
+  }
+]

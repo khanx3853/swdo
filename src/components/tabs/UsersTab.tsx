@@ -71,11 +71,12 @@ export const UsersTab: React.FC<UsersTabProps> = ({
   const handleEdit = (u: UserAccount) => {
     setEditingId(u.id);
     setUsername(u.username);
-    setPassword(u.password || 'password123');
+    setPassword(u.password || '');
     setRights(u.Rights);
     setAccess(u.Access || []);
     setTheme(u.Theme);
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleToggleAccess = (tabName: string) => {

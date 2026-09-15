@@ -307,10 +307,10 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
             <button
               type="button"
               onClick={() => {
-                setFormData((prev) => ({ ...prev, AutoSmsSubmission: !prev.AutoSmsSubmission }));
+                setFormData((prev) => ({ ...prev, AutoSmsSubmission: !Boolean(prev.AutoSmsSubmission) }));
               }}
               className={`w-full p-3 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 text-left ${
-                formData.AutoSmsSubmission
+                Boolean(formData.AutoSmsSubmission)
                   ? 'bg-emerald-500/10 border-emerald-500/40 shadow-sm'
                   : 'bg-slate-800/40 border-slate-700/60 opacity-75 hover:opacity-100'
               }`}
@@ -321,9 +321,9 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
                     Donation Submission SMS
                   </span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                    formData.AutoSmsSubmission ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-700 text-slate-400 border border-slate-600'
+                    Boolean(formData.AutoSmsSubmission) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-700 text-slate-400 border border-slate-600'
                   }`}>
-                    {formData.AutoSmsSubmission ? 'ACTIVE' : 'OFF'}
+                    {Boolean(formData.AutoSmsSubmission) ? 'ACTIVE' : 'OFF'}
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight block">
@@ -331,10 +331,10 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
                 </span>
               </div>
               <div className={`relative inline-flex h-5 w-10 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                formData.AutoSmsSubmission ? 'bg-emerald-500' : 'bg-slate-600'
+                Boolean(formData.AutoSmsSubmission) ? 'bg-emerald-500' : 'bg-slate-600'
               }`}>
                 <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-                  formData.AutoSmsSubmission ? 'translate-x-5' : 'translate-x-0'
+                  Boolean(formData.AutoSmsSubmission) ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </div>
             </button>

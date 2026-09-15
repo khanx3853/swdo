@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateUUID } from '../../utils/uuid';
 import {
   X,
@@ -63,7 +63,13 @@ export const DonateModal: React.FC<DonateModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState('');
   const [txnId, setTxnId] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [receiveSms, setReceiveSms] = useState(true);
+  const [receiveSms, setReceiveSms] = useState(Boolean(settings?.AutoSmsSubmission));
+
+  useEffect(() => {
+    if (isOpen) {
+      setReceiveSms(Boolean(settings?.AutoSmsSubmission));
+    }
+  }, [isOpen, settings?.AutoSmsSubmission]);
   
   // Payment Proof Screenshot state (Required)
   const [paymentMethodError, setPaymentMethodError] = useState<string>('');

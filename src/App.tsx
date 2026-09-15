@@ -77,11 +77,58 @@ export default function App() {
 
   const isAdmin = currentUser?.Rights === 'Admin';
 
-  // Data collections - synced live with Firebase Firestore
-  const [donations, setDonations] = useState<Donation[]>(INITIAL_DONATIONS);
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(INITIAL_BENEFICIARIES);
-  const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
-  const [users, setUsers] = useState<UserAccount[]>(INITIAL_USERS);
+  // Data collections - synced live with Firebase Firestore & persistent server store
+  const [donations, setDonations] = useState<Donation[]>(() => {
+    try {
+      const saved = localStorage.getItem('swdo_donations');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_DONATIONS;
+  });
+
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(() => {
+    try {
+      const saved = localStorage.getItem('swdo_beneficiaries');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_BENEFICIARIES;
+  });
+
+  const [members, setMembers] = useState<Member[]>(() => {
+    try {
+      const saved = localStorage.getItem('swdo_members');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_MEMBERS;
+  });
+
+  const [users, setUsers] = useState<UserAccount[]>(() => {
+    try {
+      const saved = localStorage.getItem('swdo_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return INITIAL_USERS;
+  });
   const [settings, setSettings] = useState<PortalSettings>(() => {
     try {
       const saved = localStorage.getItem('alkhair_settings');
@@ -409,7 +456,7 @@ export default function App() {
       await saveToFirestore('donations', donation);
       
       // Trigger background email & SMS notification for newly created donations
-      const shouldSendSms = donation.SendSms !== false && (settings?.AutoSmsSubmission !== false);
+      const shouldSendSms = donation.SendSms !== false && Boolean(settings?.AutoSmsSubmission);
       const isPublicSubmission = donation.Source === 'Live' && donation.Status === 'Pending';
       
       let notifResult: any = null;
@@ -648,17 +695,31 @@ export default function App() {
   const handleSaveUser = async (user: UserAccount) => {
     // Optimistic update
     setUsers(prev => {
-      const index = prev.findIndex(u => u.id === user.id);
+      const index = prev.findIndex(u => u.id === user.id || (u.username && user.username && u.username.toLowerCase() === user.username.toLowerCase()));
+      let nextUsers: UserAccount[];
       if (index >= 0) {
-        const newUsers = [...prev];
-        newUsers[index] = user;
-        return newUsers;
+        nextUsers = [...prev];
+        nextUsers[index] = user;
+      } else {
+        nextUsers = [user, ...prev];
       }
-      return [user, ...prev];
+      try {
+        localStorage.setItem('swdo_users', JSON.stringify(nextUsers));
+      } catch (e) {}
+      return nextUsers;
     });
 
+    // If the updated user is the currently logged in user, update session immediately
+    if (currentUser && (currentUser.id === user.id || (currentUser.username && user.username && currentUser.username.toLowerCase() === user.username.toLowerCase()))) {
+      const updatedCurrent = { ...currentUser, ...user };
+      setCurrentUser(updatedCurrent);
+      try {
+        localStorage.setItem('alkhair_current_user', JSON.stringify(updatedCurrent));
+      } catch (e) {}
+    }
+
     await saveToFirestore('users', user);
-    showToast(`User account ${user.username} configured!`);
+    showToast(`User login information for '${user.username}' updated successfully!`);
   };
 
   // Delete flow
@@ -705,6 +766,17 @@ export default function App() {
       showToast('Member record deleted.', 'info');
     } else if (type === 'user') {
       deleteFromFirestore('users', item.id);
+      setUsers(prev => {
+        const nextUsers = prev.filter(u => u.id !== item.id);
+        try {
+          localStorage.setItem('swdo_users', JSON.stringify(nextUsers));
+        } catch (e) {}
+        return nextUsers;
+      });
+      if (currentUser && currentUser.id === item.id) {
+        setCurrentUser(null);
+        localStorage.removeItem('alkhair_current_user');
+      }
       showToast('User account deleted.', 'info');
     } else if (type === 'reject_donation') {
       handleRejectDonation(item.id);

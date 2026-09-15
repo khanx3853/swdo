@@ -312,7 +312,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       : 'Ali'
   );
   const [proofImage, setProofImage] = useState<string>('');
-  const [sendSms, setSendSms] = useState<boolean>(true);
+  const [sendSms, setSendSms] = useState<boolean>(Boolean(settings?.AutoSmsSubmission));
   const [isProcessingProof, setIsProcessingProof] = useState(false);
   const formFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -362,7 +362,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
         : 'Ali'
     );
     setProofImage('');
-    setSendSms(true);
+    setSendSms(Boolean(settings?.AutoSmsSubmission));
     setEditingId(null);
     if (onClearEdit) onClearEdit();
   };
