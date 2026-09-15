@@ -11169,8 +11169,8 @@ export const INITIAL_MEMBERS: Member[] = [
 export const INITIAL_USERS: UserAccount[] = [
   {
     "id": "8e540699-e9d6-48a4-aa47-7126e373a82f", "Source": "Audit",
-    "username": "admin",
-    "password": "admin123",
+    "username": "Ali",
+    "password": "Ali321",
     "Rights": "Admin",
     "Access": [
       "Home",

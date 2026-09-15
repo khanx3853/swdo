@@ -456,8 +456,8 @@ async function startServer() {
     return [
       {
         id: "8e540699-e9d6-48a4-aa47-7126e373a82f",
-        username: "admin",
-        password: "admin123",
+        username: "Ali",
+        password: "Ali321",
         Rights: "Admin",
         Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
         Theme: "Dark"
