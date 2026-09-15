@@ -69,33 +69,31 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         }
       }
 
-      if (serverLogs.length > 0) {
-        const existingIds = new Set<string>();
-        const combined: SmsLog[] = [...serverLogs];
-        combined.forEach(l => existingIds.add(l.id));
+      const existingIds = new Set<string>();
+      const combined: SmsLog[] = [...serverLogs];
+      combined.forEach(l => existingIds.add(l.id));
 
-        // Merge any local offline logs
-        try {
-          const local = localStorage.getItem('swdo_sms_logs');
-          if (local) {
-            const parsed = JSON.parse(local);
-            if (Array.isArray(parsed)) {
-              parsed.forEach((p: any) => {
-                if (p && p.id && !existingIds.has(p.id)) {
-                  combined.push(p);
-                  existingIds.add(p.id);
-                }
-              });
-            }
+      // Merge any local offline logs
+      try {
+        const local = localStorage.getItem('swdo_sms_logs');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((p: any) => {
+              if (p && p.id && !existingIds.has(p.id)) {
+                combined.push(p);
+                existingIds.add(p.id);
+              }
+            });
           }
-        } catch (e) {}
+        }
+      } catch (e) {}
 
-        const sorted = combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        setLogs(sorted);
-        try {
-          localStorage.setItem('swdo_sms_logs', JSON.stringify(sorted));
-        } catch (e) {}
-      }
+      const sorted = combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setLogs(sorted);
+      try {
+        localStorage.setItem('swdo_sms_logs', JSON.stringify(sorted));
+      } catch (e) {}
     } catch (e) {
       console.warn('Failed to fetch server logs:', e);
     } finally {
@@ -166,9 +164,7 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         }
       });
       
-      if (sorted.length > 0) {
-        setLogs(sorted);
-      }
+      setLogs(sorted);
       setLoading(false);
     });
 

@@ -1213,7 +1213,12 @@ async function startServer() {
     }
 
     try {
-      const url = "https://api.veevotech.com/v3/sendsms";
+      const urls = [
+        "https://api.veevotech.com/v3/sendsms",
+        "https://oneid.veevotech.com/sendsms",
+        "https://api.veevotech.com/sendsms"
+      ];
+      
       const params = new URLSearchParams();
       params.append("hash", hash);
       params.append("receivernum", formattedNum);
@@ -1222,17 +1227,38 @@ async function startServer() {
       params.append("sendernum", senderNum);
       params.append("unicode", "1"); // Enable Unicode support for Urdu/Arabic characters
 
-      console.log(`📱 [VeevoTech SMS] Dispatching via gateway (Hash: ${hash.substring(0, 4)}...)...`);
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json" 
-        },
-        body: params.toString()
-      });
+      let response: Response | null = null;
+      let responseText = "";
+      let lastError: any = null;
 
-      const responseText = await response.text();
+      for (const url of urls) {
+        try {
+          console.log(`📱 [VeevoTech SMS] Dispatching via gateway ${url} (Hash: ${hash.substring(0, 4)}...)...`);
+          response = await fetch(url, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Accept": "application/json" 
+            },
+            body: params.toString()
+          });
+          if (response.ok) {
+            responseText = await response.text();
+            break;
+          } else {
+            responseText = await response.text();
+            lastError = new Error(`HTTP ${response.status}: ${responseText}`);
+          }
+        } catch (endpointErr) {
+          lastError = endpointErr;
+          console.warn(`⚠️ [VeevoTech SMS] Endpoint ${url} failed:`, endpointErr);
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
+
       let data: any = null;
       try {
         data = JSON.parse(responseText);
