@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { PortalSettings } from '../../types';
 import { INITIAL_SETTINGS } from '../../data/initialData';
+import { JunaidSignature } from '../JunaidSignature';
+import { AliSignature } from '../AliSignature';
+import { ParvezSignature } from '../ParvezSignature';
 
 interface SettingsTabProps {
   settings: PortalSettings;
@@ -134,52 +137,85 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {/* Cabinet Signatories */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3 pb-1 border-b dark:border-purple-900/40 border-purple-200">
-              2. Official Cabinet Signatories
+              2. Official Cabinet Signatories & Digital Signatures
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              <div className="field-box">
-                <input
-                  type="text"
-                  value={formData.Chairperson}
-                  onChange={(e) =>
-                    setFormData({ ...formData, Chairperson: e.target.value })
-                  }
-                  required
-                  className="field-input"
-                  placeholder=" "
-                />
-                <User className="field-icon text-emerald-500 w-4 h-4" />
-                <label className="field-label">President / Chairperson</label>
+              <div className="space-y-2">
+                <div className="field-box">
+                  <input
+                    type="text"
+                    value={formData.Chairperson}
+                    onChange={(e) =>
+                      setFormData({ ...formData, Chairperson: e.target.value })
+                    }
+                    required
+                    className="field-input"
+                    placeholder=" "
+                  />
+                  <User className="field-icon text-emerald-500 w-4 h-4" />
+                  <label className="field-label">President / Chairperson</label>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-emerald-500/20 text-center">
+                  <p className="text-[10px] text-slate-400 font-semibold mb-1">Official Digital Signature</p>
+                  <div className="h-10 flex items-center justify-center">
+                    <AliSignature className="h-10 max-w-[120px] object-contain" />
+                  </div>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-500">
+                    Active on Statements & PDFs
+                  </span>
+                </div>
               </div>
 
-              <div className="field-box">
-                <input
-                  type="text"
-                  value={formData.Secretary}
-                  onChange={(e) =>
-                    setFormData({ ...formData, Secretary: e.target.value })
-                  }
-                  required
-                  className="field-input"
-                  placeholder=" "
-                />
-                <User className="field-icon text-blue-500 w-4 h-4" />
-                <label className="field-label">General Secretary</label>
+              <div className="space-y-2">
+                <div className="field-box">
+                  <input
+                    type="text"
+                    value={formData.Secretary}
+                    onChange={(e) =>
+                      setFormData({ ...formData, Secretary: e.target.value })
+                    }
+                    required
+                    className="field-input"
+                    placeholder=" "
+                  />
+                  <User className="field-icon text-blue-500 w-4 h-4" />
+                  <label className="field-label">General Secretary</label>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-blue-500/20 text-center">
+                  <p className="text-[10px] text-slate-400 font-semibold mb-1">Official Digital Signature</p>
+                  <div className="h-10 flex items-center justify-center">
+                    <ParvezSignature className="h-10 max-w-[120px] object-contain" />
+                  </div>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-500">
+                    Active on Statements & Reports
+                  </span>
+                </div>
               </div>
 
-              <div className="field-box">
-                <input
-                  type="text"
-                  value={formData.Treasurer}
-                  onChange={(e) =>
-                    setFormData({ ...formData, Treasurer: e.target.value })
-                  }
-                  required
-                  className="field-input"
-                  placeholder=" "
-                />
-                <User className="field-icon text-purple-500 w-4 h-4" />
-                <label className="field-label">Finance Secretary / Treasurer</label>
+              <div className="space-y-2">
+                <div className="field-box">
+                  <input
+                    type="text"
+                    value={formData.Treasurer}
+                    onChange={(e) =>
+                      setFormData({ ...formData, Treasurer: e.target.value })
+                    }
+                    required
+                    className="field-input"
+                    placeholder=" "
+                  />
+                  <User className="field-icon text-purple-500 w-4 h-4" />
+                  <label className="field-label">Finance Secretary / Treasurer</label>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-purple-500/20 text-center">
+                  <p className="text-[10px] text-slate-400 font-semibold mb-1">Official Digital Signature</p>
+                  <div className="h-10 flex items-center justify-center">
+                    <JunaidSignature className="h-10 max-w-[120px] object-contain" />
+                  </div>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-500">
+                    Active on Receipts & Statements
+                  </span>
+                </div>
               </div>
             </div>
           </div>

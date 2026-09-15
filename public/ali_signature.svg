@@ -1,0 +1,28 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 270' width='640' height='540'>
+  <defs>
+    <filter id='smooth-ink' x='-10%' y='-10%' width='120%' height='120%'>
+      <feGaussianBlur stdDeviation='0.3' result='blur' />
+      <feMerge>
+        <feMergeNode in='blur' />
+        <feMergeNode in='SourceGraphic' />
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill='none' stroke='#0f172a' stroke-linecap='round' stroke-linejoin='round' filter='url(#smooth-ink)'>
+    <!-- Outer oval envelope loop -->
+    <path d='M 115 195 C 80 165 42 118 45 78 C 47 42 75 22 135 24 C 190 26 218 52 212 98 C 206 142 165 190 108 202 C 72 210 28 222 20 242 C 16 250 32 248 60 238 C 120 220 190 214 278 214' stroke-width='4.8' />
+    
+    <!-- Inner Sharp 'N' Core Glyph -->
+    <path d='M 112 162 L 156 64 L 148 168 L 188 78 L 194 142' stroke-width='5.2' />
+    
+    <!-- Accent tick / dot -->
+    <path d='M 206 172 L 210 162' stroke-width='4.5' />
+    
+    <!-- Crossing vertical stem strokes -->
+    <path d='M 172 216 L 168 260' stroke-width='5' />
+    <path d='M 188 212 L 184 258' stroke-width='5' />
+    
+    <!-- Cursive name tail / flourish -->
+    <path d='M 194 208 C 205 194 216 196 226 210 C 235 198 246 200 256 212 C 264 204 272 208 280 216' stroke-width='4.2' />
+  </g>
+</svg>

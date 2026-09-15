@@ -125,23 +125,112 @@ export function addPdfWatermark(
   }
 }
 
-export function getSignatureDataUrl(): Promise<string> {
+export function getTransparentSignatureDataUrl(src: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg'));
-      } else {
+      if (!ctx) {
         resolve('');
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      try {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const avg = (r + g + b) / 3;
+          // Transparent threshold for background paper
+          if (avg > 140 || (g > r && g > b && g > 90)) {
+            data[i + 3] = 0;
+          } else {
+            data[i] = 15;
+            data[i + 1] = 23;
+            data[i + 2] = 42;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        resolve(canvas.toDataURL('image/png'));
       }
     };
     img.onerror = () => resolve('');
-    img.src = '/junaid_signature.jpg';
+    img.src = src;
+  });
+}
+
+export function getSignatureDataUrl(): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width || 320;
+      canvas.height = img.height || 220;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve('');
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => {
+      getTransparentSignatureDataUrl('/junaid_signature.jpg').then(resolve);
+    };
+    img.src = '/junaid_signature.svg';
+  });
+}
+
+export function getAliSignatureDataUrl(): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width || 320;
+      canvas.height = img.height || 270;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve('');
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => {
+      getTransparentSignatureDataUrl('/ali_signature.png').then(resolve);
+    };
+    img.src = '/ali_signature.svg';
+  });
+}
+
+export function getParvezSignatureDataUrl(): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width || 320;
+      canvas.height = img.height || 240;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve('');
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve('');
+    img.src = '/parvez_signature.svg';
   });
 }
 
@@ -273,6 +362,8 @@ export async function exportMonkeyFilePDF(ben: Beneficiary, settings: PortalSett
   });
 
   const logoData = await getLogoDataUrl();
+  const signatureData = await getSignatureDataUrl();
+  const aliSignatureData = await getAliSignatureDataUrl();
 
   // Register Urdu Font
   doc.addFileToVFS('NotoSansArabic.ttf', NOTO_SANS_ARABIC_BASE64);
@@ -363,10 +454,20 @@ export async function exportMonkeyFilePDF(ben: Beneficiary, settings: PortalSett
   doc.setTextColor(15, 23, 42);
   doc.text('Beneficiary Thumb / Signature', 45, 245, { align: 'center' });
 
+  if (signatureData) {
+    try {
+      doc.addImage(signatureData, 'PNG', 88, 226, 34, 13);
+    } catch (e) {}
+  }
   doc.line(80, 240, 130, 240);
   doc.text('Junaid Khan', 105, 245, { align: 'center' });
   doc.text('Welfare Officer / Case Examiner', 105, 250, { align: 'center' });
 
+  if (aliSignatureData) {
+    try {
+      doc.addImage(aliSignatureData, 'PNG', 148, 226, 34, 13);
+    } catch (e) {}
+  }
   doc.line(140, 240, 190, 240);
   doc.text(settings.Chairperson || 'Chairperson / President', 165, 245, { align: 'center' });
   doc.text(settings['Foundation Name'] || 'SWDO', 165, 250, { align: 'center' });
@@ -393,6 +494,8 @@ export async function exportBeneficiariesReportPDF(
   });
 
   const logoData = await getLogoDataUrl();
+  const signatureData = await getSignatureDataUrl();
+  const aliSignatureData = await getAliSignatureDataUrl();
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Register Urdu Font
@@ -583,6 +686,12 @@ export async function exportBeneficiariesReportPDF(
     doc.setDrawColor(203, 213, 225);
     doc.line(20, sigY, 75, sigY);
     doc.line(120, sigY, 175, sigY);
+
+    if (aliSignatureData) {
+      try {
+        doc.addImage(aliSignatureData, 'PNG', 230, sigY - 12, 35, 12);
+      } catch (e) {}
+    }
     doc.line(220, sigY, 275, sigY);
 
     doc.setFont('helvetica', 'normal');
@@ -672,6 +781,9 @@ export async function exportDonationsReportPDF(
   });
 
   const logoData = await getLogoDataUrl();
+  const signatureData = await getSignatureDataUrl();
+  const parvezSignatureData = await getParvezSignatureDataUrl();
+  const aliSignatureData = await getAliSignatureDataUrl();
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Register Urdu Font
@@ -857,19 +969,30 @@ export async function exportDonationsReportPDF(
 
   const sigY = y + 10;
   
-  if (settings.TreasurerSignature) {
+  const effectiveTreasurerSig = settings.TreasurerSignature || signatureData;
+  if (effectiveTreasurerSig) {
     try {
-      doc.addImage(settings.TreasurerSignature, 'PNG', 20, sigY - 12, 35, 12);
+      doc.addImage(effectiveTreasurerSig, 'PNG', 20, sigY - 12, 35, 12);
     } catch(e) {}
   }
   doc.line(15, sigY, 65, sigY);
   doc.text(settings.Treasurer || 'Treasurer', 40, sigY + 5, { align: 'center' });
   doc.text('Accountant / Operator', 40, sigY + 10, { align: 'center' });
 
+  if (parvezSignatureData) {
+    try {
+      doc.addImage(parvezSignatureData, 'PNG', 131, sigY - 12, 35, 12);
+    } catch (e) {}
+  }
   doc.line(123, sigY, 173, sigY);
   doc.text(settings.Secretary || 'General Secretary', 148.5, sigY + 5, { align: 'center' });
   doc.text('Verified By', 148.5, sigY + 10, { align: 'center' });
 
+  if (aliSignatureData) {
+    try {
+      doc.addImage(aliSignatureData, 'PNG', 237.5, sigY - 12, 35, 12);
+    } catch (e) {}
+  }
   doc.line(230, sigY, 280, sigY);
   doc.text(settings.Chairperson || 'President', 255, sigY + 5, { align: 'center' });
   doc.text('Approved By', 255, sigY + 10, { align: 'center' });

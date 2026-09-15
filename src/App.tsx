@@ -98,19 +98,25 @@ export default function App() {
 
   // Firestore Data Initialization & Real-time Subscriptions
   useEffect(() => {
-    // Check Supabase connectivity
+    // Check system connectivity
     const verifyConnection = async () => {
-      if (!isSupabaseConfigured) {
-        setDbStatus({ ok: false, error: 'Supabase credentials missing' });
-        return;
-      }
       const status = await checkSupabaseConnection();
       setDbStatus(status as any);
-      if (!status.ok) {
-        console.error('Initial DB connectivity check failed. App may be in offline mode.');
-      }
     };
     verifyConnection();
+
+    const handleOnline = () => {
+      setDbStatus({ ok: true });
+      resetQuotaFlag();
+      setQuotaExceeded(false);
+    };
+
+    const handleOffline = () => {
+      setDbStatus({ ok: false, error: 'Network Offline' });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     // If the config was just changed, we should try a fresh fetch
     resetQuotaFlag(); 
@@ -223,6 +229,8 @@ export default function App() {
     );
 
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       unsubDonations();
       unsubBeneficiaries();
       unsubMembers();

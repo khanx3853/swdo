@@ -13,6 +13,8 @@ import {
 import { Beneficiary, PortalSettings } from '../../types';
 import { formatPKR, generateMonkeyFilePDF } from '../../utils/formatters';
 import { Logo } from '../Logo';
+import { JunaidSignature } from '../JunaidSignature';
+import { AliSignature } from '../AliSignature';
 
 interface MonkeyFileModalProps {
   beneficiaries: Beneficiary[];
@@ -210,13 +212,19 @@ Status: Verified & Allotted
           {/* Signatures */}
           <div className="pt-6 grid grid-cols-2 gap-4 text-center text-[11px]">
             <div>
+              <div className="h-10 flex items-end justify-center mb-1">
+                <JunaidSignature className="h-12 max-w-[110px] object-contain" />
+              </div>
               <div className="h-0.5 w-24 mx-auto bg-slate-400 dark:bg-slate-600 mb-1" />
               <p className="font-bold dark:text-slate-300 text-slate-700">Junaid Khan</p>
               <p className="text-[9px] text-slate-500">Welfare Officer / Case Examiner</p>
             </div>
             <div>
+              <div className="h-10 flex items-end justify-center mb-1">
+                <AliSignature className="h-12 max-w-[110px] object-contain" />
+              </div>
               <div className="h-0.5 w-24 mx-auto bg-slate-400 dark:bg-slate-600 mb-1" />
-              <p className="font-bold dark:text-slate-300 text-slate-700">{settings.Chairperson}</p>
+              <p className="font-bold dark:text-slate-300 text-slate-700">{settings.Chairperson || 'Ali Bahadur'}</p>
               <p className="text-[9px] text-slate-500">President / Approver</p>
             </div>
           </div>

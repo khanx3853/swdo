@@ -1,0 +1,30 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 240' width='640' height='480'>
+  <defs>
+    <filter id='parvez-smooth-ink' x='-10%' y='-10%' width='120%' height='120%'>
+      <feGaussianBlur stdDeviation='0.3' result='blur' />
+      <feMerge>
+        <feMergeNode in='blur' />
+        <feMergeNode in='SourceGraphic' />
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill='none' stroke='#0f172a' stroke-linecap='round' stroke-linejoin='round' filter='url(#parvez-smooth-ink)'>
+    <!-- Initial 'M' on the left -->
+    <path d='M 28 142 C 24 135 22 128 25 120 C 28 112 32 115 34 132 C 36 142 38 122 40 110 C 43 98 47 105 48 128 C 49 140 50 155 60 168 C 72 184 96 188 122 180 C 132 176 138 165 140 145' stroke-width='4.2' />
+    
+    <!-- Central tall 'P/B' ascender loop -->
+    <path d='M 136 150 C 130 120 120 75 122 46 C 124 28 135 24 142 34 C 150 48 152 75 148 105 C 144 132 135 152 130 165 L 148 182' stroke-width='4.6' />
+    
+    <!-- Middle loops / 'B' shape -->
+    <path d='M 120 138 C 128 116 148 108 155 125 C 160 138 155 152 144 165 C 152 155 168 158 174 175 L 175 192' stroke-width='4.2' />
+    
+    <!-- Dot / accent mark -->
+    <path d='M 194 82 L 196 85' stroke-width='4.8' />
+    
+    <!-- Long ascending diagonal stroke into high right loop and baseline cross -->
+    <path d='M 146 168 C 175 145 212 112 245 78 C 258 62 272 20 270 16 C 266 12 254 38 248 70 C 242 105 245 132 260 118' stroke-width='4.4' />
+    
+    <!-- Small lower dash/tick under signature -->
+    <path d='M 138 206 L 148 198' stroke-width='4.2' />
+  </g>
+</svg>

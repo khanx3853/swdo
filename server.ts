@@ -106,7 +106,17 @@ async function startServer() {
 
   // Health check route for Cloud Run and monitoring
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+    res.json({ status: "ok", live: true, timestamp: Date.now() });
+  });
+
+  app.get("/api/system-status", async (req, res) => {
+    res.json({
+      status: "ok",
+      live: true,
+      backend: "active",
+      supabaseConfigured: isSupabaseConfigured,
+      timestamp: Date.now()
+    });
   });
 
   // API routes

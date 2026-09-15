@@ -105,6 +105,7 @@ export interface PortalSettings {
   'Account Title'?: string;
   Currency: string;
   TreasurerSignature?: string;
+  ChairpersonSignature?: string;
   AutoSmsSubmission?: boolean;
   AutoSmsApproval?: boolean;
   AutoSmsBeneficiary?: boolean;

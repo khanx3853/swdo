@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
             )}
-            <span className="text-[11px]">{dbStatus.ok ? 'System Live' : 'Offline Mode'}</span>
+            <span className="text-[11px]">{dbStatus.ok ? 'System Live' : 'Network Offline'}</span>
           </div>
         )}
 

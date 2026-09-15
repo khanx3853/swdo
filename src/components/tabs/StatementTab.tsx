@@ -12,12 +12,14 @@ import {
   Search,
 } from 'lucide-react';
 import { Donation, Beneficiary, PortalSettings } from '../../types';
-import { formatPKR, parseAmount, parseDateRange, getLogoDataUrl, addPdfWatermark } from '../../utils/formatters';
+import { formatPKR, parseAmount, parseDateRange, getLogoDataUrl, addPdfWatermark, getSignatureDataUrl, getAliSignatureDataUrl, getParvezSignatureDataUrl } from '../../utils/formatters';
 import { getRealTimeFinancialMetrics, OFFICIAL_AUDIT_REPORT } from '../../utils/auditData';
 import { jsPDF } from 'jspdf';
 import { NOTO_SANS_ARABIC_BASE64 } from '../../utils/fonts';
 import { Logo } from '../Logo';
 import { JunaidSignature } from '../JunaidSignature';
+import { AliSignature } from '../AliSignature';
+import { ParvezSignature } from '../ParvezSignature';
 
 interface StatementTabProps {
   donations: Donation[];
@@ -285,6 +287,9 @@ export const StatementTab: React.FC<StatementTabProps> = ({
     });
 
     const logoData = await getLogoDataUrl();
+    const signatureData = await getSignatureDataUrl();
+    const aliSignatureData = await getAliSignatureDataUrl();
+    const parvezSignatureData = await getParvezSignatureDataUrl();
 
     // Register Urdu Font
     doc.addFileToVFS('NotoSansArabic.ttf', NOTO_SANS_ARABIC_BASE64);
@@ -402,14 +407,31 @@ export const StatementTab: React.FC<StatementTabProps> = ({
     // Signatures
     const sigY = Math.min(y + 20, 270);
     doc.setDrawColor(203, 213, 225);
+
+    const effectiveTreasurerSig = settings.TreasurerSignature || signatureData;
+    if (effectiveTreasurerSig) {
+      try {
+        doc.addImage(effectiveTreasurerSig, 'PNG', 25, sigY - 12, 35, 12);
+      } catch (e) {}
+    }
     doc.line(20, sigY, 65, sigY);
     doc.text(settings.Treasurer || 'Junaid Khan', 42.5, sigY + 5, { align: 'center' });
     doc.text('Accountant / Operator', 42.5, sigY + 10, { align: 'center' });
 
+    if (parvezSignatureData) {
+      try {
+        doc.addImage(parvezSignatureData, 'PNG', 88, sigY - 12, 35, 12);
+      } catch (e) {}
+    }
     doc.line(80, sigY, 130, sigY);
     doc.text(settings.Secretary || 'Muhammad Parvez', 105, sigY + 5, { align: 'center' });
     doc.text('General Secretary', 105, sigY + 10, { align: 'center' });
 
+    if (aliSignatureData) {
+      try {
+        doc.addImage(aliSignatureData, 'PNG', 150, sigY - 12, 35, 12);
+      } catch (e) {}
+    }
     doc.line(145, sigY, 190, sigY);
     doc.text(settings.Chairperson || 'Ali Bahadur', 167.5, sigY + 5, { align: 'center' });
     doc.text('President / Treasurer', 167.5, sigY + 10, { align: 'center' });
@@ -802,14 +824,18 @@ export const StatementTab: React.FC<StatementTabProps> = ({
             <p className="font-bold dark:text-slate-300 text-slate-700">{settings.Treasurer || 'Junaid Khan'}</p>
             <p className="text-[10px] text-slate-500">Accountant / Operator</p>
           </div>
-          <div className="space-y-1">
-            <div className="h-12" />
+          <div className="space-y-1 relative">
+            <div className="h-12 flex items-end justify-center mb-1">
+              <ParvezSignature className="h-14 max-w-[130px] object-contain" />
+            </div>
             <div className="h-0.5 w-32 mx-auto bg-slate-300 dark:bg-slate-700" />
             <p className="font-bold dark:text-slate-300 text-slate-700">{settings.Secretary || 'Muhammad Parvez'}</p>
             <p className="text-[10px] text-slate-500">General Secretary</p>
           </div>
-          <div className="space-y-1">
-            <div className="h-12" />
+          <div className="space-y-1 relative">
+            <div className="h-12 flex items-end justify-center mb-1">
+              <AliSignature className="h-14 max-w-[130px] object-contain" />
+            </div>
             <div className="h-0.5 w-32 mx-auto bg-slate-300 dark:bg-slate-700" />
             <p className="font-bold dark:text-slate-300 text-slate-700">{settings.Chairperson || 'Ali Bahadur'}</p>
             <p className="text-[10px] text-slate-500">President / Treasurer</p>

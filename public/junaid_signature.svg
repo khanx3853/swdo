@@ -1,0 +1,45 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220' width='640' height='440'>
+  <defs>
+    <filter id='junaid-smooth-ink' x='-10%' y='-10%' width='120%' height='120%'>
+      <feGaussianBlur stdDeviation='0.3' result='blur' />
+      <feMerge>
+        <feMergeNode in='blur' />
+        <feMergeNode in='SourceGraphic' />
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill='none' stroke='#0f172a' stroke-linecap='round' stroke-linejoin='round' filter='url(#junaid-smooth-ink)'>
+    <!-- Top star/flower mark on upper left -->
+    <path d='M 74 38 L 82 22 L 90 38 L 100 24 L 98 42 Z' fill='#0f172a' stroke='#0f172a' stroke-width='1.5' />
+    
+    <!-- Top horizontal cap over 'Junai' -->
+    <path d='M 78 44 L 75 62 Q 95 62 125 60 Q 142 58 148 68' stroke-width='4.5' />
+
+    <!-- Left initial vertical stem of J -->
+    <path d='M 75 62 L 74 158' stroke-width='5' />
+    
+    <!-- Underline baseline cross -->
+    <path d='M 38 138 L 260 148' stroke-width='4.5' />
+    
+    <!-- 'unai' letters cursive flow -->
+    <!-- u -->
+    <path d='M 86 116 L 87 136 C 92 142 102 142 108 134 L 110 118' stroke-width='4.2' />
+    <!-- n -->
+    <path d='M 110 126 C 114 116 126 115 132 135 L 132 125 C 136 116 148 116 152 134' stroke-width='4.2' />
+    <!-- a -->
+    <path d='M 152 130 C 148 118 162 114 168 124 C 172 132 168 140 162 140 C 156 140 152 132 156 122' stroke-width='3.8' />
+    <!-- i -->
+    <path d='M 168 120 L 170 138' stroke-width='4' />
+    <!-- dot above i -->
+    <circle cx='138' cy='82' r='2.8' fill='#0f172a' stroke='none' />
+    <circle cx='185' cy='90' r='2.8' fill='#0f172a' stroke='none' />
+    
+    <!-- Tall vertical stem of d/t cross -->
+    <path d='M 198 52 L 188 178' stroke-width='5' />
+    
+    <!-- Right side box and loop flourish (d/khan) -->
+    <path d='M 198 90 L 235 90 C 255 90 262 105 258 125 C 252 145 240 155 228 145 C 220 136 222 118 234 118 C 248 118 252 132 250 148 C 248 162 254 182 245 195 C 235 208 208 214 204 212' stroke-width='4.6' />
+    <!-- Inner right top loop -->
+    <path d='M 235 90 C 248 70 265 65 264 88 C 262 115 250 148 245 158' stroke-width='4.2' />
+  </g>
+</svg>
