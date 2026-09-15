@@ -622,6 +622,424 @@ async function startServer() {
     }
   });
 
+  // Gallery Pictures APIs
+  app.get("/api/gallery_pictures", async (req, res) => {
+    try {
+      const columns = (req.query.columns as string) || "id, caption, createdAt";
+      let localList = getStoredCollection("gallery_pictures_store.json", []);
+      const deletedIds = getDeletedIds("gallery_pictures");
+      if (deletedIds.size > 0) {
+        localList = localList.filter((d: any) => !deletedIds.has(d.id));
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("gallery_pictures")
+            .select(columns);
+          if (!error && Array.isArray(data)) {
+            const filtered = deletedIds.size > 0 
+              ? data.filter((d: any) => !deletedIds.has(d.id))
+              : data;
+            return res.json({ success: true, data: filtered });
+          }
+        } catch (dbErr) {
+          console.warn("Supabase fetch gallery_pictures warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: localList });
+    } catch (err: any) {
+      console.error("Error in /api/gallery_pictures:", err);
+      return res.status(500).json({ error: err.message || "Failed to fetch gallery pictures" });
+    }
+  });
+
+  app.get("/api/gallery_pictures/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedIds = getDeletedIds("gallery_pictures");
+      if (deletedIds.has(id)) {
+        return res.status(404).json({ error: "Picture not found" });
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("gallery_pictures")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+          if (!error && data) {
+            return res.json({ success: true, data });
+          }
+        } catch (dbErr) {
+          console.warn(`Supabase fetch gallery_pictures/${id} warning:`, dbErr);
+        }
+      }
+
+      const localList = getStoredCollection("gallery_pictures_store.json", []);
+      const item = localList.find((p: any) => p.id === id);
+      if (item) {
+        return res.json({ success: true, data: item });
+      }
+      return res.status(404).json({ error: "Picture not found" });
+    } catch (err: any) {
+      console.error("Error in /api/gallery_pictures/:id:", err);
+      return res.status(500).json({ error: err.message || "Failed to fetch picture" });
+    }
+  });
+
+  app.post("/api/save-gallery_picture", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) {
+        return res.status(400).json({ error: "Missing picture ID or data" });
+      }
+      let current = getStoredCollection("gallery_pictures_store.json", []);
+      const idx = current.findIndex((p: any) => p.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      saveStoredCollection("gallery_pictures_store.json", current);
+      removeDeletedId("gallery_pictures", item.id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("gallery_pictures").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save gallery_picture warning:", dbErr);
+        });
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      console.error("Save gallery_picture error:", err);
+      return res.status(500).json({ error: err.message || "Failed to save picture" });
+    }
+  });
+
+  app.post("/api/delete-gallery_picture", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+      let current = getStoredCollection("gallery_pictures_store.json", []);
+      current = current.filter((p: any) => p.id !== id);
+      saveStoredCollection("gallery_pictures_store.json", current);
+      addDeletedId("gallery_pictures", id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("gallery_pictures").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete gallery_picture warning:", dbErr);
+        });
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Delete gallery_picture error:", err);
+      return res.status(500).json({ error: err.message || "Failed to delete picture" });
+    }
+  });
+
+  // Gallery Videos APIs
+  app.get("/api/gallery_videos", async (req, res) => {
+    try {
+      const columns = (req.query.columns as string) || "id, caption, createdAt";
+      let localList = getStoredCollection("gallery_videos_store.json", []);
+      const deletedIds = getDeletedIds("gallery_videos");
+      if (deletedIds.size > 0) {
+        localList = localList.filter((d: any) => !deletedIds.has(d.id));
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("gallery_videos")
+            .select(columns);
+          if (!error && Array.isArray(data)) {
+            const filtered = deletedIds.size > 0 
+              ? data.filter((d: any) => !deletedIds.has(d.id))
+              : data;
+            return res.json({ success: true, data: filtered });
+          }
+        } catch (dbErr) {
+          console.warn("Supabase fetch gallery_videos warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: localList });
+    } catch (err: any) {
+      console.error("Error in /api/gallery_videos:", err);
+      return res.status(500).json({ error: err.message || "Failed to fetch gallery videos" });
+    }
+  });
+
+  app.get("/api/gallery_videos/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedIds = getDeletedIds("gallery_videos");
+      if (deletedIds.has(id)) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("gallery_videos")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+          if (!error && data) {
+            return res.json({ success: true, data });
+          }
+        } catch (dbErr) {
+          console.warn(`Supabase fetch gallery_videos/${id} warning:`, dbErr);
+        }
+      }
+
+      const localList = getStoredCollection("gallery_videos_store.json", []);
+      const item = localList.find((v: any) => v.id === id);
+      if (item) {
+        return res.json({ success: true, data: item });
+      }
+      return res.status(404).json({ error: "Video not found" });
+    } catch (err: any) {
+      console.error("Error in /api/gallery_videos/:id:", err);
+      return res.status(500).json({ error: err.message || "Failed to fetch video" });
+    }
+  });
+
+  app.post("/api/save-gallery_video", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) {
+        return res.status(400).json({ error: "Missing video ID or data" });
+      }
+      let current = getStoredCollection("gallery_videos_store.json", []);
+      const idx = current.findIndex((v: any) => v.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      saveStoredCollection("gallery_videos_store.json", current);
+      removeDeletedId("gallery_videos", item.id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("gallery_videos").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save gallery_video warning:", dbErr);
+        });
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      console.error("Save gallery_video error:", err);
+      return res.status(500).json({ error: err.message || "Failed to save video" });
+    }
+  });
+
+  app.post("/api/delete-gallery_video", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+      let current = getStoredCollection("gallery_videos_store.json", []);
+      current = current.filter((v: any) => v.id !== id);
+      saveStoredCollection("gallery_videos_store.json", current);
+      addDeletedId("gallery_videos", id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("gallery_videos").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete gallery_video warning:", dbErr);
+        });
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Delete gallery_video error:", err);
+      return res.status(500).json({ error: err.message || "Failed to delete video" });
+    }
+  });
+
+  // Generic document and collection fetch proxies (using Service Role key)
+  app.get("/api/document/:collection/:id", async (req, res) => {
+    try {
+      const { collection, id } = req.params;
+      const deletedIds = getDeletedIds(collection);
+      if (deletedIds.has(id)) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+          .from(collection)
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+        if (!error && data) {
+          return res.json({ success: true, data });
+        }
+      }
+
+      const localList = getStoredCollection(`${collection}_store.json`, []);
+      const item = localList.find((x: any) => x.id === id);
+      if (item) {
+        return res.json({ success: true, data: item });
+      }
+      return res.status(404).json({ error: "Document not found" });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to fetch document" });
+    }
+  });
+
+  app.get("/api/collection/:collection", async (req, res) => {
+    try {
+      const { collection } = req.params;
+      const columns = (req.query.columns as string) || "*";
+      const deletedIds = getDeletedIds(collection);
+
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+          .from(collection)
+          .select(columns);
+        if (!error && Array.isArray(data)) {
+          const filtered = deletedIds.size > 0 
+            ? data.filter((d: any) => !deletedIds.has(d.id))
+            : data;
+          return res.json({ success: true, data: filtered });
+        }
+      }
+
+      let localList = getStoredCollection(`${collection}_store.json`, []);
+      if (deletedIds.size > 0) {
+        localList = localList.filter((d: any) => !deletedIds.has(d.id));
+      }
+      return res.json({ success: true, data: localList });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to fetch collection" });
+    }
+  });
+
+  // Dedicated SMS Logs API endpoints
+  app.get("/api/sms_logs", async (req, res) => {
+    try {
+      let localList = getStoredCollection("sms_logs_store.json", []);
+      const deletedIds = getDeletedIds("sms_logs");
+      if (deletedIds.size > 0) {
+        localList = localList.filter((d: any) => !deletedIds.has(d.id));
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("sms_logs")
+            .select("*")
+            .order("timestamp", { ascending: false });
+          if (!error && Array.isArray(data)) {
+            const combinedMap = new Map();
+            data.forEach((d: any) => {
+              if (!deletedIds.has(d.id)) {
+                combinedMap.set(d.id, d);
+              }
+            });
+            localList.forEach((l: any) => {
+              if (!deletedIds.has(l.id) && !combinedMap.has(l.id)) {
+                combinedMap.set(l.id, l);
+              }
+            });
+            const merged = Array.from(combinedMap.values()).sort(
+              (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+            return res.json({ success: true, data: merged });
+          }
+        } catch (dbErr) {
+          console.warn("Supabase fetch sms_logs warning:", dbErr);
+        }
+      }
+      return res.json({ success: true, data: localList });
+    } catch (err: any) {
+      console.error("Error in /api/sms_logs:", err);
+      return res.status(500).json({ error: err.message || "Failed to fetch SMS logs" });
+    }
+  });
+
+  app.get("/api/sms_logs/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deletedIds = getDeletedIds("sms_logs");
+      if (deletedIds.has(id)) {
+        return res.status(404).json({ error: "Log not found" });
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from("sms_logs")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+          if (!error && data) {
+            return res.json({ success: true, data });
+          }
+        } catch (dbErr) {
+          console.warn(`Supabase fetch sms_logs/${id} warning:`, dbErr);
+        }
+      }
+
+      const localList = getStoredCollection("sms_logs_store.json", []);
+      const item = localList.find((l: any) => l.id === id);
+      if (item) {
+        return res.json({ success: true, data: item });
+      }
+      return res.status(404).json({ error: "Log not found" });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to fetch SMS log" });
+    }
+  });
+
+  app.post("/api/save-sms_log", async (req, res) => {
+    try {
+      const item = req.body;
+      if (!item || !item.id) {
+        return res.status(400).json({ error: "Missing SMS log ID or data" });
+      }
+      let current = getStoredCollection("sms_logs_store.json", []);
+      const idx = current.findIndex((l: any) => l.id === item.id);
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], ...item };
+      } else {
+        current.unshift(item);
+      }
+      if (current.length > 500) current = current.slice(0, 500);
+      saveStoredCollection("sms_logs_store.json", current);
+      removeDeletedId("sms_logs", item.id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("sms_logs").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save sms_log warning:", dbErr);
+        });
+      }
+      return res.json({ success: true, data: item });
+    } catch (err: any) {
+      console.error("Save sms_log error:", err);
+      return res.status(500).json({ error: err.message || "Failed to save SMS log" });
+    }
+  });
+
+  app.post("/api/delete-sms_log", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing ID" });
+      let current = getStoredCollection("sms_logs_store.json", []);
+      current = current.filter((l: any) => l.id !== id);
+      saveStoredCollection("sms_logs_store.json", current);
+      addDeletedId("sms_logs", id);
+
+      if (isSupabaseConfigured) {
+        Promise.resolve(supabase.from("sms_logs").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete sms_log warning:", dbErr);
+        });
+      }
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Delete sms_log error:", err);
+      return res.status(500).json({ error: err.message || "Failed to delete SMS log" });
+    }
+  });
+
   // API routes
   app.get("/api/sms-diagnostic", async (req, res) => {
     if (!isSupabaseConfigured) {
@@ -833,6 +1251,11 @@ async function startServer() {
         response: JSON.stringify(data || {})
       };
       try {
+        let current = getStoredCollection("sms_logs_store.json", []);
+        current.unshift(logRecord);
+        if (current.length > 500) current = current.slice(0, 500);
+        saveStoredCollection("sms_logs_store.json", current);
+
         if (isSupabaseConfigured) {
           const { error: insertErr } = await supabase.from("sms_logs").insert(logRecord);
           if (insertErr) {
@@ -886,6 +1309,11 @@ async function startServer() {
         response: JSON.stringify({ error: err.message || "Failed to reach Veevo Tech gateway" })
       };
       try {
+        let current = getStoredCollection("sms_logs_store.json", []);
+        current.unshift(failRecord);
+        if (current.length > 500) current = current.slice(0, 500);
+        saveStoredCollection("sms_logs_store.json", current);
+
         if (isSupabaseConfigured) {
           await supabase.from("sms_logs").insert(failRecord);
         }

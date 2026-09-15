@@ -203,6 +203,9 @@ function getApiSingularName(collectionName: string): string {
   if (collectionName === 'members') return 'member';
   if (collectionName === 'users') return 'user';
   if (collectionName === 'settings') return 'settings';
+  if (collectionName === 'gallery_pictures') return 'gallery_picture';
+  if (collectionName === 'gallery_videos') return 'gallery_video';
+  if (collectionName === 'sms_logs') return 'sms_log';
   return collectionName.replace(/s$/, '');
 }
 
@@ -220,7 +223,7 @@ export function subscribeCollection<T extends { id: string }>(
     const saved = localStorage.getItem(localKey);
     if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         hasLocalData = true;
         onData(parsed as T[]);
       }
@@ -234,17 +237,27 @@ export function subscribeCollection<T extends { id: string }>(
   // 2. Fetch authoritative latest data from backend server
   const endpoint = `/api/${collectionName}`;
   fetch(endpoint)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
     .then(result => {
-      const items = result?.data || result?.users;
+      const items = result?.data || result?.users || result?.logs || (Array.isArray(result) ? result : null);
       if (Array.isArray(items)) {
         try {
           localStorage.setItem(localKey, JSON.stringify(items));
         } catch (e) {}
         onData(items as T[]);
+      } else if (!hasLocalData) {
+        onData([]);
       }
     })
-    .catch(e => console.warn(`Backend fetch for ${collectionName} warning:`, e));
+    .catch(e => {
+      console.warn(`Backend fetch for ${collectionName} warning:`, e);
+      if (!hasLocalData) {
+        onData([]);
+      }
+    });
 
   return () => {};
 }
@@ -293,38 +306,106 @@ export async function fetchCollection<T extends { id: string }>(
   collectionName: string,
   columns = '*'
 ): Promise<T[]> {
-  if (!isSupabaseConfigured) return [];
+  // 1. Try server specific or generic endpoint first
   try {
-    const data = await withRetry(
-      () => supabase.from(collectionName).select(columns) as any,
-      3,
-      `fetching collection ${collectionName}`
-    );
-    
-    return (data as any[] || []).map(item => patchSource(item)) as T[];
-  } catch (err) {
-    handleDbError(err, `fetching collection ${collectionName}`);
-    return [];
+    const url = `/api/${collectionName}?columns=${encodeURIComponent(columns)}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const result = await res.json();
+      const items = result?.data || result?.items || (Array.isArray(result) ? result : null);
+      if (Array.isArray(items)) {
+        return items.map(item => patchSource(item)) as T[];
+      }
+    }
+  } catch (e) {
+    // Server fetch fallback
   }
+
+  try {
+    const res = await fetch(`/api/collection/${encodeURIComponent(collectionName)}?columns=${encodeURIComponent(columns)}`);
+    if (res.ok) {
+      const result = await res.json();
+      if (Array.isArray(result?.data)) {
+        return result.data.map((item: any) => patchSource(item)) as T[];
+      }
+    }
+  } catch (e) {}
+
+  // 2. Try direct Supabase if configured
+  if (isSupabaseConfigured) {
+    try {
+      const data = await withRetry(
+        () => supabase.from(collectionName).select(columns) as any,
+        2,
+        `fetching collection ${collectionName}`
+      );
+      return (data as any[] || []).map(item => patchSource(item)) as T[];
+    } catch (err) {
+      handleDbError(err, `fetching collection ${collectionName}`);
+    }
+  }
+  return [];
 }
 
 export async function fetchDocument<T>(
   collectionName: string,
   docId: string
 ): Promise<T | null> {
-  if (!isSupabaseConfigured) return null;
+  // 1. Try server specific endpoint first: /api/${collectionName}/${docId}
   try {
-    const data = await withRetry(
-      () => supabase.from(collectionName).select('*').eq('id', docId).maybeSingle() as any,
-      3,
-      `fetching document ${collectionName}/${docId}`
-    );
-    
-    return data ? patchSource(data as any) as T : null;
-  } catch (err) {
-    handleDbError(err, `fetching document ${collectionName}/${docId}`);
-    return null;
+    const res = await fetch(`/api/${encodeURIComponent(collectionName)}/${encodeURIComponent(docId)}`);
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.data) {
+        return patchSource(result.data) as T;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Try generic server document endpoint: /api/document/${collectionName}/${docId}
+  try {
+    const res = await fetch(`/api/document/${encodeURIComponent(collectionName)}/${encodeURIComponent(docId)}`);
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.data) {
+        return patchSource(result.data) as T;
+      }
+    }
+  } catch (e) {}
+
+  // 3. Check local storage cache
+  try {
+    const localKey = `swdo_${collectionName}_${docId}`;
+    const cached = localStorage.getItem(localKey);
+    if (cached) {
+      return JSON.parse(cached) as T;
+    }
+    const colKey = `swdo_${collectionName}`;
+    const colCached = localStorage.getItem(colKey);
+    if (colCached) {
+      const list = JSON.parse(colCached);
+      if (Array.isArray(list)) {
+        const found = list.find((x: any) => x.id === docId);
+        if (found) return found as T;
+      }
+    }
+  } catch (e) {}
+
+  // 4. Fallback to direct supabase only if configured
+  if (isSupabaseConfigured) {
+    try {
+      const data = await withRetry(
+        () => supabase.from(collectionName).select('*').eq('id', docId).maybeSingle() as any,
+        2,
+        `fetching document ${collectionName}/${docId}`
+      );
+      return data ? patchSource(data as any) as T : null;
+    } catch (err) {
+      handleDbError(err, `fetching document ${collectionName}/${docId}`);
+      return null;
+    }
   }
+  return null;
 }
 
 export async function saveToFirestore<T extends { id: string }>(

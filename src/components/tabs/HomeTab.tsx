@@ -181,9 +181,14 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           setActivePicUrl(doc.url);
           // Optional: cache it in the list to avoid re-fetching
           setPictures(prev => prev.map(p => p.id === pic.id ? { ...p, url: doc.url } : p));
+        } else if (DEFAULT_PICTURES[0]?.url) {
+          setActivePicUrl(DEFAULT_PICTURES[0].url);
         }
       } catch (err) {
-        console.error("Failed to load active picture:", err);
+        console.warn("Notice: Active picture fallback used:", err);
+        if (DEFAULT_PICTURES[0]?.url) {
+          setActivePicUrl(DEFAULT_PICTURES[0].url);
+        }
       } finally {
         setIsLoadingActivePic(false);
       }
@@ -216,9 +221,14 @@ export const HomeTab: React.FC<HomeTabProps> = ({
           setActiveVidUrl(doc.url);
           // Cache it
           setVideos(prev => prev.map(v => v.id === vid.id ? { ...v, url: doc.url } : v));
+        } else if (DEFAULT_VIDEOS[0]?.url) {
+          setActiveVidUrl(DEFAULT_VIDEOS[0].url);
         }
       } catch (err) {
-        console.error("Failed to load active video:", err);
+        console.warn("Notice: Active video fallback used:", err);
+        if (DEFAULT_VIDEOS[0]?.url) {
+          setActiveVidUrl(DEFAULT_VIDEOS[0].url);
+        }
       } finally {
         setIsLoadingActiveVid(false);
       }

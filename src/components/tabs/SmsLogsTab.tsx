@@ -18,10 +18,11 @@ import {
   FileText,
   Tag,
   Copy,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import { SmsLog, PortalSettings } from '../../types';
-import { fetchCollection, isTableNotFoundError, subscribeCollection } from '../../lib/firestoreSync';
+import { fetchCollection, isTableNotFoundError, subscribeCollection, deleteFromFirestore } from '../../lib/firestoreSync';
 
 interface SmsLogsTabProps {
   isAdmin?: boolean;
@@ -50,29 +51,56 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
   const fetchServerLogs = async () => {
     setSyncing(true);
     try {
-      const res = await fetch('/api/sms-diagnostic');
-      const data = await res.json();
-      if (data.logs && Array.isArray(data.logs)) {
-        const existingIds = new Set(logs.map(l => l.id));
-        const newLogs = [...logs];
-        let addedCount = 0;
-        
-        data.logs.forEach((l: any) => {
-          if (!existingIds.has(l.id)) {
-            newLogs.push(l);
-            addedCount++;
-          }
-        });
-        
-        if (addedCount > 0) {
-          const sorted = newLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-          setLogs(sorted);
+      let serverLogs: SmsLog[] = [];
+      const res = await fetch('/api/sms_logs');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          serverLogs = json.data;
         }
+      }
+      if (serverLogs.length === 0) {
+        const diagRes = await fetch('/api/sms-diagnostic');
+        if (diagRes.ok) {
+          const diagJson = await diagRes.json();
+          if (diagJson.logs && Array.isArray(diagJson.logs)) {
+            serverLogs = diagJson.logs;
+          }
+        }
+      }
+
+      if (serverLogs.length > 0) {
+        const existingIds = new Set<string>();
+        const combined: SmsLog[] = [...serverLogs];
+        combined.forEach(l => existingIds.add(l.id));
+
+        // Merge any local offline logs
+        try {
+          const local = localStorage.getItem('swdo_sms_logs');
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((p: any) => {
+                if (p && p.id && !existingIds.has(p.id)) {
+                  combined.push(p);
+                  existingIds.add(p.id);
+                }
+              });
+            }
+          }
+        } catch (e) {}
+
+        const sorted = combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setLogs(sorted);
+        try {
+          localStorage.setItem('swdo_sms_logs', JSON.stringify(sorted));
+        } catch (e) {}
       }
     } catch (e) {
       console.warn('Failed to fetch server logs:', e);
     } finally {
       setSyncing(false);
+      setLoading(false);
     }
   };
 
@@ -82,16 +110,37 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDeleteLog = async (id: string) => {
+    if (!window.confirm('Are you sure you want to remove this delivery log?')) return;
+    try {
+      setLogs(prev => prev.filter(l => l.id !== id));
+      setSelectedLog(null);
+      await deleteFromFirestore('sms_logs', id);
+    } catch (e) {
+      console.warn('Failed to delete SMS log:', e);
+    }
+  };
+
   useEffect(() => {
     setFormData({ ...settings });
   }, [settings]);
 
   useEffect(() => {
     setLoading(true);
+
+    // Initial server fetch
+    fetchServerLogs();
+
+    // Safety timeout: dismiss loading spinner within 1.5 seconds under all network conditions
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+
     const unsubscribe = subscribeCollection<SmsLog>('sms_logs', (data) => {
+      clearTimeout(safetyTimer);
       let combined = [...data];
       
-      // Also get any local logs for backward compatibility/redundancy
+      // Also check any local logs for backward compatibility/redundancy
       try {
         const local = localStorage.getItem('swdo_sms_logs');
         if (local && local !== 'undefined' && local !== 'null') {
@@ -109,18 +158,6 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         console.warn('Failed to parse local SMS logs:', e);
       }
 
-      if (combined.length === 0) {
-        const sampleLog: SmsLog = {
-          id: 'sms_sample_' + Date.now(),
-          recipient: '03472021703',
-          message: 'Assalamu Alaikum! Test SMS log from SWDO Relief Portal.',
-          type: 'System Test',
-          status: 'Delivered',
-          timestamp: new Date().toISOString(),
-        };
-        combined = [sampleLog];
-      }
-
       const sorted = combined.sort((a, b) => {
         try {
           return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
@@ -129,11 +166,16 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         }
       });
       
-      setLogs(sorted);
+      if (sorted.length > 0) {
+        setLogs(sorted);
+      }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      unsubscribe();
+    };
   }, []);
 
   const handleSendTestSms = async () => {
@@ -831,7 +873,19 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t dark:border-slate-800 border-slate-200 bg-slate-50/50 dark:bg-slate-950/50 flex justify-end">
+            <div className="p-4 border-t dark:border-slate-800 border-slate-200 bg-slate-50/50 dark:bg-slate-950/50 flex items-center justify-between">
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLog(selectedLog.id)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 transition-all flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete Log
+                </button>
+              ) : (
+                <div />
+              )}
               <button
                 onClick={() => setSelectedLog(null)}
                 className="px-6 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
