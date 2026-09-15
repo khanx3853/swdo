@@ -110,6 +110,40 @@ async function startServer() {
   });
 
   // API routes
+  app.get("/api/sms-diagnostic", async (req, res) => {
+    if (!isSupabaseConfigured) {
+      return res.json({ configured: false, error: "Supabase not configured" });
+    }
+    try {
+      const { data: logs, error: logsErr } = await supabase
+        .from("sms_logs")
+        .select("*")
+        .order("timestamp", { ascending: false })
+        .limit(20);
+      
+      const { data: settings, error: settingsErr } = await supabase
+        .from("settings")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      
+      res.json({
+        configured: true,
+        url: supabaseUrl,
+        hasLogs: !!logs,
+        count: logs?.length || 0,
+        logs: logs || [],
+        settings: settings || null,
+        errors: {
+          logs: logsErr ? logsErr.message : null,
+          settings: settingsErr ? settingsErr.message : null
+        }
+      });
+    } catch (err: any) {
+      res.json({ configured: true, error: err.message });
+    }
+  });
+
   app.post("/api/approve-donation", async (req, res) => {
     const { donationId, adminUsername } = req.body;
     console.log(`Received approval request for: ${donationId} by ${adminUsername}`);
@@ -218,7 +252,7 @@ async function startServer() {
     }
 
     if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-      return digitsOnly;
+      return '+' + digitsOnly;
     }
     return null;
   }
@@ -231,9 +265,16 @@ async function startServer() {
     senderNum?: string;
     type?: string;
   }) {
-    const hash = options.hash || process.env.VEEVOTECH_SMS_HASH || "d9eb3e26f4532bcbbca611804241635a";
-    const senderNum = options.senderNum || process.env.VEEVOTECH_SENDER_NUM || "Default";
+    const rawHash = options.hash || process.env.VEEVOTECH_SMS_HASH || "d9eb3e26f4532bcbbca611804241635a";
+    const rawSenderNum = options.senderNum || process.env.VEEVOTECH_SENDER_NUM || "Default";
+    
+    // Clean secrets to handle user paste errors
+    const hash = extractRealValue(rawHash).split('.')[0];
+    const senderNum = extractRealValue(rawSenderNum) || "Default";
+    
     const formattedNum = formatPhoneNumberForSms(options.to);
+
+    console.log(`📱 [VeevoTech SMS] Request to ${options.to} (Formatted: ${formattedNum || 'INVALID'}). Type: ${options.type || 'N/A'}`);
 
     if (!formattedNum) {
       console.warn("⚠️ [VeevoTech SMS] Skipped: Invalid or missing phone number:", options.to);
@@ -248,8 +289,9 @@ async function startServer() {
       params.append("receivernetwork", "0");
       params.append("textmessage", options.message);
       params.append("sendernum", senderNum);
+      params.append("unicode", "1"); // Enable Unicode support for Urdu/Arabic characters
 
-      console.log(`📱 [VeevoTech SMS] Dispatching to ${formattedNum}...`);
+      console.log(`📱 [VeevoTech SMS] Dispatching via gateway (Hash: ${hash.substring(0, 4)}...)...`);
       const response = await fetch(url, {
         method: "POST",
         headers: { 

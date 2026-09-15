@@ -146,8 +146,9 @@ export default function App() {
       (data) => {
         if (data) {
           let needsUpdate = false;
-          const updated = { ...data };
-
+          // Merge with initial settings to ensure all required fields exist
+          const updated = { ...INITIAL_SETTINGS, ...data };
+          
           if (!data.Address || data.Address === "Batkot" || data.Address === "Lelai") {
             updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
             needsUpdate = true;
