@@ -415,7 +415,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
 
     // Category Filter
     if (categoryFilter === 'all') {
-      baseList = baseList.filter((b) => !isWheelchairOrDisabled(b) && !isMasajidBeneficiary(b));
+      baseList = beneficiaries;
     } else if (categoryFilter === 'disabled') {
       baseList = baseList.filter(isWheelchairOrDisabled);
     } else if (categoryFilter === 'direct_financial') {
@@ -427,7 +427,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
     // Date Range Filter
     if (fromDate || toDate) {
       baseList = baseList.filter((b) => {
-        const itemDate = b.Date;
+        const itemDate = (b.Date || '').replace(/\//g, '-');
         if (!itemDate) return false;
         
         // Simple string comparison for ISO dates (YYYY-MM-DD)
@@ -1020,7 +1020,7 @@ export const BeneficiariesTab: React.FC<BeneficiariesTabProps> = ({
             <Users className="w-3.5 h-3.5 text-blue-400" />
             <span>All Beneficiaries</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 font-mono">
-              {nonWheelchairBeneficiaries.length}
+              {beneficiaries.length}
             </span>
           </button>
           <button

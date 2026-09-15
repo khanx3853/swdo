@@ -42,6 +42,7 @@ export interface Donation {
   SendSms?: boolean;
   SmsSent?: boolean;
   SmsMessageId?: string;
+  [key: string]: any;
 }
 
 export interface Beneficiary {
@@ -62,6 +63,7 @@ export interface Beneficiary {
   Status?: 'Allotted' | 'Pending' | 'Verified';
   Source?: 'Audit' | 'Live';
   SendSms?: boolean;
+  [key: string]: any;
 }
 
 export interface Member {

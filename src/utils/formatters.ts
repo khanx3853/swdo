@@ -39,7 +39,7 @@ export function formatContact(val: string): string {
 
 export function parseDateRange(dateStr: string | undefined | null): { start: string; end: string; sortTimestamp: number } {
   if (!dateStr) return { start: '', end: '', sortTimestamp: 0 };
-  const str = dateStr.trim();
+  const str = dateStr.trim().replace(/\//g, '-');
 
   // Match standard YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {

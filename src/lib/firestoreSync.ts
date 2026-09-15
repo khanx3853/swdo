@@ -232,7 +232,6 @@ export function subscribeCollection<T extends { id: string }>(
   }
 
   // 2. Fetch latest data from backend server
-  const singular = getApiSingularName(collectionName);
   const endpoint = `/api/${collectionName}`;
   fetch(endpoint)
     .then(res => res.json())
@@ -240,9 +239,26 @@ export function subscribeCollection<T extends { id: string }>(
       const items = result?.data || result?.users;
       if (Array.isArray(items) && items.length > 0) {
         try {
-          localStorage.setItem(localKey, JSON.stringify(items));
-        } catch (e) {}
-        onData(items as T[]);
+          const existing = localStorage.getItem(localKey);
+          let mergedList = items;
+          if (existing) {
+            const parsed = JSON.parse(existing);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const itemMap = new Map(items.map((it: any) => [it.id || it.username, it]));
+              for (const p of parsed) {
+                const key = p.id || p.username;
+                if (key && !itemMap.has(key)) {
+                  itemMap.set(key, p);
+                }
+              }
+              mergedList = Array.from(itemMap.values());
+            }
+          }
+          localStorage.setItem(localKey, JSON.stringify(mergedList));
+          onData(mergedList as T[]);
+        } catch (e) {
+          onData(items as T[]);
+        }
       }
     })
     .catch(e => console.warn(`Backend fetch for ${collectionName} warning:`, e));
@@ -261,9 +277,26 @@ export function subscribeCollection<T extends { id: string }>(
         .catch(err => console.error(`Seeding failed for ${collectionName}:`, err));
     } else if (data.length > 0) {
       try {
-        localStorage.setItem(localKey, JSON.stringify(data));
-      } catch (e) {}
-      onData(data);
+        const existing = localStorage.getItem(localKey);
+        let mergedList = data;
+        if (existing) {
+          const parsed = JSON.parse(existing);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const itemMap = new Map(data.map((it: any) => [it.id || it.username, it]));
+            for (const p of parsed) {
+              const key = p.id || p.username;
+              if (key && !itemMap.has(key)) {
+                itemMap.set(key, p);
+              }
+            }
+            mergedList = Array.from(itemMap.values());
+          }
+        }
+        localStorage.setItem(localKey, JSON.stringify(mergedList));
+        onData(mergedList as T[]);
+      } catch (e) {
+        onData(data);
+      }
     }
   });
 

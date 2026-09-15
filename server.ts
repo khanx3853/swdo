@@ -148,19 +148,30 @@ async function startServer() {
 
   // Donations APIs
   app.get("/api/donations", async (req, res) => {
-    let list = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
+    let localList = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase.from("donations").select("*").order("Date", { ascending: false });
-        if (!error && data && data.length > 0) {
-          saveStoredCollection("donations_store.json", data);
-          return res.json({ success: true, data });
+        if (!error && data) {
+          const remoteIds = new Set(data.map((d: any) => d.id));
+          const localOnly = localList.filter((d: any) => !remoteIds.has(d.id));
+          const merged = [...data, ...localOnly];
+          
+          if (localOnly.length > 0) {
+            console.log(`Syncing ${localOnly.length} local donations to Supabase...`);
+            supabase.from("donations").upsert(localOnly).then(({ error }) => {
+              if (error) console.warn("Donation sync fail:", error);
+            });
+          }
+
+          saveStoredCollection("donations_store.json", merged);
+          return res.json({ success: true, data: merged });
         }
       } catch (err) {
         console.warn("Supabase fetch donations warning:", err);
       }
     }
-    return res.json({ success: true, data: list });
+    return res.json({ success: true, data: localList });
   });
 
   app.post("/api/save-donation", async (req, res) => {
@@ -243,19 +254,30 @@ async function startServer() {
 
   // Beneficiaries APIs
   app.get("/api/beneficiaries", async (req, res) => {
-    let list = getStoredCollection("beneficiaries_store.json", []);
+    let localList = getStoredCollection("beneficiaries_store.json", []);
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase.from("beneficiaries").select("*").order("Date", { ascending: false });
-        if (!error && data && data.length > 0) {
-          saveStoredCollection("beneficiaries_store.json", data);
-          return res.json({ success: true, data });
+        if (!error && data) {
+          const remoteIds = new Set(data.map((b: any) => b.id));
+          const localOnly = localList.filter((b: any) => !remoteIds.has(b.id));
+          const merged = [...data, ...localOnly];
+
+          if (localOnly.length > 0) {
+            console.log(`Syncing ${localOnly.length} local beneficiaries to Supabase...`);
+            supabase.from("beneficiaries").upsert(localOnly).then(({ error }) => {
+              if (error) console.warn("Beneficiary sync fail:", error);
+            });
+          }
+
+          saveStoredCollection("beneficiaries_store.json", merged);
+          return res.json({ success: true, data: merged });
         }
       } catch (err) {
         console.warn("Supabase fetch beneficiaries warning:", err);
       }
     }
-    return res.json({ success: true, data: list });
+    return res.json({ success: true, data: localList });
   });
 
   app.post("/api/save-beneficiary", async (req, res) => {
@@ -490,13 +512,13 @@ async function startServer() {
   }
 
   app.get("/api/users", async (req, res) => {
-    let usersList = getStoredUsers();
+    let localUsers = getStoredUsers();
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase.from("users").select("*");
-        if (!error && data && data.length > 0) {
-          // Normalize fields (handle case sensitivity)
-          const normalized = data.map((u: any) => ({
+        if (!error && data) {
+          // Normalize fields
+          const remoteUsers = data.map((u: any) => ({
             id: u.id,
             username: u.username,
             password: u.password,
@@ -504,14 +526,42 @@ async function startServer() {
             Access: u.Access || u.access || ["Home", "Donations", "Beneficiaries", "Members"],
             Theme: u.Theme || u.theme || "Dark"
           }));
-          saveStoredUsers(normalized);
-          return res.json({ success: true, users: normalized });
+
+          const remoteUsernames = new Set(remoteUsers.map((u: any) => u.username.toLowerCase()));
+          const localOnly = localUsers.filter((u: any) => !remoteUsernames.has(u.username.toLowerCase()));
+          
+          // Ensure 'Ali' is in the list
+          const hasAli = remoteUsernames.has("ali") || localUsers.some(u => u.username.toLowerCase() === "ali");
+          if (!hasAli) {
+             const aliUser = {
+               id: "8e540699-e9d6-48a4-aa47-7126e373a82f",
+               username: "Ali",
+               password: "Ali321",
+               Rights: "Admin",
+               Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
+               Theme: "Dark"
+             };
+             localUsers.push(aliUser);
+             localOnly.push(aliUser);
+          }
+
+          const merged = [...remoteUsers, ...localOnly];
+
+          if (localOnly.length > 0) {
+            console.log(`Syncing ${localOnly.length} local users to Supabase...`);
+            supabase.from("users").upsert(localOnly).then(({ error }) => {
+              if (error) console.warn("User sync fail:", error);
+            });
+          }
+
+          saveStoredUsers(merged);
+          return res.json({ success: true, users: merged });
         }
       } catch (err) {
         console.warn("Supabase fetch users failed, using local store:", err);
       }
     }
-    return res.json({ success: true, users: usersList });
+    return res.json({ success: true, users: localUsers });
   });
 
   app.post("/api/save-user", async (req, res) => {

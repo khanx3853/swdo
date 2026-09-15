@@ -84,7 +84,14 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const donMap = new Map<string, Donation>();
+          for (const d of INITIAL_DONATIONS) {
+            if (d && d.id) donMap.set(d.id, d);
+          }
+          for (const d of parsed) {
+            if (d && d.id) donMap.set(d.id, d);
+          }
+          return Array.from(donMap.values());
         }
       }
     } catch (e) {}
@@ -97,7 +104,14 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const bMap = new Map<string, Beneficiary>();
+          for (const b of INITIAL_BENEFICIARIES) {
+            if (b && b.id) bMap.set(b.id, b);
+          }
+          for (const b of parsed) {
+            if (b && b.id) bMap.set(b.id, b);
+          }
+          return Array.from(bMap.values());
         }
       }
     } catch (e) {}
@@ -110,7 +124,14 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const mMap = new Map<string, Member>();
+          for (const m of INITIAL_MEMBERS) {
+            if (m && m.id) mMap.set(m.id, m);
+          }
+          for (const m of parsed) {
+            if (m && m.id) mMap.set(m.id, m);
+          }
+          return Array.from(mMap.values());
         }
       }
     } catch (e) {}
@@ -123,7 +144,14 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const uMap = new Map<string, UserAccount>();
+          for (const u of INITIAL_USERS) {
+            if (u && (u.username || u.id)) uMap.set(u.username || u.id, u);
+          }
+          for (const u of parsed) {
+            if (u && (u.username || u.id)) uMap.set(u.username || u.id, u);
+          }
+          return Array.from(uMap.values());
         }
       }
     } catch (e) {}

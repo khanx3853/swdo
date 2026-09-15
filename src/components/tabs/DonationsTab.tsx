@@ -219,7 +219,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'masajid' | 'sadaqah' | 'zakat' | 'direct-aid' | 'wheelchairs' | 'orphans' | 'ration' | 'blood'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -526,6 +526,10 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     return donations.filter((d) => (d.Status || '').toLowerCase() !== 'rejected');
   }, [donations]);
 
+  const rejectedDonations = useMemo(() => {
+    return donations.filter((d) => (d.Status || '').toLowerCase() === 'rejected');
+  }, [donations]);
+
   // Category Specific Sub-lists
   const masajidDonationsList = useMemo(() => {
     return approvedDonations.filter(isMasajidDonation);
@@ -546,18 +550,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   };
 
   const filteredDonations = useMemo(() => {
-    // Hide rejected items from the main lists entirely for both Admin and normal users
     let list = isAdmin 
-      ? nonRejectedDonations 
+      ? (statusFilter === 'rejected'
+          ? rejectedDonations
+          : (statusFilter === 'pending'
+              ? pendingDonations
+              : (statusFilter === 'approved' ? approvedDonations : donations)))
       : approvedDonations;
-      
-    if (isAdmin) {
-      if (statusFilter === 'pending') {
-        list = pendingDonations;
-      } else if (statusFilter === 'approved') {
-        list = approvedDonations;
-      }
-    }
 
     // Apply category sub-filter
     if (categoryFilter === 'masajid') {
@@ -574,17 +573,15 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       list = list.filter(isRationDonation);
     } else if (categoryFilter === 'blood') {
       list = list.filter(isBloodDonation);
-    } else if (categoryFilter === 'all') {
-      // Exclude specific categories from "All" to keep it clean if requested, 
-      // but usually All should show everything except those with separate sections.
-      list = list.filter(d => !isMasajidDonation(d));
     }
+    // categoryFilter === 'all': show all donations without excluding Masajid
 
     let result = list;
 
     if (fromDate || toDate) {
       result = result.filter(d => {
-        const { start, end } = parseDateRange(d.Date || '');
+        const dateStr = (d.Date || '').replace(/\//g, '-');
+        const { start, end } = parseDateRange(dateStr);
         return (!fromDate || (end || start) >= fromDate) && (!toDate || (start || end) <= toDate);
       });
     }
@@ -672,6 +669,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   }, [beneficiaries, categoryFilter, searchTerm, fromDate, toDate]);
 
   // Category scoped counts for status buttons
+  const categoryScopedAllCount = useMemo(() => {
+    if (categoryFilter === 'masajid') return donations.filter(isMasajidDonation).length;
+    if (categoryFilter === 'sadaqah') return donations.filter(isSadaqahDonation).length;
+    if (categoryFilter === 'zakat') return donations.filter(isZakatDonation).length;
+    return donations.length;
+  }, [donations, categoryFilter]);
+
   const categoryScopedApprovedCount = useMemo(() => {
     if (categoryFilter === 'masajid') return approvedDonations.filter(isMasajidDonation).length;
     if (categoryFilter === 'sadaqah') return approvedDonations.filter(isSadaqahDonation).length;
@@ -692,6 +696,13 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
     if (categoryFilter === 'zakat') return pendingDonations.filter(isZakatDonation).length;
     return pendingDonations.length;
   }, [pendingDonations, categoryFilter]);
+
+  const categoryScopedRejectedCount = useMemo(() => {
+    if (categoryFilter === 'masajid') return rejectedDonations.filter(isMasajidDonation).length;
+    if (categoryFilter === 'sadaqah') return rejectedDonations.filter(isSadaqahDonation).length;
+    if (categoryFilter === 'zakat') return rejectedDonations.filter(isZakatDonation).length;
+    return rejectedDonations.length;
+  }, [rejectedDonations, categoryFilter]);
 
   const filteredPendingQueue = useMemo(() => {
     let list = pendingDonations;
@@ -1593,7 +1604,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                All ({categoryScopedNonRejectedCount})
+                All ({categoryScopedAllCount})
               </button>
               <button
                 type="button"
@@ -1618,6 +1629,18 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Approved ({categoryScopedApprovedCount})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('rejected')}
+                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  statusFilter === 'rejected'
+                    ? 'bg-rose-600 text-white shadow'
+                    : 'text-rose-400 hover:text-rose-300'
+                }`}
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Rejected ({categoryScopedRejectedCount})</span>
               </button>
             </div>
           ) : (
