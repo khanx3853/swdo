@@ -203,15 +203,7 @@ export default function App() {
 
           const fullUpdated: PortalSettings = {
             ...INITIAL_SETTINGS,
-            ...(savedLocal || {}),
             ...updated,
-            AutoSmsSubmission: savedLocal?.AutoSmsSubmission ?? INITIAL_SETTINGS.AutoSmsSubmission,
-            AutoSmsApproval: savedLocal?.AutoSmsApproval ?? INITIAL_SETTINGS.AutoSmsApproval,
-            VeevoSmsHash: savedLocal?.VeevoSmsHash || INITIAL_SETTINGS.VeevoSmsHash,
-            VeevoSenderNum: savedLocal?.VeevoSenderNum || INITIAL_SETTINGS.VeevoSenderNum,
-            SmsSubmissionTemplate: savedLocal?.SmsSubmissionTemplate || INITIAL_SETTINGS.SmsSubmissionTemplate,
-            SmsApprovalTemplate: (savedLocal?.SmsApprovalTemplate && savedLocal.SmsApprovalTemplate.includes('Assalamu Alaikum')) ? savedLocal.SmsApprovalTemplate : INITIAL_SETTINGS.SmsApprovalTemplate,
-            SmsBeneficiaryTemplate: (savedLocal?.SmsBeneficiaryTemplate && savedLocal.SmsBeneficiaryTemplate.includes('Alhamdulillah')) ? savedLocal.SmsBeneficiaryTemplate : INITIAL_SETTINGS.SmsBeneficiaryTemplate,
           };
 
           if (needsUpdate) {
@@ -294,6 +286,26 @@ export default function App() {
     });
   };
 
+  // Cleanup bloated localStorage keys from previous versions to resolve QuotaExceededError
+  useEffect(() => {
+    const bloatedKeys = [
+      'swdo_donations', 
+      'swdo_beneficiaries', 
+      'swdo_members', 
+      'alkhair_users',
+      'swdo_sms_logs'
+    ];
+    bloatedKeys.forEach(key => {
+      try {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+        }
+      } catch (e) {
+        console.warn(`Failed to clear legacy key ${key}:`, e);
+      }
+    });
+  }, []);
+
   // Sync theme with HTML & BODY classes
   useEffect(() => {
     if (theme === 'Dark') {
@@ -306,23 +318,7 @@ export default function App() {
     localStorage.setItem('swdo_theme', theme);
   }, [theme]);
 
-  // Sync state to localStorage
-  useEffect(() => {
-    localStorage.setItem('swdo_donations', JSON.stringify(donations));
-  }, [donations]);
-
-  useEffect(() => {
-    localStorage.setItem('swdo_beneficiaries', JSON.stringify(beneficiaries));
-  }, [beneficiaries]);
-
-  useEffect(() => {
-    localStorage.setItem('swdo_members', JSON.stringify(members));
-  }, [members]);
-
-  useEffect(() => {
-    localStorage.setItem('alkhair_users', JSON.stringify(users));
-  }, [users]);
-
+  // Sync settings and user session (these are small and safe)
   useEffect(() => {
     localStorage.setItem('alkhair_settings', JSON.stringify(settings));
   }, [settings]);
@@ -931,6 +927,7 @@ export default function App() {
               <SettingsTab
                 settings={settings}
                 onSaveSettings={(newSettings) => {
+                  setSettings(newSettings);
                   saveDocToFirestore('settings', 'portalSettings', newSettings);
                   showToast('Foundation settings saved!');
                 }}

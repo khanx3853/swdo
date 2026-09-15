@@ -85,39 +85,35 @@ async function startServer() {
     return { transporter: pooledTransporter, smtpUser, adminEmail };
   }
 
-  // Helper to format phone number for Veevo Tech SMS API (e.g. +923001234567)
+  // Helper to format phone number for Veevo Tech SMS API (e.g. 923001234567)
   function formatPhoneNumberForSms(phone: string): string | null {
     if (!phone) return null;
-    let cleaned = phone.trim().replace(/[\s\-\(\)\.,]/g, '');
+    let cleaned = phone.trim().replace(/[\s\-\(\)\.,\+]/g, ''); // Remove all symbols including +
     if (!cleaned || cleaned.includes('@')) return null;
 
-    // 03XXXXXXXXX -> +923XXXXXXXXX
+    // 03XXXXXXXXX -> 923XXXXXXXXX
     if (/^03\d{9}$/.test(cleaned)) {
-      return '+92' + cleaned.substring(1);
+      return '92' + cleaned.substring(1);
     }
-    // 3XXXXXXXXX -> +923XXXXXXXXX
+    // 3XXXXXXXXX -> 923XXXXXXXXX
     if (/^3\d{9}$/.test(cleaned)) {
-      return '+92' + cleaned;
+      return '92' + cleaned;
     }
-    // 923XXXXXXXXX without + -> +923XXXXXXXXX
+    // 923XXXXXXXXX -> 923XXXXXXXXX
     if (/^923\d{9}$/.test(cleaned)) {
-      return '+' + cleaned;
+      return cleaned;
     }
-    // 0092... -> +92...
-    if (cleaned.startsWith('00')) {
-      return '+' + cleaned.substring(2);
+    // 0092... -> 92...
+    if (cleaned.startsWith('0092')) {
+      return cleaned.substring(2);
     }
-    // Already starting with +
-    if (cleaned.startsWith('+')) {
-      const digitsOnly = cleaned.substring(1).replace(/\D/g, '');
-      if (digitsOnly.length >= 10) return '+' + digitsOnly;
-    }
+    
     const digitsOnly = cleaned.replace(/\D/g, '');
     if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
-      return '+92' + digitsOnly.substring(1);
+      return '92' + digitsOnly.substring(1);
     }
     if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
-      return '+' + digitsOnly;
+      return digitsOnly;
     }
     return null;
   }
@@ -142,7 +138,7 @@ async function startServer() {
       const url = new URL("https://api.veevotech.com/v3/sendsms");
       url.searchParams.set("hash", hash);
       url.searchParams.set("receivernum", formattedNum);
-      url.searchParams.set("receivernetwork", "Receiver_Network");
+      url.searchParams.set("receivernetwork", "0");
       url.searchParams.set("textmessage", options.message);
       url.searchParams.set("sendernum", senderNum);
 

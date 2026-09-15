@@ -12,7 +12,12 @@ import {
 const DB_ERROR_KEY = 'db_connection_error';
 
 function setDbError() {
-  localStorage.setItem(DB_ERROR_KEY, 'true');
+  try {
+    localStorage.setItem(DB_ERROR_KEY, 'true');
+  } catch (e) {
+    // If we can't even set an error flag, things are very full
+    console.error('CRITICAL: localStorage is completely full. Use a different browser or clear cache.');
+  }
 }
 
 export function isQuotaExceeded(): boolean {
@@ -106,7 +111,9 @@ const TABLE_COLUMNS: Record<string, string[]> = {
     'id', 'Foundation Name', 'SubTitle', 'Address', 'Chairperson',
     'Secretary', 'Treasurer', 'Easypaisa No', 'Easypaisa Title',
     'Bank No', 'Bank Title', 'Bank Account No', 'Account Title',
-    'Currency', 'TreasurerSignature'
+    'Currency', 'TreasurerSignature', 'AutoSmsSubmission', 'AutoSmsApproval',
+    'AutoSmsBeneficiary', 'VeevoSmsHash', 'VeevoSenderNum', 'SmsSubmissionTemplate',
+    'SmsApprovalTemplate', 'SmsBeneficiaryTemplate'
   ],
   beneficiaries: [
     'id', 'Date', 'Beneficiary Name', 'Father Name', 'NIC No',
@@ -145,15 +152,8 @@ export function sanitizeForDb<T>(data: T, collectionName?: string): T {
       'isLiveAdded',
       'Source',
       'ProofLink',
-      'SendSms',
       'SmsSent',
-      'SmsMessageId',
-      'AutoSmsSubmission',
-      'AutoSmsApproval',
-      'VeevoSmsHash',
-      'VeevoSenderNum',
-      'SmsSubmissionTemplate',
-      'SmsApprovalTemplate'
+      'SmsMessageId'
     ];
     
     // Pack ProofLink into Remarks so we don't lose it

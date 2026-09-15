@@ -147,11 +147,14 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
           response: JSON.stringify(data)
         };
         
+        // Skip local logging to prevent QuotaExceededError
+        /*
         try {
           const local = localStorage.getItem('swdo_sms_logs');
           const logs = local ? JSON.parse(local) : [];
           localStorage.setItem('swdo_sms_logs', JSON.stringify([newLog, ...logs].slice(0, 50)));
         } catch (e) {}
+        */
 
         setTestStatus({
           loading: false,
