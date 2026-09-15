@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 import { patchSource } from '../utils/sourcePatch';
 import {
   Donation,
@@ -200,6 +200,7 @@ export async function saveBulkToFirestore<T extends { id: string }>(
   collectionName: string,
   items: T[]
 ) {
+  if (!isSupabaseConfigured) return;
   try {
     const sanitized = items.map(item => sanitizeForDb(item, collectionName));
     
@@ -220,6 +221,10 @@ export function subscribeCollection<T extends { id: string }>(
   onData: (data: T[]) => void,
   initialDataIfEmpty?: T[]
 ): () => void {
+  if (!isSupabaseConfigured) {
+    if (initialDataIfEmpty) onData(initialDataIfEmpty);
+    return () => {};
+  }
   // Initial fetch
   fetchCollection<T>(collectionName).then(data => {
     if (data.length === 0 && initialDataIfEmpty && initialDataIfEmpty.length > 0) {
@@ -258,6 +263,10 @@ export function subscribeDocument<T>(
   onData: (data: T) => void,
   initialDataIfEmpty?: T
 ): () => void {
+  if (!isSupabaseConfigured) {
+    if (initialDataIfEmpty) onData(initialDataIfEmpty);
+    return () => {};
+  }
   // Initial fetch
   fetchDocument<T>(collectionName, docId).then(data => {
     if (!data && initialDataIfEmpty) {
@@ -291,6 +300,7 @@ export async function fetchCollection<T extends { id: string }>(
   collectionName: string,
   columns = '*'
 ): Promise<T[]> {
+  if (!isSupabaseConfigured) return [];
   try {
     const data = await withRetry(
       () => supabase.from(collectionName).select(columns) as any,
@@ -309,6 +319,7 @@ export async function fetchDocument<T>(
   collectionName: string,
   docId: string
 ): Promise<T | null> {
+  if (!isSupabaseConfigured) return null;
   try {
     const data = await withRetry(
       () => supabase.from(collectionName).select('*').eq('id', docId).maybeSingle() as any,
@@ -327,6 +338,7 @@ export async function saveToFirestore<T extends { id: string }>(
   collectionName: string,
   item: T
 ) {
+  if (!isSupabaseConfigured) return;
   try {
     const sanitized = sanitizeForDb(item, collectionName);
     await withRetry(
@@ -341,6 +353,7 @@ export async function saveToFirestore<T extends { id: string }>(
 }
 
 export async function deleteFromFirestore(collectionName: string, id: string) {
+  if (!isSupabaseConfigured) return;
   try {
     await withRetry(
       () => supabase.from(collectionName).delete().eq('id', id) as any,
@@ -353,6 +366,7 @@ export async function deleteFromFirestore(collectionName: string, id: string) {
 }
 
 export async function addDocToFirestore(collectionName: string, data: any) {
+  if (!isSupabaseConfigured) return null;
   try {
     const sanitized = sanitizeForDb(data, collectionName);
     const result = await withRetry(
@@ -373,6 +387,7 @@ export async function saveDocToFirestore<T>(
   docId: string,
   data: T
 ) {
+  if (!isSupabaseConfigured) return;
   try {
     const sanitized = sanitizeForDb(data, collectionName);
     // Ensure id matches docId for the upsert

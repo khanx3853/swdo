@@ -40,7 +40,7 @@ import {
   generateMonkeyFilePDF,
 } from './utils/formatters';
 import { playSuccessChime } from './utils/audio';
-import { checkSupabaseConnection } from './lib/supabase';
+import { checkSupabaseConnection, isSupabaseConfigured } from './lib/supabase';
 import {
   subscribeCollection,
   subscribeDocument,
@@ -100,6 +100,10 @@ export default function App() {
   useEffect(() => {
     // Check Supabase connectivity
     const verifyConnection = async () => {
+      if (!isSupabaseConfigured) {
+        setDbStatus({ ok: false, error: 'Supabase credentials missing' });
+        return;
+      }
       const status = await checkSupabaseConnection();
       setDbStatus(status as any);
       if (!status.ok) {
@@ -144,17 +148,17 @@ export default function App() {
           let needsUpdate = false;
           const updated = { ...data };
 
-          if (!data.Address || data.Address.includes("Batkot") || data.Address.includes("Lelai") || !data.Address.includes("Barbatkot")) {
+          if (!data.Address || data.Address === "Batkot" || data.Address === "Lelai") {
             updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
             needsUpdate = true;
           }
 
-          if (data.Chairperson === "Fazal Rahim" || !data.Chairperson) {
+          if (!data.Chairperson || data.Chairperson === "Fazal Rahim") {
             updated.Chairperson = "Ali Bahadur";
             needsUpdate = true;
           }
 
-          if (data.Secretary === "Muhammad Zada" || !data.Secretary) {
+          if (!data.Secretary || data.Secretary === "Muhammad Zada") {
             updated.Secretary = "Muhammad Parvez";
             needsUpdate = true;
           }

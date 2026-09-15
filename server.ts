@@ -1,13 +1,103 @@
 import express from "express";
 import path from "path";
+import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://wnhealllbmvxhxpvgvjm.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduaGVhbGxsYm12eGh4cHZndmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMDM5ODcsImV4cCI6MjEwNDY3OTk4N30.U4YA-7_7VIScGiLm8wkeCmimqJyjBoXYE3GAKIhzDeg';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const extractRealValue = (val: any, preferUrl = false): string => {
+  if (!val || typeof val !== 'string') return '';
+  let trimmed = val.trim();
+  trimmed = trimmed.replace(/^["'\[\(]+|["'\]\)]+$/g, '').trim();
+
+  if (preferUrl) {
+    const urlPattern = /https?:\/\/[a-z0-9\.\-]+(?:\/[^\s,;]*)?/i;
+    const urlMatches = trimmed.match(urlPattern);
+    if (urlMatches) {
+      let url = urlMatches[0].replace(/\/+$/, '');
+      if (url.endsWith('/rest/v1')) {
+        url = url.substring(0, url.length - 8);
+      }
+      return url;
+    }
+    return trimmed;
+  }
+
+  const segments = trimmed.split(/[\s,;]+/);
+  let bestKey = '';
+
+  for (const segment of segments) {
+    const dots = segment.split('.');
+    for (let i = 0; i < dots.length; i++) {
+      let potential = '';
+      if (dots[i].startsWith('eyJhbGci') && i + 2 < dots.length) {
+        potential = `${dots[i]}.${dots[i+1]}.${dots[i+2]}`;
+      } else if (dots[i].startsWith('eyJpc3Mi') && i + 1 < dots.length) {
+        potential = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${dots[i]}.${dots[i+1]}`;
+      }
+
+      if (potential.length > 100) {
+        if (potential.includes('cm9sZSI6InNlcnZpY2Vfcm9sZS') || potential.includes('InJvbGUiOiJzZXJ2aWNlX3JvbGUi')) {
+          return potential;
+        }
+        bestKey = potential;
+      }
+    }
+  }
+
+  return bestKey || trimmed;
+};
+
+const getValidUrl = (url: string | undefined): string => {
+  const fallback = 'https://wnhealllbmvxhxpvgvjm.supabase.co';
+  const realUrl = extractRealValue(url, true);
+  if (!realUrl) return fallback;
+  
+  let trimmed = realUrl;
+  if (/^[a-z0-9]{20}$/.test(trimmed)) {
+    return `https://${trimmed}.supabase.co`;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('Invalid protocol');
+    }
+    return parsed.origin;
+  } catch (e) {
+    return fallback;
+  }
+};
+
+const isEnvSet = (val: any): boolean => {
+  const trimmed = extractRealValue(val);
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return false;
+  if (trimmed.startsWith('http')) return trimmed.length > 15;
+  if (trimmed.startsWith('eyJ')) return trimmed.length > 100;
+  if (/^[a-z0-9]{20}$/.test(trimmed)) return true;
+  return false;
+};
+
+const supabaseUrlFromEnv = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKeyFromEnv = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceKeyFromEnv = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+export const isSupabaseConfigured = isEnvSet(supabaseUrlFromEnv) && (isEnvSet(supabaseAnonKeyFromEnv) || isEnvSet(supabaseServiceKeyFromEnv));
+
+const supabaseUrl = getValidUrl(supabaseUrlFromEnv);
+const supabaseAnonKey = extractRealValue(supabaseAnonKeyFromEnv);
+const supabaseServiceKey = extractRealValue(supabaseServiceKeyFromEnv);
+
+if (!isSupabaseConfigured) {
+  console.warn('Backend Supabase credentials missing or invalid. Server will run in offline/demo mode.');
+}
+
+// Use Service Role key on backend if available to bypass RLS, otherwise fallback to anon
+const supabase = createClient(
+  supabaseUrl,
+  supabaseServiceKey || supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy'
+);
 
 async function startServer() {
   const app = express();
@@ -24,6 +114,10 @@ async function startServer() {
     const { donationId, adminUsername } = req.body;
     console.log(`Received approval request for: ${donationId} by ${adminUsername}`);
     
+    if (!isSupabaseConfigured) {
+      return res.status(503).json({ error: "Database not configured" });
+    }
+
     try {
       const { data, error } = await supabase
         .from("donations")
@@ -99,19 +193,30 @@ async function startServer() {
     if (/^3\d{9}$/.test(cleaned)) {
       return '92' + cleaned;
     }
+    // 9203XXXXXXXXX -> 923XXXXXXXXX (Common mistake: international + leading zero)
+    if (/^9203\d{9}$/.test(cleaned)) {
+      return '92' + cleaned.substring(3);
+    }
     // 923XXXXXXXXX -> 923XXXXXXXXX
     if (/^923\d{9}$/.test(cleaned)) {
       return cleaned;
     }
     // 0092... -> 92...
     if (cleaned.startsWith('0092')) {
-      return cleaned.substring(2);
+      const rest = cleaned.substring(4);
+      if (rest.startsWith('0')) return '92' + rest.substring(1);
+      return '92' + rest;
     }
     
     const digitsOnly = cleaned.replace(/\D/g, '');
     if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
       return '92' + digitsOnly.substring(1);
     }
+    // If it starts with 92 and has 13 digits and the 3rd digit is 0, it's 9203...
+    if (digitsOnly.startsWith('920') && digitsOnly.length === 13) {
+      return '92' + digitsOnly.substring(3);
+    }
+
     if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
       return digitsOnly;
     }
@@ -124,6 +229,7 @@ async function startServer() {
     message: string;
     hash?: string;
     senderNum?: string;
+    type?: string;
   }) {
     const hash = options.hash || process.env.VEEVOTECH_SMS_HASH || "d9eb3e26f4532bcbbca611804241635a";
     const senderNum = options.senderNum || process.env.VEEVOTECH_SENDER_NUM || "Default";
@@ -135,25 +241,33 @@ async function startServer() {
     }
 
     try {
-      const url = new URL("https://api.veevotech.com/v3/sendsms");
-      url.searchParams.set("hash", hash);
-      url.searchParams.set("receivernum", formattedNum);
-      url.searchParams.set("receivernetwork", "0");
-      url.searchParams.set("textmessage", options.message);
-      url.searchParams.set("sendernum", senderNum);
+      const url = "https://api.veevotech.com/v3/sendsms";
+      const params = new URLSearchParams();
+      params.append("hash", hash);
+      params.append("receivernum", formattedNum);
+      params.append("receivernetwork", "0");
+      params.append("textmessage", options.message);
+      params.append("sendernum", senderNum);
 
       console.log(`📱 [VeevoTech SMS] Dispatching to ${formattedNum}...`);
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: { "Accept": "application/json" }
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json" 
+        },
+        body: params.toString()
       });
 
-      const data: any = await response.json().catch(async () => {
-        const text = await response.text();
-        return { raw: text };
-      });
+      const responseText = await response.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        data = { raw: responseText };
+      }
 
-      const isSuccess = data && data.STATUS === "SUCCESSFUL";
+      const isSuccess = data && (data.STATUS === "SENT" || data.STATUS === "SUCCESSFUL");
       const logRecord = {
         id: 'sms_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         recipient: formattedNum,
@@ -164,10 +278,11 @@ async function startServer() {
         response: JSON.stringify(data || {})
       };
       try {
-        const { error: insertErr } = await supabase.from("sms_logs").insert(logRecord);
-        if (insertErr) {
-          // Ignore missing table error
-          console.log("ℹ️ sms_logs table note:", insertErr.message || insertErr);
+        if (isSupabaseConfigured) {
+          const { error: insertErr } = await supabase.from("sms_logs").insert(logRecord);
+          if (insertErr) {
+            console.log("ℹ️ sms_logs table note:", insertErr.message || insertErr);
+          }
         }
       } catch (logErr) {
         // Suppress
@@ -178,9 +293,17 @@ async function startServer() {
         return { success: true, messageId: data.MESSAGE_ID, charged: data.CHARGED_BALANCE, data };
       } else {
         const isLowBalance = data?.ERROR_FILTER === "LOW_BALANCE" || data?.ERROR_CODE === "TAPI-149730721";
-        const errorDesc = isLowBalance
-          ? "Veevo Tech account balance exhausted (LOW_BALANCE). Please recharge credits at oneid.veevotech.com to resume SMS dispatches."
-          : (data?.ERROR_DESCRIPTION || data?.ERROR_FILTER || "SMS transmission failed");
+        
+        let errorDesc = "SMS transmission failed";
+        if (isLowBalance) {
+          errorDesc = "Veevo Tech account balance exhausted (LOW_BALANCE). Please recharge credits at oneid.veevotech.com to resume SMS dispatches.";
+        } else if (data?.ERROR_DESCRIPTION) {
+          errorDesc = data.ERROR_DESCRIPTION;
+        } else if (data?.ERROR_FILTER) {
+          errorDesc = data.ERROR_FILTER;
+        } else if (data?.STATUS === "ERROR") {
+          errorDesc = `Gateway Error: ${JSON.stringify(data)}`;
+        }
 
         if (isLowBalance) {
           console.warn(`⚠️ [VeevoTech SMS] Gateway low balance notice for ${formattedNum}: Recharge required at oneid.veevotech.com`);
@@ -208,7 +331,9 @@ async function startServer() {
         response: JSON.stringify({ error: err.message || "Failed to reach Veevo Tech gateway" })
       };
       try {
-        await supabase.from("sms_logs").insert(failRecord);
+        if (isSupabaseConfigured) {
+          await supabase.from("sms_logs").insert(failRecord);
+        }
       } catch (logErr) {
         // Suppress
       }
@@ -217,15 +342,14 @@ async function startServer() {
     }
   }
 
-  // Helper to ensure clean SMS text while preserving Urdu/Arabic script
+  // Helper to ensure clean SMS text while preserving Urdu/Arabic script and newlines
   function sanitizeForGsmSms(text: string): string {
     if (!text) return "";
     return text
-      .replace(/[()]/g, '')
+      .replace(/[\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F1E6-\u1F1FF\u2600-\u26FF\u2700-\u27BF\u1F900-\u1F9FF\u1F3FB-\u1F3FF\u1F170-\u1F251]/g, '') // Strip emojis only
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u201C\u201D]/g, '"')
       .replace(/[\u2013\u2014]/g, "-")
-      .replace(/\s+/g, ' ')
       .trim();
   }
 
@@ -249,7 +373,7 @@ async function startServer() {
         const org = "SWDO Welfare (Reg# 5514)";
 
         let smsBody = donation.SmsSubmissionTemplate ||
-          `Dear {donor}, thank you for donating Rs. {amount} to {org}. Trx: {txn}. Received for verification. May Allah reward you!`;
+          `Assalamu Alaikum {donor},\n\nWe have received your donation of Rs. {amount} to {org}.\nTrx ID: {txn}\n\nYour contribution is pending verification. JazakAllah Khair!`;
 
         smsBody = smsBody
           .replace(/\{donor\}/gi, donorName)
@@ -257,7 +381,11 @@ async function startServer() {
           .replace(/\{txn\}/gi, txn)
           .replace(/\{org\}/gi, org);
 
+        // Replace literal \n with actual newlines if user typed them in settings
+        smsBody = smsBody.replace(/\\n/g, '\n');
         smsBody = sanitizeForGsmSms(smsBody);
+
+        console.log(`📱 [Submission Notif] Body: ${smsBody.replace(/\n/g, ' [NL] ')}`);
 
         smsResult = await sendVeevoSms({
           to: donation['Contact No'],
@@ -674,14 +802,7 @@ async function startServer() {
             const org = "Shangla Welfare & Development Org (REG# 5514)";
 
             let approvalSms = donation.SmsApprovalTemplate ||
-              `Assalamu Alaikum {donor},
-
-JazakAllahu Khair!
-Aap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}
-
-Allah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko dono jahan ki bhalai ata kare. Ameen 🤲
-
-{org}`;
+              `Assalamu Alaikum {donor},\n\nJazakAllahu Khair! Aap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai.\nRef: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
 
             approvalSms = approvalSms
               .replace(/\{donor\}/gi, donorName)
@@ -692,15 +813,20 @@ Allah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko 
               .replace(/\{txn\}/gi, txn)
               .replace(/\{org\}/gi, org);
 
+            // Replace literal \n with actual newlines
+            approvalSms = approvalSms.replace(/\\n/g, '\n');
             approvalSms = sanitizeForGsmSms(approvalSms);
 
+            console.log(`📱 [Status Notif] Body: ${approvalSms.replace(/\n/g, ' [NL] ')}`);
+
+            console.log(`📱 [Status Notif] Dispatching SMS to ${donation['Contact No']}...`);
             await sendVeevoSms({
               to: donation['Contact No'],
               message: approvalSms,
               hash: donation.VeevoSmsHash,
               senderNum: donation.VeevoSenderNum,
               type: "Donation Approval"
-            } as any);
+            });
           } catch (smsErr) {
             console.warn("⚠️ Error sending status update SMS:", smsErr);
           }

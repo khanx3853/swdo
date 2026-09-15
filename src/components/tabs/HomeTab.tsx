@@ -385,11 +385,18 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     return Object.entries(monthMap)
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => {
-        const [m1, y1] = a.name.split(' ');
-        const [m2, y2] = b.name.split(' ');
-        const d1 = new Date(parseInt(`20${y1}`), months.indexOf(m1));
-        const d2 = new Date(parseInt(`20${y2}`), months.indexOf(m2));
-        return d1.getTime() - d2.getTime();
+        try {
+          const [m1, y1] = a.name.split(' ');
+          const [m2, y2] = b.name.split(' ');
+          const d1 = new Date(parseInt(`20${y1}`), months.indexOf(m1));
+          const d2 = new Date(parseInt(`20${y2}`), months.indexOf(m2));
+          const t1 = d1.getTime();
+          const t2 = d2.getTime();
+          if (isNaN(t1) || isNaN(t2)) return 0;
+          return t1 - t2;
+        } catch (e) {
+          return 0;
+        }
       });
   }, [approvedDonations]);
 

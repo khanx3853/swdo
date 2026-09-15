@@ -21,7 +21,7 @@ import {
   Check
 } from 'lucide-react';
 import { SmsLog, PortalSettings } from '../../types';
-import { fetchCollection, isTableNotFoundError } from '../../lib/firestoreSync';
+import { fetchCollection, isTableNotFoundError, subscribeCollection } from '../../lib/firestoreSync';
 
 interface SmsLogsTabProps {
   isAdmin?: boolean;
@@ -56,32 +56,28 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
     setFormData({ ...settings });
   }, [settings]);
 
-  const loadLogs = async () => {
+  useEffect(() => {
     setLoading(true);
-    try {
-      let combined: SmsLog[] = [];
-      try {
-        const data = await fetchCollection<SmsLog>('sms_logs');
-        if (data && data.length > 0) {
-          combined = [...data];
-        }
-      } catch (e) {
-        // Table might not exist yet
-      }
-
-      // Also get any local logs
+    const unsubscribe = subscribeCollection<SmsLog>('sms_logs', (data) => {
+      let combined = [...data];
+      
+      // Also get any local logs for backward compatibility/redundancy
       try {
         const local = localStorage.getItem('swdo_sms_logs');
-        if (local) {
-          const parsed: SmsLog[] = JSON.parse(local);
-          const existingIds = new Set(combined.map(l => l.id));
-          parsed.forEach(p => {
-            if (!existingIds.has(p.id)) {
-              combined.push(p);
-            }
-          });
+        if (local && local !== 'undefined' && local !== 'null') {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed)) {
+            const existingIds = new Set(combined.map(l => l.id));
+            parsed.forEach(p => {
+              if (p && p.id && !existingIds.has(p.id)) {
+                combined.push(p);
+              }
+            });
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to parse local SMS logs:', e);
+      }
 
       if (combined.length === 0) {
         const sampleLog: SmsLog = {
@@ -95,19 +91,19 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         combined = [sampleLog];
       }
 
-      const sorted = combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const sorted = combined.sort((a, b) => {
+        try {
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        } catch (e) {
+          return 0;
+        }
+      });
+      
       setLogs(sorted);
-    } catch (err) {
-      if (!isTableNotFoundError(err)) {
-        console.error('Failed to load SMS logs:', err);
-      }
-    } finally {
       setLoading(false);
-    }
-  };
+    });
 
-  useEffect(() => {
-    loadLogs();
+    return () => unsubscribe();
   }, []);
 
   const handleSendTestSms = async () => {
@@ -161,7 +157,6 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
           success: true,
           message: 'SMS dispatched successfully!',
         });
-        loadLogs();
       } else {
         const isLowBalance = !!data.lowBalance;
         setTestStatus({
@@ -170,7 +165,6 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
           lowBalance: isLowBalance,
           message: data.error || 'SMS delivery failed',
         });
-        loadLogs();
       }
     } catch (err: any) {
       setTestStatus({
@@ -182,20 +176,24 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
   };
 
   const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      log.recipient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.type?.toLowerCase().includes(searchTerm.toLowerCase());
+    try {
+      const matchesSearch =
+        (log.recipient || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.message || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (log.type || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all' || log.status?.toLowerCase() === statusFilter.toLowerCase();
+      const matchesStatus =
+        statusFilter === 'all' || (log.status || '').toLowerCase() === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus;
+    } catch (e) {
+      return false;
+    }
   });
 
   const totalSent = logs.length;
-  const deliveredCount = logs.filter(l => l.status === 'Delivered').length;
-  const failedCount = logs.filter(l => l.status === 'Failed').length;
+  const deliveredCount = logs.filter(l => (l.status || '').toLowerCase() === 'delivered').length;
+  const failedCount = logs.filter(l => (l.status || '').toLowerCase() === 'failed').length;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -594,15 +592,6 @@ export const SmsLogsTab: React.FC<SmsLogsTabProps> = ({
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <button
-            onClick={loadLogs}
-            disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
