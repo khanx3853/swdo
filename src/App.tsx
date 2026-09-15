@@ -225,80 +225,19 @@ export default function App() {
       'settings',
       'portalSettings',
       (data) => {
-        if (data) {
-          let needsUpdate = false;
-          // Merge with initial settings to ensure all required fields exist
-          const updated = { ...INITIAL_SETTINGS, ...data };
-          
-          if (!data.Address || data.Address === "Batkot" || data.Address === "Lelai") {
-            updated.Address = "Maira ,Barbatkot, Alpuri, District Shangla, KPK, Pakistan";
-            needsUpdate = true;
-          }
+        const savedLocal = (() => {
+          try {
+            const s = localStorage.getItem('alkhair_settings');
+            return s ? JSON.parse(s) : null;
+          } catch { return null; }
+        })();
 
-          if (!data.Chairperson || data.Chairperson === "Fazal Rahim") {
-            updated.Chairperson = "Ali Bahadur";
-            needsUpdate = true;
-          }
-
-          if (!data.Secretary || data.Secretary === "Muhammad Zada") {
-            updated.Secretary = "Muhammad Parvez";
-            needsUpdate = true;
-          }
-
-          if (data['Easypaisa Title'] === "Shangla Welfare Org" || !data['Easypaisa Title']) {
-            updated['Easypaisa Title'] = "ALI BAHADUR";
-            needsUpdate = true;
-          }
-
-          if (data['Bank Title'] === "Askari Bank - SWDO Official" || !data['Bank Title']) {
-            updated['Bank Title'] = "MEEZAN BANK";
-            needsUpdate = true;
-          }
-
-          if (data['Account Title'] === "Shangla Welfare & Development Org" || !data['Account Title']) {
-            updated['Account Title'] = "ALI BAHADUR";
-            needsUpdate = true;
-          }
-
-          if (!data.SmsBeneficiaryTemplate || !data.SmsBeneficiaryTemplate.includes('Alhamdulillah')) {
-            updated.SmsBeneficiaryTemplate = INITIAL_SETTINGS.SmsBeneficiaryTemplate;
-            needsUpdate = true;
-          }
-
-          if (!data.SmsApprovalTemplate || !data.SmsApprovalTemplate.includes('Assalamu Alaikum')) {
-            updated.SmsApprovalTemplate = INITIAL_SETTINGS.SmsApprovalTemplate;
-            needsUpdate = true;
-          }
-
-          if (data['Bank Account No'] === "12345678901234" || !data['Bank Account No']) {
-            updated['Bank Account No'] = "00300110485989";
-            needsUpdate = true;
-          }
-
-          if (data['Bank No'] === "12345678901234" || !data['Bank No']) {
-            updated['Bank No'] = "PK34MEZN0000300110485989";
-            needsUpdate = true;
-          }
-
-          const savedLocal = (() => {
-            try {
-              const s = localStorage.getItem('alkhair_settings');
-              return s ? JSON.parse(s) : null;
-            } catch { return null; }
-          })();
-
-          const fullUpdated: PortalSettings = {
-            ...INITIAL_SETTINGS,
-            ...updated,
-          };
-
-          if (needsUpdate) {
-            setSettings(fullUpdated);
-            saveDocToFirestore('settings', 'portalSettings', fullUpdated);
-          } else {
-            setSettings(fullUpdated);
-          }
-        }
+        const combined: PortalSettings = {
+          ...INITIAL_SETTINGS,
+          ...(data || {}),
+          ...(savedLocal || {}),
+        };
+        setSettings(combined);
       },
       INITIAL_SETTINGS
     );
@@ -1041,10 +980,17 @@ export default function App() {
                 settings={settings}
                 onSaveSettings={(newSettings) => {
                   setSettings(newSettings);
+                  try {
+                    localStorage.setItem('alkhair_settings', JSON.stringify(newSettings));
+                  } catch (e) {}
                   saveDocToFirestore('settings', 'portalSettings', newSettings);
                   showToast('Foundation settings saved!');
                 }}
                 onResetDefaults={() => {
+                  setSettings(INITIAL_SETTINGS);
+                  try {
+                    localStorage.setItem('alkhair_settings', JSON.stringify(INITIAL_SETTINGS));
+                  } catch (e) {}
                   saveDocToFirestore('settings', 'portalSettings', INITIAL_SETTINGS);
                   showToast('Settings reset to system defaults');
                 }}
@@ -1084,8 +1030,11 @@ export default function App() {
                 isAdmin={isAdmin}
                 settings={settings}
                 onSaveSettings={(newSettings) => {
-                  saveDocToFirestore('settings', 'portalSettings', newSettings);
                   setSettings(newSettings);
+                  try {
+                    localStorage.setItem('alkhair_settings', JSON.stringify(newSettings));
+                  } catch (e) {}
+                  saveDocToFirestore('settings', 'portalSettings', newSettings);
                   showToast('SMS Hub settings saved successfully!');
                 }}
               />
