@@ -97,12 +97,12 @@ const DEFAULT_PICTURES = [
 const DEFAULT_VIDEOS = [
   {
     id: 'default-vid-1',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-holding-hands-of-an-elderly-person-41857-large.mp4',
+    url: 'https://raw.githubusercontent.com/cseitz/sample-files/main/assets/video/mp4/bbb_short.mp4',
     caption: 'Helping Hands: Elder Care & Warm Compassionate Outreach'
   },
   {
     id: 'default-vid-2',
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-volunteers-distributing-food-packages-45607-large.mp4',
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     caption: 'Emergency Aid: Direct Food Package & Relief Distribution'
   }
 ];
