@@ -388,7 +388,6 @@ async function startServer() {
   function sanitizeForGsmSms(text: string): string {
     if (!text) return "";
     return text
-      .replace(/[\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F1E6-\u1F1FF\u2600-\u26FF\u2700-\u27BF\u1F900-\u1F9FF\u1F3FB-\u1F3FF\u1F170-\u1F251]/g, '') // Strip emojis only
       .replace(/[\u2018\u2019]/g, "'")
       .replace(/[\u201C\u201D]/g, '"')
       .replace(/[\u2013\u2014]/g, "-")
