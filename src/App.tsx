@@ -77,25 +77,18 @@ export default function App() {
 
   const isAdmin = currentUser?.Rights === 'Admin';
 
-  // Data collections - synced live with Firebase Firestore & persistent server store
+  // Data collections - synced live with persistent server store and local cache
   const [donations, setDonations] = useState<Donation[]>(() => {
     try {
       const saved = localStorage.getItem('swdo_donations');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const donMap = new Map<string, Donation>();
-          for (const d of INITIAL_DONATIONS) {
-            if (d && d.id) donMap.set(d.id, d);
-          }
-          for (const d of parsed) {
-            if (d && d.id) donMap.set(d.id, d);
-          }
-          return Array.from(donMap.values());
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {}
-    return INITIAL_DONATIONS;
+    return [];
   });
 
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(() => {
@@ -103,19 +96,12 @@ export default function App() {
       const saved = localStorage.getItem('swdo_beneficiaries');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const bMap = new Map<string, Beneficiary>();
-          for (const b of INITIAL_BENEFICIARIES) {
-            if (b && b.id) bMap.set(b.id, b);
-          }
-          for (const b of parsed) {
-            if (b && b.id) bMap.set(b.id, b);
-          }
-          return Array.from(bMap.values());
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {}
-    return INITIAL_BENEFICIARIES;
+    return [];
   });
 
   const [members, setMembers] = useState<Member[]>(() => {
@@ -123,19 +109,12 @@ export default function App() {
       const saved = localStorage.getItem('swdo_members');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const mMap = new Map<string, Member>();
-          for (const m of INITIAL_MEMBERS) {
-            if (m && m.id) mMap.set(m.id, m);
-          }
-          for (const m of parsed) {
-            if (m && m.id) mMap.set(m.id, m);
-          }
-          return Array.from(mMap.values());
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {}
-    return INITIAL_MEMBERS;
+    return [];
   });
 
   const [users, setUsers] = useState<UserAccount[]>(() => {
@@ -144,14 +123,7 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const uMap = new Map<string, UserAccount>();
-          for (const u of INITIAL_USERS) {
-            if (u && (u.username || u.id)) uMap.set(u.username || u.id, u);
-          }
-          for (const u of parsed) {
-            if (u && (u.username || u.id)) uMap.set(u.username || u.id, u);
-          }
-          return Array.from(uMap.values());
+          return parsed;
         }
       }
     } catch (e) {}
@@ -171,7 +143,7 @@ export default function App() {
   const [quotaExceeded, setQuotaExceeded] = useState(isQuotaExceeded());
   const [dbStatus, setDbStatus] = useState<{ ok: boolean; error?: string } | undefined>();
 
-  // Firestore Data Initialization & Real-time Subscriptions
+  // Firestore Data Initialization & Subscriptions
   useEffect(() => {
     // Check system connectivity
     const verifyConnection = async () => {
@@ -193,51 +165,39 @@ export default function App() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // If the config was just changed, we should try a fresh fetch
     resetQuotaFlag(); 
     setQuotaExceeded(false);
 
     const unsubDonations = subscribeCollection<Donation>(
       'donations',
-      (data) => setDonations(data),
-      INITIAL_DONATIONS
+      (data) => setDonations(data)
     );
 
     const unsubBeneficiaries = subscribeCollection<Beneficiary>(
       'beneficiaries',
-      (data) => setBeneficiaries(data),
-      INITIAL_BENEFICIARIES
+      (data) => setBeneficiaries(data)
     );
 
     const unsubMembers = subscribeCollection<Member>(
       'members',
-      (data) => setMembers(data),
-      INITIAL_MEMBERS
+      (data) => setMembers(data)
     );
 
     const unsubUsers = subscribeCollection<UserAccount>(
       'users',
-      (data) => setUsers(data),
-      INITIAL_USERS
+      (data) => setUsers(data)
     );
 
     const unsubSettings = subscribeDocument<PortalSettings>(
       'settings',
       'portalSettings',
       (data) => {
-        const savedLocal = (() => {
-          try {
-            const s = localStorage.getItem('alkhair_settings');
-            return s ? JSON.parse(s) : null;
-          } catch { return null; }
-        })();
-
-        const combined: PortalSettings = {
-          ...INITIAL_SETTINGS,
-          ...(data || {}),
-          ...(savedLocal || {}),
-        };
-        setSettings(combined);
+        if (data) {
+          setSettings(prev => ({
+            ...prev,
+            ...data,
+          }));
+        }
       },
       INITIAL_SETTINGS
     );
@@ -313,26 +273,6 @@ export default function App() {
     });
   };
 
-  // Cleanup bloated localStorage keys from previous versions to resolve QuotaExceededError
-  useEffect(() => {
-    const bloatedKeys = [
-      'swdo_donations', 
-      'swdo_beneficiaries', 
-      'swdo_members', 
-      'alkhair_users',
-      'swdo_sms_logs'
-    ];
-    bloatedKeys.forEach(key => {
-      try {
-        if (localStorage.getItem(key)) {
-          localStorage.removeItem(key);
-        }
-      } catch (e) {
-        console.warn(`Failed to clear legacy key ${key}:`, e);
-      }
-    });
-  }, []);
-
   // Sync theme with HTML & BODY classes
   useEffect(() => {
     if (theme === 'Dark') {
@@ -369,7 +309,7 @@ export default function App() {
           setBeneficiaries(JSON.parse(e.newValue));
         } else if (e.key === 'swdo_members') {
           setMembers(JSON.parse(e.newValue));
-        } else if (e.key === 'alkhair_users') {
+        } else if (e.key === 'swdo_users') {
           setUsers(JSON.parse(e.newValue));
         } else if (e.key === 'alkhair_settings') {
           setSettings(JSON.parse(e.newValue));
@@ -380,7 +320,6 @@ export default function App() {
         console.error('Storage sync error:', err);
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -578,8 +517,12 @@ export default function App() {
     }
   };
 
-  const handleClearAllDonations = () => {
-    donations.forEach((d) => deleteFromFirestore('donations', d.id));
+  const handleClearAllDonations = async () => {
+    setDonations([]);
+    try {
+      localStorage.setItem('swdo_donations', JSON.stringify([]));
+      await fetch('/api/clear-donations', { method: 'POST' });
+    } catch (e) {}
     showToast('All donation and donator records have been removed.', 'info');
   };
 
@@ -633,8 +576,12 @@ export default function App() {
     }
   };
 
-  const handleClearAllBeneficiaries = () => {
-    beneficiaries.forEach((b) => deleteFromFirestore('beneficiaries', b.id));
+  const handleClearAllBeneficiaries = async () => {
+    setBeneficiaries([]);
+    try {
+      localStorage.setItem('swdo_beneficiaries', JSON.stringify([]));
+      await fetch('/api/clear-beneficiaries', { method: 'POST' });
+    } catch (e) {}
     showToast('All beneficiary records have been removed.', 'info');
   };
 
@@ -654,8 +601,12 @@ export default function App() {
     showToast(`Council member ${member.Name} updated!`);
   };
 
-  const handleClearAllMembers = () => {
-    members.forEach((m) => deleteFromFirestore('members', m.id));
+  const handleClearAllMembers = async () => {
+    setMembers([]);
+    try {
+      localStorage.setItem('swdo_members', JSON.stringify([]));
+      await fetch('/api/clear-members', { method: 'POST' });
+    } catch (e) {}
     showToast('All members have been removed from the directory.', 'info');
   };
 
@@ -720,19 +671,26 @@ export default function App() {
     });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const { item, type } = deleteModalState;
+    if (!item) {
+      setDeleteModalState((prev) => ({ ...prev, isOpen: false }));
+      return;
+    }
+
     if (type === 'donation') {
-      deleteFromFirestore('donations', item.id);
+      setDonations(prev => prev.filter(d => d.id !== item.id));
+      await deleteFromFirestore('donations', item.id);
       showToast('Donation record deleted.', 'info');
     } else if (type === 'beneficiary') {
-      deleteFromFirestore('beneficiaries', item.id);
+      setBeneficiaries(prev => prev.filter(b => b.id !== item.id));
+      await deleteFromFirestore('beneficiaries', item.id);
       showToast('Beneficiary record deleted.', 'info');
     } else if (type === 'member') {
-      deleteFromFirestore('members', item.id);
+      setMembers(prev => prev.filter(m => m.id !== item.id));
+      await deleteFromFirestore('members', item.id);
       showToast('Member record deleted.', 'info');
     } else if (type === 'user') {
-      deleteFromFirestore('users', item.id);
       setUsers(prev => {
         const nextUsers = prev.filter(u => u.id !== item.id);
         try {
@@ -740,13 +698,14 @@ export default function App() {
         } catch (e) {}
         return nextUsers;
       });
+      await deleteFromFirestore('users', item.id);
       if (currentUser && currentUser.id === item.id) {
         setCurrentUser(null);
         localStorage.removeItem('alkhair_current_user');
       }
       showToast('User account deleted.', 'info');
     } else if (type === 'reject_donation') {
-      handleRejectDonation(item.id);
+      await handleRejectDonation(item.id);
     }
 
     setDeleteModalState((prev) => ({ ...prev, isOpen: false }));
@@ -855,9 +814,12 @@ export default function App() {
                 const d = donations.find((x) => x.id === id);
                 if (d) handleDeleteTrigger(d, 'donation');
               }}
-              onDeleteMultipleDonations={(ids) => {
+              onDeleteMultipleDonations={async (ids) => {
                 if (window.confirm(`Permanently delete ${ids.length} selected records?`)) {
-                  ids.forEach((id) => deleteFromFirestore('donations', id));
+                  setDonations(prev => prev.filter(d => !ids.includes(d.id)));
+                  for (const id of ids) {
+                    await deleteFromFirestore('donations', id);
+                  }
                   showToast(`${ids.length} records deleted successfully.`, 'info');
                 }
               }}
@@ -881,9 +843,12 @@ export default function App() {
                 const b = beneficiaries.find((x) => x.id === id);
                 if (b) handleDeleteTrigger(b, 'beneficiary');
               }}
-              onDeleteMultipleBeneficiaries={(ids) => {
+              onDeleteMultipleBeneficiaries={async (ids) => {
                 if (window.confirm(`Permanently delete ${ids.length} beneficiary records?`)) {
-                  ids.forEach((id) => deleteFromFirestore('beneficiaries', id));
+                  setBeneficiaries(prev => prev.filter(b => !ids.includes(b.id)));
+                  for (const id of ids) {
+                    await deleteFromFirestore('beneficiaries', id);
+                  }
                   showToast(`${ids.length} records deleted successfully.`, 'info');
                 }
               }}

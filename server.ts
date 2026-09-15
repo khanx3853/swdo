@@ -127,7 +127,7 @@ async function startServer() {
       if (fs.existsSync(filePath)) {
         const raw = fs.readFileSync(filePath, "utf-8");
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -146,30 +146,55 @@ async function startServer() {
     }
   }
 
+  const DELETED_IDS_FILE = path.join(process.cwd(), "deleted_ids.json");
+  function getDeletedIds(collection: string): Set<string> {
+    try {
+      if (fs.existsSync(DELETED_IDS_FILE)) {
+        const parsed = JSON.parse(fs.readFileSync(DELETED_IDS_FILE, "utf-8"));
+        if (parsed && Array.isArray(parsed[collection])) {
+          return new Set(parsed[collection]);
+        }
+      }
+    } catch (e) {}
+    return new Set();
+  }
+
+  function addDeletedId(collection: string, id: string) {
+    try {
+      let data: Record<string, string[]> = {};
+      if (fs.existsSync(DELETED_IDS_FILE)) {
+        data = JSON.parse(fs.readFileSync(DELETED_IDS_FILE, "utf-8")) || {};
+      }
+      if (!data[collection]) data[collection] = [];
+      if (!data[collection].includes(id)) {
+        data[collection].push(id);
+        fs.writeFileSync(DELETED_IDS_FILE, JSON.stringify(data, null, 2), "utf-8");
+      }
+    } catch (e) {}
+  }
+
+  function removeDeletedId(collection: string, id: string) {
+    try {
+      if (fs.existsSync(DELETED_IDS_FILE)) {
+        const data = JSON.parse(fs.readFileSync(DELETED_IDS_FILE, "utf-8")) || {};
+        if (data[collection]) {
+          data[collection] = data[collection].filter((x: string) => x !== id);
+          fs.writeFileSync(DELETED_IDS_FILE, JSON.stringify(data, null, 2), "utf-8");
+        }
+      }
+    } catch (e) {}
+  }
+
+  function isUuid(id: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  }
+
   // Donations APIs
   app.get("/api/donations", async (req, res) => {
     let localList = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.from("donations").select("*").order("Date", { ascending: false });
-        if (!error && data) {
-          const remoteIds = new Set(data.map((d: any) => d.id));
-          const localOnly = localList.filter((d: any) => !remoteIds.has(d.id));
-          const merged = [...data, ...localOnly];
-          
-          if (localOnly.length > 0) {
-            console.log(`Syncing ${localOnly.length} local donations to Supabase...`);
-            supabase.from("donations").upsert(localOnly).then(({ error }) => {
-              if (error) console.warn("Donation sync fail:", error);
-            });
-          }
-
-          saveStoredCollection("donations_store.json", merged);
-          return res.json({ success: true, data: merged });
-        }
-      } catch (err) {
-        console.warn("Supabase fetch donations warning:", err);
-      }
+    const deletedIds = getDeletedIds("donations");
+    if (deletedIds.size > 0) {
+      localList = localList.filter((d: any) => !deletedIds.has(d.id));
     }
     return res.json({ success: true, data: localList });
   });
@@ -189,13 +214,12 @@ async function startServer() {
         current.unshift(item);
       }
       saveStoredCollection("donations_store.json", current);
+      removeDeletedId("donations", item.id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("donations").upsert(item);
-        } catch (dbErr) {
-          console.warn("Supabase save donation warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(item.id)) {
+        Promise.resolve(supabase.from("donations").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save donation warning:", dbErr);
+        });
       }
       return res.json({ success: true, data: item });
     } catch (err: any) {
@@ -212,17 +236,29 @@ async function startServer() {
       let current = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
       current = current.filter((d: any) => d.id !== id);
       saveStoredCollection("donations_store.json", current);
+      addDeletedId("donations", id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("donations").delete().eq("id", id);
-        } catch (dbErr) {
-          console.warn("Supabase delete donation warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(id)) {
+        Promise.resolve(supabase.from("donations").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete donation warning:", dbErr);
+        });
       }
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Failed to delete donation" });
+    }
+  });
+
+  app.post("/api/clear-donations", async (req, res) => {
+    try {
+      const current = getStoredCollection("donations_store.json", []);
+      for (const d of current) {
+        if (d && d.id) addDeletedId("donations", d.id);
+      }
+      saveStoredCollection("donations_store.json", []);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to clear donations" });
     }
   });
 
@@ -234,16 +270,20 @@ async function startServer() {
       let current = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
       const itemMap = new Map(current.map((d: any) => [d.id, d]));
       for (const item of items) {
-        if (item && item.id) itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+        if (item && item.id) {
+          itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+          removeDeletedId("donations", item.id);
+        }
       }
       const updated = Array.from(itemMap.values());
       saveStoredCollection("donations_store.json", updated);
 
       if (isSupabaseConfigured) {
-        try {
-          await supabase.from("donations").upsert(items);
-        } catch (dbErr) {
-          console.warn("Supabase bulk save donations warning:", dbErr);
+        const uuidItems = items.filter((x: any) => x && isUuid(x.id));
+        if (uuidItems.length > 0) {
+          Promise.resolve(supabase.from("donations").upsert(uuidItems)).catch((dbErr: any) => {
+            console.warn("Supabase bulk save donations warning:", dbErr);
+          });
         }
       }
       return res.json({ success: true, count: items.length });
@@ -255,27 +295,9 @@ async function startServer() {
   // Beneficiaries APIs
   app.get("/api/beneficiaries", async (req, res) => {
     let localList = getStoredCollection("beneficiaries_store.json", []);
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.from("beneficiaries").select("*").order("Date", { ascending: false });
-        if (!error && data) {
-          const remoteIds = new Set(data.map((b: any) => b.id));
-          const localOnly = localList.filter((b: any) => !remoteIds.has(b.id));
-          const merged = [...data, ...localOnly];
-
-          if (localOnly.length > 0) {
-            console.log(`Syncing ${localOnly.length} local beneficiaries to Supabase...`);
-            supabase.from("beneficiaries").upsert(localOnly).then(({ error }) => {
-              if (error) console.warn("Beneficiary sync fail:", error);
-            });
-          }
-
-          saveStoredCollection("beneficiaries_store.json", merged);
-          return res.json({ success: true, data: merged });
-        }
-      } catch (err) {
-        console.warn("Supabase fetch beneficiaries warning:", err);
-      }
+    const deletedIds = getDeletedIds("beneficiaries");
+    if (deletedIds.size > 0) {
+      localList = localList.filter((b: any) => !deletedIds.has(b.id));
     }
     return res.json({ success: true, data: localList });
   });
@@ -295,13 +317,12 @@ async function startServer() {
         current.unshift(item);
       }
       saveStoredCollection("beneficiaries_store.json", current);
+      removeDeletedId("beneficiaries", item.id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("beneficiaries").upsert(item);
-        } catch (dbErr) {
-          console.warn("Supabase save beneficiary warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(item.id)) {
+        Promise.resolve(supabase.from("beneficiaries").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save beneficiary warning:", dbErr);
+        });
       }
       return res.json({ success: true, data: item });
     } catch (err: any) {
@@ -318,17 +339,29 @@ async function startServer() {
       let current = getStoredCollection("beneficiaries_store.json", []);
       current = current.filter((b: any) => b.id !== id);
       saveStoredCollection("beneficiaries_store.json", current);
+      addDeletedId("beneficiaries", id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("beneficiaries").delete().eq("id", id);
-        } catch (dbErr) {
-          console.warn("Supabase delete beneficiary warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(id)) {
+        Promise.resolve(supabase.from("beneficiaries").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete beneficiary warning:", dbErr);
+        });
       }
       return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Failed to delete beneficiary" });
+    }
+  });
+
+  app.post("/api/clear-beneficiaries", async (req, res) => {
+    try {
+      const current = getStoredCollection("beneficiaries_store.json", []);
+      for (const b of current) {
+        if (b && b.id) addDeletedId("beneficiaries", b.id);
+      }
+      saveStoredCollection("beneficiaries_store.json", []);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to clear beneficiaries" });
     }
   });
 
@@ -340,16 +373,20 @@ async function startServer() {
       let current = getStoredCollection("beneficiaries_store.json", []);
       const itemMap = new Map(current.map((b: any) => [b.id, b]));
       for (const item of items) {
-        if (item && item.id) itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+        if (item && item.id) {
+          itemMap.set(item.id, { ...(itemMap.get(item.id) || {}), ...item });
+          removeDeletedId("beneficiaries", item.id);
+        }
       }
       const updated = Array.from(itemMap.values());
       saveStoredCollection("beneficiaries_store.json", updated);
 
       if (isSupabaseConfigured) {
-        try {
-          await supabase.from("beneficiaries").upsert(items);
-        } catch (dbErr) {
-          console.warn("Supabase bulk save beneficiaries warning:", dbErr);
+        const uuidItems = items.filter((x: any) => x && isUuid(x.id));
+        if (uuidItems.length > 0) {
+          Promise.resolve(supabase.from("beneficiaries").upsert(uuidItems)).catch((dbErr: any) => {
+            console.warn("Supabase bulk save beneficiaries warning:", dbErr);
+          });
         }
       }
       return res.json({ success: true, count: items.length });
@@ -361,16 +398,9 @@ async function startServer() {
   // Members APIs
   app.get("/api/members", async (req, res) => {
     let list = getStoredCollection("members_store.json", []);
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.from("members").select("*").order("Joining Date", { ascending: false });
-        if (!error && data && data.length > 0) {
-          saveStoredCollection("members_store.json", data);
-          return res.json({ success: true, data });
-        }
-      } catch (err) {
-        console.warn("Supabase fetch members warning:", err);
-      }
+    const deletedIds = getDeletedIds("members");
+    if (deletedIds.size > 0) {
+      list = list.filter((m: any) => !deletedIds.has(m.id));
     }
     return res.json({ success: true, data: list });
   });
@@ -388,13 +418,12 @@ async function startServer() {
         current.unshift(item);
       }
       saveStoredCollection("members_store.json", current);
+      removeDeletedId("members", item.id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("members").upsert(item);
-        } catch (dbErr) {
-          console.warn("Supabase save member warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(item.id)) {
+        Promise.resolve(supabase.from("members").upsert(item)).catch((dbErr: any) => {
+          console.warn("Supabase background save member warning:", dbErr);
+        });
       }
       return res.json({ success: true, data: item });
     } catch (err: any) {
@@ -410,13 +439,12 @@ async function startServer() {
       let current = getStoredCollection("members_store.json", []);
       current = current.filter((m: any) => m.id !== id);
       saveStoredCollection("members_store.json", current);
+      addDeletedId("members", id);
 
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("members").delete().eq("id", id);
-        } catch (dbErr) {
-          console.warn("Supabase delete member warning:", dbErr);
-        }
+      if (isSupabaseConfigured && isUuid(id)) {
+        Promise.resolve(supabase.from("members").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete member warning:", dbErr);
+        });
       }
       return res.json({ success: true });
     } catch (err: any) {
@@ -424,21 +452,23 @@ async function startServer() {
     }
   });
 
+  app.post("/api/clear-members", async (req, res) => {
+    try {
+      const current = getStoredCollection("members_store.json", []);
+      for (const m of current) {
+        if (m && m.id) addDeletedId("members", m.id);
+      }
+      saveStoredCollection("members_store.json", []);
+      return res.json({ success: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to clear members" });
+    }
+  });
+
   // Settings APIs
   app.get("/api/settings", async (req, res) => {
     let settingsData = getStoredCollection("settings_store.json", []);
     const item = settingsData.find((s: any) => s.id === "portalSettings") || settingsData[0] || null;
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.from("settings").select("*").eq("id", "portalSettings").single();
-        if (!error && data) {
-          saveStoredCollection("settings_store.json", [data]);
-          return res.json({ success: true, data });
-        }
-      } catch (err) {
-        console.warn("Supabase fetch settings warning:", err);
-      }
-    }
     return res.json({ success: true, data: item });
   });
 
@@ -450,11 +480,9 @@ async function startServer() {
       saveStoredCollection("settings_store.json", [settingObj]);
 
       if (isSupabaseConfigured) {
-        try {
-          await supabase.from("settings").upsert(settingObj);
-        } catch (dbErr) {
-          console.warn("Supabase save settings warning:", dbErr);
-        }
+        Promise.resolve(supabase.from("settings").upsert(settingObj)).catch((dbErr: any) => {
+          console.warn("Supabase background save settings warning:", dbErr);
+        });
       }
       return res.json({ success: true, data: settingObj });
     } catch (err: any) {
@@ -469,7 +497,8 @@ async function startServer() {
         const raw = fs.readFileSync(USERS_FILE_PATH, "utf-8");
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const deletedIds = getDeletedIds("users");
+          return parsed.filter((u: any) => !deletedIds.has(u.id) && !deletedIds.has(u.username?.toLowerCase()));
         }
       }
     } catch (e) {
@@ -513,54 +542,6 @@ async function startServer() {
 
   app.get("/api/users", async (req, res) => {
     let localUsers = getStoredUsers();
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.from("users").select("*");
-        if (!error && data) {
-          // Normalize fields
-          const remoteUsers = data.map((u: any) => ({
-            id: u.id,
-            username: u.username,
-            password: u.password,
-            Rights: u.Rights || u.rights || "Operator",
-            Access: u.Access || u.access || ["Home", "Donations", "Beneficiaries", "Members"],
-            Theme: u.Theme || u.theme || "Dark"
-          }));
-
-          const remoteUsernames = new Set(remoteUsers.map((u: any) => u.username.toLowerCase()));
-          const localOnly = localUsers.filter((u: any) => !remoteUsernames.has(u.username.toLowerCase()));
-          
-          // Ensure 'Ali' is in the list
-          const hasAli = remoteUsernames.has("ali") || localUsers.some(u => u.username.toLowerCase() === "ali");
-          if (!hasAli) {
-             const aliUser = {
-               id: "8e540699-e9d6-48a4-aa47-7126e373a82f",
-               username: "Ali",
-               password: "Ali321",
-               Rights: "Admin",
-               Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
-               Theme: "Dark"
-             };
-             localUsers.push(aliUser);
-             localOnly.push(aliUser);
-          }
-
-          const merged = [...remoteUsers, ...localOnly];
-
-          if (localOnly.length > 0) {
-            console.log(`Syncing ${localOnly.length} local users to Supabase...`);
-            supabase.from("users").upsert(localOnly).then(({ error }) => {
-              if (error) console.warn("User sync fail:", error);
-            });
-          }
-
-          saveStoredUsers(merged);
-          return res.json({ success: true, users: merged });
-        }
-      } catch (err) {
-        console.warn("Supabase fetch users failed, using local store:", err);
-      }
-    }
     return res.json({ success: true, users: localUsers });
   });
 
@@ -589,14 +570,16 @@ async function startServer() {
         currentUsers.unshift(normalizedUser);
       }
       saveStoredUsers(currentUsers);
+      removeDeletedId("users", normalizedUser.id);
+      if (normalizedUser.username) {
+        removeDeletedId("users", normalizedUser.username.toLowerCase());
+      }
 
-      // 2. Sync to Supabase if configured
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("users").upsert(normalizedUser);
-        } catch (dbErr) {
-          console.warn("Supabase save user failed:", dbErr);
-        }
+      // 2. Sync to Supabase in background if valid UUID
+      if (isSupabaseConfigured && isUuid(normalizedUser.id)) {
+        Promise.resolve(supabase.from("users").upsert(normalizedUser)).catch((dbErr: any) => {
+          console.warn("Supabase background save user warning:", dbErr);
+        });
       }
 
       console.log(`User login information updated for: ${normalizedUser.username}`);
@@ -616,16 +599,19 @@ async function startServer() {
 
       // 1. Update server file store
       let currentUsers = getStoredUsers();
+      const userToDelete = currentUsers.find((u: any) => u.id === id);
       currentUsers = currentUsers.filter((u: any) => u.id !== id);
       saveStoredUsers(currentUsers);
+      addDeletedId("users", id);
+      if (userToDelete?.username) {
+        addDeletedId("users", userToDelete.username.toLowerCase());
+      }
 
-      // 2. Sync to Supabase if configured
-      if (isSupabaseConfigured) {
-        try {
-          await supabase.from("users").delete().eq("id", id);
-        } catch (dbErr) {
-          console.warn("Supabase delete user failed:", dbErr);
-        }
+      // 2. Sync to Supabase if configured and UUID
+      if (isSupabaseConfigured && isUuid(id)) {
+        Promise.resolve(supabase.from("users").delete().eq("id", id)).catch((dbErr: any) => {
+          console.warn("Supabase background delete user warning:", dbErr);
+        });
       }
 
       console.log(`User deleted with id: ${id}`);
