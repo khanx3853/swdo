@@ -323,10 +323,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   const handleDeletePicture = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (id.startsWith('default-')) {
-      alert("Default pictures cannot be deleted.");
-      return;
-    }
     if (!confirm("Are you sure you want to delete this picture from the slideshow?")) return;
     try {
       await deleteFromFirestore('gallery_pictures', id);
@@ -339,10 +335,6 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   const handleDeleteVideo = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (id.startsWith('default-')) {
-      alert("Default videos cannot be deleted.");
-      return;
-    }
     if (!confirm("Are you sure you want to delete this video from the playlist?")) return;
     try {
       await deleteFromFirestore('gallery_videos', id);
