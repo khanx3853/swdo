@@ -268,7 +268,8 @@ async function startServer() {
           message: smsBody,
           hash: donation.VeevoSmsHash,
           senderNum: donation.VeevoSenderNum,
-        });
+          type: "Donation Submission"
+        } as any);
       } catch (smsErr) {
         console.warn("⚠️ Error in automatic SMS dispatch:", smsErr);
         smsResult = { success: false, error: (smsErr as any).message || "SMS failed" };
@@ -495,7 +496,8 @@ async function startServer() {
           message: smsBody,
           hash: beneficiary.VeevoSmsHash,
           senderNum: beneficiary.VeevoSenderNum,
-        });
+          type: "Relief Registration"
+        } as any);
       } catch (smsErr) {
         console.warn("⚠️ Error in automatic Beneficiary SMS dispatch:", smsErr);
         smsResult = { success: false, error: (smsErr as any).message || "SMS failed" };
@@ -701,7 +703,8 @@ Allah aap ke is sadqa ko qubool farmaye, aap ke rizq mein izafa kare aur aap ko 
               message: approvalSms,
               hash: donation.VeevoSmsHash,
               senderNum: donation.VeevoSenderNum,
-            });
+              type: "Donation Approval"
+            } as any);
           } catch (smsErr) {
             console.warn("⚠️ Error sending status update SMS:", smsErr);
           }

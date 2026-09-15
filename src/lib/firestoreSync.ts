@@ -40,8 +40,8 @@ async function withRetry<T>(
       if (!error) return data;
       
       lastError = error;
-      // Don't retry on specific non-transient errors if identified
-      if (error.code === '42P01') throw error; // Table doesn't exist
+      // Don't retry on specific non-transient errors (Table doesn't exist)
+      if (isTableNotFoundError(error)) throw error; 
       
       console.warn(`Retry ${i + 1}/${maxRetries} for ${context} due to:`, error);
     } catch (err: any) {
@@ -61,7 +61,28 @@ async function withRetry<T>(
   throw lastError;
 }
 
+// Helper to check for "Table not found" errors
+export function isTableNotFoundError(err: any): boolean {
+  if (!err) return false;
+  const code = err.code || (typeof err === 'object' ? err.code : null);
+  const message = String(err.message || err.details || '');
+  const hint = String(err.hint || '');
+  
+  return (
+    code === 'PGRST205' || 
+    code === '42P01' || 
+    message.includes('PGRST205') || 
+    message.includes('cache') ||
+    hint.includes('table')
+  );
+}
+
 function handleDbError(err: any, context: string) {
+  // Suppress "Table not found" errors in console as they are often expected fallbacks
+  if (isTableNotFoundError(err)) {
+    return;
+  }
+
   console.error(`Error during ${context}:`, err);
   
   // Specific handling for common errors
@@ -188,7 +209,7 @@ export async function saveBulkToFirestore<T extends { id: string }>(
       `bulk save to ${collectionName}`
     );
   } catch (err) {
-    console.error(`Failed to bulk save to DB [${collectionName}]:`, err);
+    handleDbError(err, `bulk saving to ${collectionName}`);
     throw err;
   }
 }
@@ -314,7 +335,7 @@ export async function saveToFirestore<T extends { id: string }>(
       `save to ${collectionName}`
     );
   } catch (err) {
-    console.error(`Failed to save to DB [${collectionName}]:`, err);
+    handleDbError(err, `saving to ${collectionName}`);
     throw err;
   }
 }
@@ -327,7 +348,7 @@ export async function deleteFromFirestore(collectionName: string, id: string) {
       `delete from ${collectionName}`
     );
   } catch (err) {
-    console.error(`Failed to delete from DB [${collectionName}]:`, err);
+    handleDbError(err, `deleting from ${collectionName}`);
   }
 }
 
@@ -342,7 +363,7 @@ export async function addDocToFirestore(collectionName: string, data: any) {
     
     return result;
   } catch (err) {
-    console.error(`Failed to add doc to DB [${collectionName}]:`, err);
+    handleDbError(err, `adding doc to ${collectionName}`);
     throw err;
   }
 }
@@ -362,6 +383,6 @@ export async function saveDocToFirestore<T>(
       `save doc to ${collectionName}/${docId}`
     );
   } catch (err) {
-    console.error(`Failed to save doc to DB [${collectionName}/${docId}]:`, err);
+    handleDbError(err, `saving doc to ${collectionName}/${docId}`);
   }
 }
