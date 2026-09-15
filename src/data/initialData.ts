@@ -26995,8 +26995,8 @@ export const INITIAL_USERS: UserAccount[] = [
   },
   {
     "id": "636e1d51-7189-48c3-a282-a6edcd4cab91", "Source": "Audit",
-    "username": "junaid",
-    "password": "junaid123",
+    "username": "Junaid",
+    "password": "Jun@idx223",
     "Rights": "Admin",
     "Access": [
       "Home",

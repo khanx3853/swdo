@@ -515,8 +515,8 @@ async function startServer() {
       },
       {
         id: "636e1d51-7189-48c3-a282-a6edcd4cab91",
-        username: "junaid",
-        password: "junaid123",
+        username: "Junaid",
+        password: "Jun@idx223",
         Rights: "Admin",
         Access: ["Home", "Donations", "Beneficiaries", "Members", "Users", "Settings", "Statement"],
         Theme: "Dark"
