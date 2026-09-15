@@ -125,7 +125,10 @@ export const StatementTab: React.FC<StatementTabProps> = ({
 
     if (includeDonations) {
       donations
-        .filter((d) => d.Status !== 'Rejected')
+        .filter((d) => {
+          const s = (d.Status || '').toLowerCase();
+          return s !== 'rejected' && s !== 'pending';
+        })
         .forEach((d) => {
           rows.push({
             id: `don-${d.id}`,

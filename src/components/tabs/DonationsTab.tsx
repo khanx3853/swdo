@@ -219,7 +219,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'approved' | 'pending' | 'rejected' | 'all'>('approved');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'masajid' | 'sadaqah' | 'zakat' | 'direct-aid' | 'wheelchairs' | 'orphans' | 'ration' | 'blood'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -555,7 +555,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
           ? rejectedDonations
           : (statusFilter === 'pending'
               ? pendingDonations
-              : (statusFilter === 'approved' ? approvedDonations : donations)))
+              : approvedDonations))
       : approvedDonations;
 
     // Apply category sub-filter
@@ -1597,14 +1597,15 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
             <div className="flex rounded-xl p-1 bg-slate-900/80 border border-slate-800 text-xs w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setStatusFilter('all')}
-                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                  statusFilter === 'all'
-                    ? 'bg-slate-700 text-white shadow'
-                    : 'text-slate-400 hover:text-slate-200'
+                onClick={() => setStatusFilter('approved')}
+                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  statusFilter === 'approved' || statusFilter === 'all'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-emerald-400 hover:text-emerald-300'
                 }`}
               >
-                All ({categoryScopedAllCount})
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Approved ({categoryScopedApprovedCount})</span>
               </button>
               <button
                 type="button"
@@ -1617,18 +1618,6 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
               >
                 <Clock className="w-3.5 h-3.5" />
                 <span>Pending ({categoryScopedPendingCount})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('approved')}
-                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  statusFilter === 'approved'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-emerald-400 hover:text-emerald-300'
-                }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Approved ({categoryScopedApprovedCount})</span>
               </button>
               <button
                 type="button"
