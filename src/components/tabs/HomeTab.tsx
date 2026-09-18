@@ -38,6 +38,8 @@ import {
   Volume2,
   VolumeX,
   Loader2,
+  Link as LinkIcon,
+  X,
 } from 'lucide-react';
 import {
   BarChart,
@@ -107,6 +109,64 @@ const DEFAULT_VIDEOS = [
   }
 ];
 
+const isYouTubeUrl = (url: string): boolean => {
+  if (!url) return false;
+  return url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube.com/shorts');
+};
+
+const getYouTubeEmbedUrl = (url: string, isMuted: boolean): string => {
+  if (!url) return '';
+  let videoId = '';
+  if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
+  } else if (url.includes('youtube.com/shorts/')) {
+    videoId = url.split('/shorts/')[1]?.split(/[?#]/)[0];
+  } else if (url.includes('youtube.com/watch')) {
+    try {
+      const urlObj = new URL(url);
+      videoId = urlObj.searchParams.get('v') || '';
+    } catch (e) {
+      const parts = url.split('?')[1];
+      const searchParams = new URLSearchParams(parts);
+      videoId = searchParams.get('v') || '';
+    }
+  } else if (url.includes('youtube.com/embed/')) {
+    videoId = url.split('youtube.com/embed/')[1]?.split(/[?#]/)[0];
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}` : url;
+};
+
+const isGoogleDriveUrl = (url: string): boolean => {
+  if (!url) return false;
+  return url.includes('drive.google.com');
+};
+
+const getGoogleDriveEmbedUrl = (url: string): string => {
+  if (!url) return '';
+  let fileId = '';
+  if (url.includes('/file/d/')) {
+    fileId = url.split('/file/d/')[1]?.split('/')[0];
+  }
+  return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : url;
+};
+
+const isVimeoUrl = (url: string): boolean => {
+  if (!url) return false;
+  return url.includes('vimeo.com');
+};
+
+const getVimeoEmbedUrl = (url: string): string => {
+  if (!url) return '';
+  let videoId = '';
+  if (url.includes('vimeo.com/video/')) {
+    videoId = url.split('vimeo.com/video/')[1]?.split(/[?#]/)[0];
+  } else if (url.includes('vimeo.com/')) {
+    const parts = url.split('vimeo.com/')[1]?.split(/[?#]/)[0].split('/');
+    videoId = parts[parts.length - 1];
+  }
+  return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1` : url;
+};
+
 export const HomeTab: React.FC<HomeTabProps> = ({
   donations,
   beneficiaries,
@@ -120,6 +180,19 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 }) => {
   const [showDonateModal, setShowDonateModal] = useState(false);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  // Custom Media Modal States
+  const [showPicModal, setShowPicModal] = useState(false);
+  const [picModalMode, setPicModalMode] = useState<'link' | 'upload'>('link');
+  const [picModalUrl, setPicModalUrl] = useState('');
+  const [picModalCaption, setPicModalCaption] = useState('');
+  const [picModalFile, setPicModalFile] = useState<File | null>(null);
+
+  const [showVidModal, setShowVidModal] = useState(false);
+  const [vidModalMode, setVidModalMode] = useState<'link' | 'upload'>('link');
+  const [vidModalUrl, setVidModalUrl] = useState('');
+  const [vidModalCaption, setVidModalCaption] = useState('');
+  const [vidModalFile, setVidModalFile] = useState<File | null>(null);
 
   // Gallery States
   const [pictures, setPictures] = useState<{ id: string; url?: string; caption: string }[]>([]);
@@ -143,11 +216,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       return;
     }
     try {
-      // Fetch metadata only to avoid timeout on large base64 payloads
-      const picList = await fetchCollection<any>('gallery_pictures', 'id, caption, createdAt');
+      // Fetch metadata and light URLs in a single read to optimize loading of non-base64 assets
+      const picList = await fetchCollection<any>('gallery_pictures', 'id, url, caption, createdAt');
       setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
 
-      const vidList = await fetchCollection<any>('gallery_videos', 'id, caption, createdAt');
+      const vidList = await fetchCollection<any>('gallery_videos', 'id, url, caption, createdAt');
       setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
     } catch (err) {
       console.error("Error fetching gallery data:", err);
@@ -250,7 +323,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     return () => clearInterval(interval);
   }, [slideshowPlaying, pictures.length]);
 
-  const handleUploadPicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadPicture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -260,64 +333,160 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       return;
     }
 
+    setPicModalFile(file);
+    setPicModalMode('upload');
+    setPicModalUrl('');
+    setPicModalCaption('');
+    setShowPicModal(true);
+  };
+
+  const handleAddPictureLink = () => {
+    setPicModalMode('link');
+    setPicModalUrl('');
+    setPicModalCaption('');
+    setPicModalFile(null);
+    setShowPicModal(true);
+  };
+
+  const handleSavePicModal = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setIsUploadingPic(true);
-      const base64 = await compressImageFile(file, 1000, 0.8);
-      const captionInput = prompt("Enter a caption for this picture (optional):") || "";
-      await addDocToFirestore('gallery_pictures', {
-        url: base64,
-        caption: captionInput,
+      setShowPicModal(false);
+
+      let finalUrl = '';
+      if (picModalMode === 'link') {
+        if (!picModalUrl) return;
+        let trimmedUrl = picModalUrl.trim();
+        if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+          trimmedUrl = 'https://' + trimmedUrl;
+        }
+        finalUrl = trimmedUrl;
+      } else {
+        if (!picModalFile) return;
+        finalUrl = await compressImageFile(picModalFile, 1000, 0.8);
+      }
+
+      const newPic = await addDocToFirestore('gallery_pictures', {
+        url: finalUrl,
+        caption: picModalCaption.trim() || "SWDO Welfare Activity Image",
         createdAt: new Date().toISOString()
       });
-      fetchGallery(); // Refresh after upload
+
+      // Update state instantly so it plays immediately!
+      setPictures(prev => [newPic, ...prev]);
+      setActivePicIndex(0);
+      setActivePicUrl(finalUrl);
+
+      fetchGallery(); // Refresh after adding
     } catch (err) {
-      console.error("Error uploading picture:", err);
-      alert("Failed to upload image. This may be due to database limits for large files.");
+      console.error("Error saving picture modal:", err);
+      alert("Failed to save picture to the gallery.");
     } finally {
       setIsUploadingPic(false);
+      setPicModalFile(null);
+      setPicModalUrl('');
+      setPicModalCaption('');
     }
   };
 
-  const handleUploadVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadVideo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Hard limit for base64 storage in Postgres row
-    const MAX_BASE64_SIZE = 500 * 1024 * 1024; // 500MB limit requested by user
-    if (file.size > MAX_BASE64_SIZE) {
+
+    if (file.size > 500 * 1024 * 1024) {
       alert("Video file is too large for database storage! Please select a video under 500MB.");
       return;
     }
 
+    setVidModalFile(file);
+    setVidModalMode('upload');
+    setVidModalUrl('');
+    setVidModalCaption('');
+    setShowVidModal(true);
+  };
+
+  const handleAddVideoLink = () => {
+    setVidModalMode('link');
+    setVidModalUrl('');
+    setVidModalCaption('');
+    setVidModalFile(null);
+    setShowVidModal(true);
+  };
+
+  const handleSaveVidModal = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setIsUploadingVid(true);
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const base64 = event.target?.result as string;
-          const captionInput = prompt("Enter a title for this video (optional):") || "";
-          await addDocToFirestore('gallery_videos', {
-            url: base64,
-            caption: captionInput,
-            createdAt: new Date().toISOString()
-          });
-          fetchGallery(); // Refresh after upload
-        } catch (innerErr) {
-          console.error("Failed to save video doc:", innerErr);
-          alert("Error saving video document to the cloud. The video might be too large.");
-        } finally {
-          setIsUploadingVid(false);
+      setShowVidModal(false);
+
+      if (vidModalMode === 'link') {
+        if (!vidModalUrl) return;
+        let trimmedUrl = vidModalUrl.trim();
+        if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+          trimmedUrl = 'https://' + trimmedUrl;
         }
-      };
-      reader.onerror = () => {
-        alert("Failed to read video file.");
-        setIsUploadingVid(false);
-      };
-      reader.readAsDataURL(file);
+
+        const newVid = await addDocToFirestore('gallery_videos', {
+          url: trimmedUrl,
+          caption: vidModalCaption.trim() || "SWDO Welfare Campaign Video",
+          createdAt: new Date().toISOString()
+        });
+
+        // Update state instantly so it plays immediately!
+        setVideos(prev => [newVid, ...prev]);
+        setActiveVidIndex(0);
+        setActiveVidUrl(trimmedUrl);
+
+        fetchGallery(); // Refresh after adding
+      } else {
+        if (!vidModalFile) return;
+
+        // Warn if file is larger than 5MB
+        if (vidModalFile.size > 5 * 1024 * 1024) {
+          if (!confirm(`This video file is ${Math.round(vidModalFile.size / 1024 / 1024)}MB. Storing large video files directly in database might reach storage quota. We strongly recommend uploading it to YouTube or Google Drive instead. Click OK to proceed anyway.`)) {
+            setIsUploadingVid(false);
+            return;
+          }
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const base64 = event.target?.result as string;
+            const newVid = await addDocToFirestore('gallery_videos', {
+              url: base64,
+              caption: vidModalCaption.trim() || "SWDO Welfare Campaign Video",
+              createdAt: new Date().toISOString()
+            });
+
+            // Update state instantly so it plays immediately!
+            setVideos(prev => [newVid, ...prev]);
+            setActiveVidIndex(0);
+            setActiveVidUrl(base64);
+
+            fetchGallery(); // Refresh after upload
+          } catch (innerErr) {
+            console.error("Failed to save video doc:", innerErr);
+            alert("Error saving video document to the cloud. The video might be too large.");
+          } finally {
+            setIsUploadingVid(false);
+          }
+        };
+        reader.onerror = () => {
+          alert("Failed to read video file.");
+          setIsUploadingVid(false);
+        };
+        reader.readAsDataURL(vidModalFile);
+      }
     } catch (err) {
-      console.error("Error uploading video:", err);
-      alert("Failed to upload video.");
+      console.error("Error saving video modal:", err);
+      alert("Failed to save video to the playlist.");
       setIsUploadingVid(false);
+    } finally {
+      setVidModalFile(null);
+      setVidModalUrl('');
+      setVidModalCaption('');
     }
   };
 
@@ -578,6 +747,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                   >
                     <Loader2 className="w-3 h-3" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleAddPictureLink}
+                    className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-green-500/25 hover:bg-green-500/40 text-green-200 rounded-lg border border-green-500/30 flex items-center gap-1 transition-all"
+                    title="Add Image Link"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    <span>Link</span>
+                  </button>
                   <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-purple-500/25 hover:bg-purple-500/40 text-purple-200 rounded-lg border border-purple-500/30 flex items-center gap-1 transition-all">
                     {isUploadingPic ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -722,6 +900,15 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleAddVideoLink}
+                    className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-green-500/25 hover:bg-green-500/40 text-green-200 rounded-lg border border-green-500/30 flex items-center gap-1 transition-all"
+                    title="Add Video Link"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    <span>Link</span>
+                  </button>
                   <label className="cursor-pointer px-2.5 py-1 text-[10px] font-bold bg-orange-500/25 hover:bg-orange-500/40 text-orange-200 rounded-lg border border-orange-500/30 flex items-center gap-1 transition-all">
                     {isUploadingVid ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -749,6 +936,33 @@ export const HomeTab: React.FC<HomeTabProps> = ({
                     <Loader2 className="w-6 h-6 text-orange-400 animate-spin" />
                     <span className="text-[10px] text-slate-500">Loading Video Stream...</span>
                   </div>
+                ) : isYouTubeUrl(activeVidUrl) ? (
+                  <iframe
+                    key={videos[activeVidIndex]?.id || activeVidIndex}
+                    src={getYouTubeEmbedUrl(activeVidUrl, isMuted)}
+                    title={videos[activeVidIndex]?.caption || "SWDO YouTube Video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full border-0 rounded-xl select-none"
+                  />
+                ) : isGoogleDriveUrl(activeVidUrl) ? (
+                  <iframe
+                    key={videos[activeVidIndex]?.id || activeVidIndex}
+                    src={getGoogleDriveEmbedUrl(activeVidUrl)}
+                    title={videos[activeVidIndex]?.caption || "SWDO Google Drive Video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0 rounded-xl select-none"
+                  />
+                ) : isVimeoUrl(activeVidUrl) ? (
+                  <iframe
+                    key={videos[activeVidIndex]?.id || activeVidIndex}
+                    src={getVimeoEmbedUrl(activeVidUrl)}
+                    title={videos[activeVidIndex]?.caption || "SWDO Vimeo Video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0 rounded-xl select-none"
+                  />
                 ) : activeVidUrl ? (
                   <video
                     key={videos[activeVidIndex]?.id || activeVidIndex}
@@ -1373,6 +1587,176 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         currentUsername={currentUsername}
         onExportReceipt={onExportReceipt}
       />
+
+      {/* Custom Picture Modal */}
+      {showPicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {picModalMode === 'link' ? 'Add Picture Link' : 'Upload Picture'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPicModal(false);
+                  setPicModalFile(null);
+                  setPicModalUrl('');
+                  setPicModalCaption('');
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSavePicModal} className="p-6 space-y-4">
+              {picModalMode === 'link' ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Direct Image URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={picModalUrl}
+                    onChange={(e) => setPicModalUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-hidden"
+                  />
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                    Selected File: {picModalFile?.name}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Size: {Math.round((picModalFile?.size || 0) / 1024)} KB
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Caption / Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={picModalCaption}
+                  onChange={(e) => setPicModalCaption(e.target.value)}
+                  placeholder="e.g., SWDO Food Distribution Campaign"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPicModal(false);
+                    setPicModalFile(null);
+                    setPicModalUrl('');
+                    setPicModalCaption('');
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-colors"
+                >
+                  Add to Slideshow
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Video Modal */}
+      {showVidModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {vidModalMode === 'link' ? 'Add Video Link' : 'Upload Video'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVidModal(false);
+                  setVidModalFile(null);
+                  setVidModalUrl('');
+                  setVidModalCaption('');
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveVidModal} className="p-6 space-y-4">
+              {vidModalMode === 'link' ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Video Link (YouTube, Vimeo, Google Drive, MP4 etc.)
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={vidModalUrl}
+                    onChange={(e) => setVidModalUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-hidden"
+                  />
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">
+                    Selected File: {vidModalFile?.name}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Size: {Math.round((vidModalFile?.size || 0) / 1024 / 1024 * 10) / 10} MB
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={vidModalCaption}
+                  onChange={(e) => setVidModalCaption(e.target.value)}
+                  placeholder="e.g., SWDO Welfare Campaign Video"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVidModal(false);
+                    setVidModalFile(null);
+                    setVidModalUrl('');
+                    setVidModalCaption('');
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-colors"
+                >
+                  Add to Playlist
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

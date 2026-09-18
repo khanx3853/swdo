@@ -344,6 +344,18 @@ export async function fetchCollection<T extends { id: string }>(
       handleDbError(err, `fetching collection ${collectionName}`);
     }
   }
+
+  // 3. Fallback to localStorage cache if we have nothing from server or Supabase!
+  try {
+    const saved = localStorage.getItem(`swdo_${collectionName}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as T[];
+      }
+    }
+  } catch (e) {}
+
   return [];
 }
 
@@ -377,8 +389,14 @@ export async function fetchDocument<T>(
   try {
     const localKey = `swdo_${collectionName}_${docId}`;
     const cached = localStorage.getItem(localKey);
+    const cachedUrl = localStorage.getItem(`swdo_media_url_${docId}`);
+
     if (cached) {
-      return JSON.parse(cached) as T;
+      const item = JSON.parse(cached);
+      if (cachedUrl) {
+        item.url = cachedUrl;
+      }
+      return item as T;
     }
     const colKey = `swdo_${collectionName}`;
     const colCached = localStorage.getItem(colKey);
@@ -386,8 +404,16 @@ export async function fetchDocument<T>(
       const list = JSON.parse(colCached);
       if (Array.isArray(list)) {
         const found = list.find((x: any) => x.id === docId);
-        if (found) return found as T;
+        if (found) {
+          if (cachedUrl) {
+            found.url = cachedUrl;
+          }
+          return found as T;
+        }
       }
+    }
+    if (cachedUrl) {
+      return { id: docId, url: cachedUrl } as any as T;
     }
   } catch (e) {}
 
@@ -414,19 +440,38 @@ export async function saveToFirestore<T extends { id: string }>(
 ) {
   const localKey = `swdo_${collectionName}`;
 
-  // 1. Update localStorage cache immediately
+  // 1. Update localStorage cache immediately (storing heavy base64 URLs separately to prevent QuotaExceededError)
   try {
     const saved = localStorage.getItem(localKey);
     let list = saved ? JSON.parse(saved) : [];
     if (!Array.isArray(list)) list = [];
+
+    const isGallery = collectionName === 'gallery_pictures' || collectionName === 'gallery_videos';
+    const itemToStore = { ...item };
+
+    if (isGallery && (item as any).url) {
+      const urlStr = (item as any).url;
+      // Only separate heavy Base64 data (starting with "data:"). HTTP/HTTPS links are tiny and should stay inline!
+      if (urlStr.startsWith('data:')) {
+        try {
+          localStorage.setItem(`swdo_media_url_${item.id}`, urlStr);
+        } catch (e) {
+          console.warn("Failed to cache heavy media URL in localStorage, storing inline as fallback:", e);
+        }
+        delete (itemToStore as any).url; // Keep list small
+      }
+    }
+
     const idx = list.findIndex((x: any) => x.id === item.id || (collectionName === 'users' && x.username && (item as any).username && x.username.toLowerCase() === (item as any).username.toLowerCase()));
     if (idx >= 0) {
-      list[idx] = { ...list[idx], ...item };
+      list[idx] = { ...list[idx], ...itemToStore };
     } else {
-      list.unshift(item);
+      list.unshift(itemToStore);
     }
     localStorage.setItem(localKey, JSON.stringify(list));
-  } catch (e) {}
+  } catch (e) {
+    console.error("Failed to update collection list in localStorage:", e);
+  }
 
   // 2. Call backend server save API immediately
   const singular = getApiSingularName(collectionName);
@@ -469,8 +514,19 @@ export async function deleteFromFirestore(collectionName: string, id: string) {
   }
 }
 
+function generateUuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export async function addDocToFirestore(collectionName: string, data: any) {
-  const item = { ...data, id: data.id || `doc-${Date.now()}` };
+  const isGallery = collectionName === 'gallery_pictures' || collectionName === 'gallery_videos';
+  // Use a valid UUID to satisfy Postgres constraints on Supabase side
+  const defaultId = isGallery ? generateUuid() : `doc-${Date.now()}`;
+  const item = { ...data, id: data.id || defaultId };
   await saveToFirestore(collectionName, item);
   return item;
 }

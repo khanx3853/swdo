@@ -363,6 +363,45 @@ async function startServer() {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   }
 
+  function filterFields(item: any, columnsStr: string) {
+    if (!item) return item;
+    const fields = columnsStr.split(",").map(c => c.trim()).filter(Boolean);
+    const hasWildcard = fields.includes("*");
+    
+    const filtered: any = {};
+    if (hasWildcard) {
+      Object.keys(item).forEach(k => {
+        if (k === "url") {
+          const val = item[k];
+          if (typeof val === 'string' && val.startsWith('data:')) {
+            // Strip heavy base64 from list fetches
+          } else {
+            filtered[k] = val;
+          }
+        } else {
+          filtered[k] = item[k];
+        }
+      });
+      return filtered;
+    }
+
+    fields.forEach(f => {
+      if (f in item) {
+        if (f === "url") {
+          const val = item[f];
+          if (typeof val === 'string' && val.startsWith('data:')) {
+            // Strip heavy base64 from list fetches
+          } else {
+            filtered[f] = val;
+          }
+        } else {
+          filtered[f] = item[f];
+        }
+      }
+    });
+    return filtered;
+  }
+
   // Donations APIs
   app.get("/api/donations", async (req, res) => {
     let localList = getStoredCollection("donations_store.json", getStoredCollection("donations_dump.json", []));
@@ -812,16 +851,29 @@ async function startServer() {
             .from("gallery_pictures")
             .select(columns);
           if (!error && Array.isArray(data)) {
+            // Merge local list and Supabase list by ID to ensure files are never lost
+            const merged = [...localList];
+            data.forEach((supItem: any) => {
+              const exists = merged.find((l: any) => l.id === supItem.id);
+              if (!exists) {
+                merged.push(supItem);
+              } else if (supItem.url && !exists.url) {
+                exists.url = supItem.url;
+              }
+            });
+
             const filtered = deletedIds.size > 0 
-              ? data.filter((d: any) => !deletedIds.has(d.id))
-              : data;
-            return res.json({ success: true, data: filtered });
+              ? merged.filter((d: any) => !deletedIds.has(d.id))
+              : merged;
+            const filteredFields = filtered.map(item => filterFields(item, columns));
+            return res.json({ success: true, data: filteredFields });
           }
         } catch (dbErr) {
           console.warn("Supabase fetch gallery_pictures warning:", dbErr);
         }
       }
-      return res.json({ success: true, data: localList });
+      const filteredLocal = localList.map(item => filterFields(item, columns));
+      return res.json({ success: true, data: filteredLocal });
     } catch (err: any) {
       console.error("Error in /api/gallery_pictures:", err);
       return res.status(500).json({ error: err.message || "Failed to fetch gallery pictures" });
@@ -836,6 +888,12 @@ async function startServer() {
         return res.status(404).json({ error: "Picture not found" });
       }
 
+      let localItem = null;
+      try {
+        const localList = getStoredCollection("gallery_pictures_store.json", []);
+        localItem = localList.find((p: any) => p.id === id);
+      } catch (e) {}
+
       if (isSupabaseConfigured) {
         try {
           const { data, error } = await supabase
@@ -843,7 +901,7 @@ async function startServer() {
             .select("*")
             .eq("id", id)
             .maybeSingle();
-          if (!error && data) {
+          if (!error && data && data.url) {
             return res.json({ success: true, data });
           }
         } catch (dbErr) {
@@ -851,10 +909,8 @@ async function startServer() {
         }
       }
 
-      const localList = getStoredCollection("gallery_pictures_store.json", []);
-      const item = localList.find((p: any) => p.id === id);
-      if (item) {
-        return res.json({ success: true, data: item });
+      if (localItem) {
+        return res.json({ success: true, data: localItem });
       }
       return res.status(404).json({ error: "Picture not found" });
     } catch (err: any) {
@@ -928,16 +984,29 @@ async function startServer() {
             .from("gallery_videos")
             .select(columns);
           if (!error && Array.isArray(data)) {
+            // Merge local list and Supabase list by ID to ensure files are never lost
+            const merged = [...localList];
+            data.forEach((supItem: any) => {
+              const exists = merged.find((l: any) => l.id === supItem.id);
+              if (!exists) {
+                merged.push(supItem);
+              } else if (supItem.url && !exists.url) {
+                exists.url = supItem.url;
+              }
+            });
+
             const filtered = deletedIds.size > 0 
-              ? data.filter((d: any) => !deletedIds.has(d.id))
-              : data;
-            return res.json({ success: true, data: filtered });
+              ? merged.filter((d: any) => !deletedIds.has(d.id))
+              : merged;
+            const filteredFields = filtered.map(item => filterFields(item, columns));
+            return res.json({ success: true, data: filteredFields });
           }
         } catch (dbErr) {
           console.warn("Supabase fetch gallery_videos warning:", dbErr);
         }
       }
-      return res.json({ success: true, data: localList });
+      const filteredLocal = localList.map(item => filterFields(item, columns));
+      return res.json({ success: true, data: filteredLocal });
     } catch (err: any) {
       console.error("Error in /api/gallery_videos:", err);
       return res.status(500).json({ error: err.message || "Failed to fetch gallery videos" });
@@ -952,6 +1021,12 @@ async function startServer() {
         return res.status(404).json({ error: "Video not found" });
       }
 
+      let localItem = null;
+      try {
+        const localList = getStoredCollection("gallery_videos_store.json", []);
+        localItem = localList.find((v: any) => v.id === id);
+      } catch (e) {}
+
       if (isSupabaseConfigured) {
         try {
           const { data, error } = await supabase
@@ -959,7 +1034,7 @@ async function startServer() {
             .select("*")
             .eq("id", id)
             .maybeSingle();
-          if (!error && data) {
+          if (!error && data && data.url) {
             return res.json({ success: true, data });
           }
         } catch (dbErr) {
@@ -967,10 +1042,8 @@ async function startServer() {
         }
       }
 
-      const localList = getStoredCollection("gallery_videos_store.json", []);
-      const item = localList.find((v: any) => v.id === id);
-      if (item) {
-        return res.json({ success: true, data: item });
+      if (localItem) {
+        return res.json({ success: true, data: localItem });
       }
       return res.status(404).json({ error: "Video not found" });
     } catch (err: any) {
@@ -1073,7 +1146,8 @@ async function startServer() {
           const filtered = deletedIds.size > 0 
             ? data.filter((d: any) => !deletedIds.has(d.id))
             : data;
-          return res.json({ success: true, data: filtered });
+          const filteredFields = filtered.map(item => filterFields(item, columns));
+          return res.json({ success: true, data: filteredFields });
         }
       }
 
@@ -1081,7 +1155,8 @@ async function startServer() {
       if (deletedIds.size > 0) {
         localList = localList.filter((d: any) => !deletedIds.has(d.id));
       }
-      return res.json({ success: true, data: localList });
+      const filteredLocal = localList.map(item => filterFields(item, columns));
+      return res.json({ success: true, data: filteredLocal });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Failed to fetch collection" });
     }
