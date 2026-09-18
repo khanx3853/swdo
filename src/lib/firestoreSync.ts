@@ -259,7 +259,39 @@ export function subscribeCollection<T extends { id: string }>(
       }
     });
 
-  return () => {};
+  // 3. Real-time subscription via Supabase
+  const channel = supabase
+    .channel(`schema-db-changes-${collectionName}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: collectionName },
+      (payload) => {
+        console.log(`[Realtime Debug] Change detected in ${collectionName}:`, payload);
+        // Re-fetch to ensure consistency
+        fetch(`/api/${collectionName}`)
+          .then(res => res.json())
+          .then(result => {
+            console.log(`[Realtime Debug] Fetch completed for ${collectionName}. Result:`, result);
+            const items = result?.data || result?.users || result?.logs || (Array.isArray(result) ? result : null);
+            if (Array.isArray(items)) {
+              try {
+                localStorage.setItem(localKey, JSON.stringify(items));
+              } catch (e) {}
+              onData(items as T[]);
+            } else {
+              console.warn(`[Realtime Debug] Unexpected data format for ${collectionName}:`, items);
+            }
+          })
+          .catch(e => console.warn(`[Realtime Debug] Real-time fetch for ${collectionName} failed:`, e));
+      }
+    )
+    .subscribe((status) => {
+      console.log(`[Realtime Debug] Subscription status for ${collectionName}:`, status);
+    });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
 // Single document subscription

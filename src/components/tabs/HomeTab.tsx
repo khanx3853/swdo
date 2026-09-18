@@ -111,58 +111,54 @@ const DEFAULT_VIDEOS = [
 
 const isYouTubeUrl = (url: string): boolean => {
   if (!url) return false;
-  return url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtube.com/shorts');
+  const l = url.toLowerCase();
+  return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('youtube.com/shorts');
 };
 
 const getYouTubeEmbedUrl = (url: string, isMuted: boolean): string => {
   if (!url) return '';
   let videoId = '';
-  if (url.includes('youtu.be/')) {
-    videoId = url.split('youtu.be/')[1]?.split(/[?#]/)[0];
-  } else if (url.includes('youtube.com/shorts/')) {
-    videoId = url.split('/shorts/')[1]?.split(/[?#]/)[0];
-  } else if (url.includes('youtube.com/watch')) {
-    try {
-      const urlObj = new URL(url);
-      videoId = urlObj.searchParams.get('v') || '';
-    } catch (e) {
-      const parts = url.split('?')[1];
-      const searchParams = new URLSearchParams(parts);
-      videoId = searchParams.get('v') || '';
-    }
-  } else if (url.includes('youtube.com/embed/')) {
-    videoId = url.split('youtube.com/embed/')[1]?.split(/[?#]/)[0];
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/i;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    videoId = match[2];
   }
-  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}` : url;
+  return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}&enablejsapi=1` : url;
 };
 
 const isGoogleDriveUrl = (url: string): boolean => {
   if (!url) return false;
-  return url.includes('drive.google.com');
+  return url.toLowerCase().includes('drive.google.com');
 };
 
 const getGoogleDriveEmbedUrl = (url: string): string => {
   if (!url) return '';
   let fileId = '';
-  if (url.includes('/file/d/')) {
-    fileId = url.split('/file/d/')[1]?.split('/')[0];
+  const regExp = /\/file\/d\/([a-zA-Z0-9_-]+)/i;
+  const match = url.match(regExp);
+  if (match && match[1]) {
+    fileId = match[1];
+  } else {
+    try {
+      const urlObj = new URL(url);
+      fileId = urlObj.searchParams.get('id') || '';
+    } catch (e) {}
   }
   return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : url;
 };
 
 const isVimeoUrl = (url: string): boolean => {
   if (!url) return false;
-  return url.includes('vimeo.com');
+  return url.toLowerCase().includes('vimeo.com');
 };
 
 const getVimeoEmbedUrl = (url: string): string => {
   if (!url) return '';
   let videoId = '';
-  if (url.includes('vimeo.com/video/')) {
-    videoId = url.split('vimeo.com/video/')[1]?.split(/[?#]/)[0];
-  } else if (url.includes('vimeo.com/')) {
-    const parts = url.split('vimeo.com/')[1]?.split(/[?#]/)[0].split('/');
-    videoId = parts[parts.length - 1];
+  const regExp = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/i;
+  const match = url.match(regExp);
+  if (match && match[1]) {
+    videoId = match[1];
   }
   return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1` : url;
 };
@@ -218,10 +214,28 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     try {
       // Fetch metadata and light URLs in a single read to optimize loading of non-base64 assets
       const picList = await fetchCollection<any>('gallery_pictures', 'id, url, caption, createdAt');
-      setPictures(picList.length > 0 ? picList : DEFAULT_PICTURES);
+      setPictures(prev => {
+        // Merge fetched list with any local newly added items that are not in the fetched list yet
+        const merged = [...picList];
+        prev.forEach(p => {
+          if (p && p.id && !p.id.startsWith('default-') && !merged.some(m => m.id === p.id)) {
+            merged.unshift(p); // Keep local newly added items at the top
+          }
+        });
+        return merged.length > 0 ? merged : DEFAULT_PICTURES;
+      });
 
       const vidList = await fetchCollection<any>('gallery_videos', 'id, url, caption, createdAt');
-      setVideos(vidList.length > 0 ? vidList : DEFAULT_VIDEOS);
+      setVideos(prev => {
+        // Merge fetched list with any local newly added items that are not in the fetched list yet
+        const merged = [...vidList];
+        prev.forEach(v => {
+          if (v && v.id && !v.id.startsWith('default-') && !merged.some(m => m.id === v.id)) {
+            merged.unshift(v); // Keep local newly added items at the top
+          }
+        });
+        return merged.length > 0 ? merged : DEFAULT_VIDEOS;
+      });
     } catch (err) {
       console.error("Error fetching gallery data:", err);
       // Fallback to defaults on any network error
