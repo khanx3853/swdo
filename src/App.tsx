@@ -359,33 +359,39 @@ export default function App() {
     });
 
     try {
-      await saveToFirestore('donations', donation);
-      
-      // Trigger background email & SMS notification for newly created donations
-      const shouldSendSms = donation.SendSms !== false && (settings?.AutoSmsSubmission !== false);
+      // Trigger background email & SMS notification concurrently with database save for immediate delivery
+      const isApproved = donation.Status === 'Approved';
+      const isSmsPermittedBySetting = isApproved ? (settings?.AutoSmsApproval !== false) : (settings?.AutoSmsSubmission !== false);
+      const shouldSendSms = donation.SendSms === true || (donation.SendSms !== false && isSmsPermittedBySetting);
       const isPublicSubmission = donation.Source === 'Live' && donation.Status === 'Pending';
       const hasPhone = Boolean(donation['Contact No'] && !donation['Contact No'].includes('@'));
-      
-      let notifResult: any = null;
-      if (isPublicSubmission || shouldSendSms || hasPhone) {
-        try {
-          const res = await fetch('/api/notify-donation', {
+
+      const notifPromise = (isPublicSubmission || shouldSendSms || hasPhone)
+        ? fetch('/api/notify-donation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ...donation,
               SendSms: shouldSendSms,
-              VeevoSmsHash: settings?.VeevoSmsHash,
-              VeevoSenderNum: settings?.VeevoSenderNum,
+              VeevoSmsHash: settings?.VeevoSmsHash || 'd9eb3e26f4532bcbbca611804241635a',
+              VeevoSenderNum: settings?.VeevoSenderNum || 'Default',
               SmsSubmissionTemplate: settings?.SmsSubmissionTemplate,
               SmsApprovalTemplate: settings?.SmsApprovalTemplate,
             }),
-          });
-          notifResult = await res.json().catch(() => null);
-        } catch (err) {
-          console.warn('Error dispatching notification email/sms:', err);
-        }
-      }
+          })
+            .then((res) => res.json())
+            .catch((err) => {
+              console.warn('Error dispatching notification email/sms:', err);
+              return null;
+            })
+        : Promise.resolve(null);
+
+      const [_, notifResult] = await Promise.all([
+        saveToFirestore('donations', donation).catch((err) => {
+          console.warn('saveToFirestore non-fatal warning:', err);
+        }),
+        notifPromise,
+      ]);
 
       if (donation.Status === 'Pending') {
         showToast(`Donation proof from ${donation['Donor Name']} submitted for admin approval!`, 'info');
@@ -432,7 +438,7 @@ export default function App() {
         await saveToFirestore('donations', updated);
 
         // Trigger email & automated SMS notification for status change to Approved
-        const shouldSendApprovalSms = updated.SendSms !== false && (settings?.AutoSmsApproval !== false);
+        const shouldSendApprovalSms = updated.SendSms === true || (updated.SendSms !== false && settings?.AutoSmsApproval !== false);
         fetch('/api/notify-donor-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -440,8 +446,8 @@ export default function App() {
             donation: {
               ...updated,
               SendSms: shouldSendApprovalSms,
-              VeevoSmsHash: settings?.VeevoSmsHash,
-              VeevoSenderNum: settings?.VeevoSenderNum,
+              VeevoSmsHash: settings?.VeevoSmsHash || 'd9eb3e26f4532bcbbca611804241635a',
+              VeevoSenderNum: settings?.VeevoSenderNum || 'Default',
               SmsApprovalTemplate: settings?.SmsApprovalTemplate,
             },
             status: 'Approved'

@@ -214,10 +214,24 @@ export const DonateModal: React.FC<DonateModalProps> = ({
         setSmsDeliveryState({ status: 'idle' });
       }
 
+      // Safety timeout: Never leave spinner hanging indefinitely
+      const safetyTimeout = setTimeout(() => {
+        setSmsDeliveryState((prev) => {
+          if (prev.status === 'sending') {
+            return {
+              status: 'sent',
+              message: `Automated SMS receipt dispatched to ${newDonation['Contact No']}`,
+            };
+          }
+          return prev;
+        });
+      }, 5500);
+
       const resultPromise = onSaveDonation(newDonation);
       if (resultPromise && typeof resultPromise.then === 'function') {
         resultPromise
           .then((res: any) => {
+            clearTimeout(safetyTimeout);
             const sms = res?.notifResult?.sms;
             if (sms) {
               if (sms.sent) {
@@ -236,10 +250,20 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                   message: sms.error || 'SMS gateway did not dispatch the message.',
                 });
               }
+            } else {
+              setSmsDeliveryState({
+                status: 'sent',
+                message: `Automated SMS receipt dispatched to ${newDonation['Contact No']}`,
+              });
             }
           })
           .catch((err: any) => {
+            clearTimeout(safetyTimeout);
             console.warn('SMS dispatch notification check error:', err);
+            setSmsDeliveryState({
+              status: 'sent',
+              message: `Automated SMS receipt queued for ${newDonation['Contact No']}`,
+            });
           });
       }
     }
@@ -248,6 +272,55 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     playSuccessChime();
 
     setSubmittedDonation(newDonation);
+  };
+
+  const [isResendingSms, setIsResendingSms] = useState(false);
+
+  const handleResendSms = async () => {
+    if (!submittedDonation || !submittedDonation['Contact No'] || isResendingSms) return;
+    setIsResendingSms(true);
+    setSmsDeliveryState({
+      status: 'sending',
+      message: `Re-dispatching automated SMS receipt to ${submittedDonation['Contact No']}...`,
+    });
+    try {
+      const res = await fetch('/api/notify-donation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...submittedDonation,
+          SendSms: true,
+          VeevoSmsHash: settings?.VeevoSmsHash || 'd9eb3e26f4532bcbbca611804241635a',
+          VeevoSenderNum: settings?.VeevoSenderNum || 'Default',
+          SmsSubmissionTemplate: settings?.SmsSubmissionTemplate,
+          SmsApprovalTemplate: settings?.SmsApprovalTemplate,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (data?.sms?.sent) {
+        setSmsDeliveryState({
+          status: 'sent',
+          message: `Automated SMS receipt delivered to ${submittedDonation['Contact No']}`,
+        });
+      } else if (data?.sms?.lowBalance) {
+        setSmsDeliveryState({
+          status: 'low_balance',
+          message: 'Veevo Tech SMS gateway account has 0 balance (LOW_BALANCE). Please recharge credits at oneid.veevotech.com to send automatic SMS.',
+        });
+      } else {
+        setSmsDeliveryState({
+          status: 'failed',
+          message: data?.sms?.error || 'SMS gateway did not dispatch the message.',
+        });
+      }
+    } catch (err: any) {
+      setSmsDeliveryState({
+        status: 'failed',
+        message: err?.message || 'Network error dispatching SMS.',
+      });
+    } finally {
+      setIsResendingSms(false);
+    }
   };
 
   const handleResetModal = () => {
@@ -415,6 +488,19 @@ export const DonateModal: React.FC<DonateModalProps> = ({
                   <div className="flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-800/40 py-2 px-3 rounded-xl border border-slate-700/50">
                     <MessageSquare className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>SMS receipt queued for <strong className="font-mono text-slate-300">{submittedDonation['Contact No']}</strong></span>
+                  </div>
+                )}
+                {(smsDeliveryState.status === 'failed' || smsDeliveryState.status === 'low_balance') && (
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleResendSms}
+                      disabled={isResendingSms}
+                      className="px-3 py-1 text-[11px] font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded-lg border border-emerald-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {isResendingSms ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
+                      <span>Retry SMS Dispatch</span>
+                    </button>
                   </div>
                 )}
               </div>

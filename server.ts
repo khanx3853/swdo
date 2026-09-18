@@ -4,8 +4,6 @@ import fs from "fs";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const PORT = 3000;
-
 // Initialize Supabase Client
 const extractRealValue = (val: any, preferUrl = false): string => {
   if (!val || typeof val !== 'string') return '';
@@ -1227,9 +1225,10 @@ async function startServer() {
         "https://api.veevotech.com/sendsms"
       ];
       
+      const cleanReceiverNum = formattedNum.replace(/^\+/, '');
       const params = new URLSearchParams();
       params.append("hash", hash);
-      params.append("receivernum", formattedNum);
+      params.append("receivernum", cleanReceiverNum);
       params.append("receivernetwork", "0");
       params.append("textmessage", options.message);
       params.append("sendernum", senderNum);
@@ -1681,11 +1680,11 @@ async function startServer() {
     const isApproved = status === 'Approved';
     let smsResult: any = null;
 
-    // 1. Send automated SMS to donor upon approval (Completely independent of SMTP/Email)
+    // 1. Send automated SMS to donor upon approval or manual trigger (Completely independent of SMTP/Email)
     const hasPhone = Boolean(donation['Contact No'] && !donation['Contact No'].includes('@'));
     const isSmsPermitted = donation.SendSms !== false;
 
-    if (isApproved && hasPhone && isSmsPermitted) {
+    if (hasPhone && isSmsPermitted) {
       try {
         const rawName = (donation['Donor Name'] || 'Contributor').trim();
         const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
@@ -1694,10 +1693,16 @@ async function startServer() {
         const purpose = (donation.Remarks || 'General Relief Fund').trim();
         const org = "Shangla Welfare & Development Org (REG# 5514)";
 
-        let approvalSms = donation.SmsApprovalTemplate ||
-          `Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
+        let targetSms = "";
+        if (isApproved) {
+          targetSms = donation.SmsApprovalTemplate ||
+            `Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
+        } else {
+          targetSms = donation.SmsSubmissionTemplate ||
+            `Dear {donor}, thank you for your donation of Rs. {amount} to {org}. Trx ID: {txn}. Your contribution has been received for verification. May Allah reward you!`;
+        }
 
-        approvalSms = approvalSms
+        targetSms = targetSms
           .replace(/\{donor\}/gi, donorName)
           .replace(/\{عطیہ کنندہ\}/gi, donorName)
           .replace(/\{amount\}/gi, amount)
@@ -1707,16 +1712,16 @@ async function startServer() {
           .replace(/\{org\}/gi, org);
 
         // Replace literal \n with actual newlines
-        approvalSms = approvalSms.replace(/\\n/g, '\n');
-        approvalSms = sanitizeForGsmSms(approvalSms);
+        targetSms = targetSms.replace(/\\n/g, '\n');
+        targetSms = sanitizeForGsmSms(targetSms);
 
-        console.log(`📱 [Status Notif] Dispatching approval SMS to ${donation['Contact No']}...`);
+        console.log(`📱 [Status Notif] Dispatching SMS (${isApproved ? 'Approval' : 'Submission'}) to ${donation['Contact No']}...`);
         smsResult = await sendVeevoSms({
           to: donation['Contact No'],
-          message: approvalSms,
+          message: targetSms,
           hash: donation.VeevoSmsHash,
           senderNum: donation.VeevoSenderNum,
-          type: "Donation Approval"
+          type: isApproved ? "Donation Approval" : "Donation Submission"
         });
         console.log(`📱 [Status Notif] SMS outcome for ${donation['Contact No']}:`, smsResult.success ? 'DELIVERED' : smsResult.error);
       } catch (smsErr) {
@@ -1724,7 +1729,7 @@ async function startServer() {
         smsResult = { success: false, error: (smsErr as any).message || "Status SMS failed" };
       }
     } else {
-      console.log(`ℹ️ [Status Notif] SMS skipped. isApproved: ${isApproved}, hasPhone: ${hasPhone}, isSmsPermitted: ${isSmsPermitted}`);
+      console.log(`ℹ️ [Status Notif] SMS skipped. hasPhone: ${hasPhone}, isSmsPermitted: ${isSmsPermitted}`);
     }
 
     // Return instant HTTP response including SMS outcome
@@ -2002,9 +2007,27 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  const DEFAULT_PORT = 3000;
+  const cloudRunPort = process.env.PORT ? parseInt(process.env.PORT, 10) : null;
+
+  // Always listen on port 3000 for local proxy and dev environment
+  app.listen(DEFAULT_PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${DEFAULT_PORT}`);
   });
+
+  // If deployed to Cloud Run or container specifying a different PORT (e.g. 8080), listen on it as well
+  if (cloudRunPort && cloudRunPort !== DEFAULT_PORT && !isNaN(cloudRunPort)) {
+    try {
+      const crServer = app.listen(cloudRunPort, "0.0.0.0", () => {
+        console.log(`Cloud Run container ingress listening on http://0.0.0.0:${cloudRunPort}`);
+      });
+      crServer.on("error", (err: any) => {
+        console.warn(`Could not bind additional Cloud Run port ${cloudRunPort}:`, err?.message);
+      });
+    } catch (err) {
+      console.warn(`Could not start Cloud Run listener on ${cloudRunPort}:`, err);
+    }
+  }
 }
 
 startServer().catch((err) => {

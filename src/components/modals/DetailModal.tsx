@@ -79,9 +79,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           donation: {
             ...curDonation,
             SendSms: true,
-            VeevoSmsHash: settings?.VeevoSmsHash,
-            VeevoSenderNum: settings?.VeevoSenderNum,
+            VeevoSmsHash: settings?.VeevoSmsHash || 'd9eb3e26f4532bcbbca611804241635a',
+            VeevoSenderNum: settings?.VeevoSenderNum || 'Default',
             SmsApprovalTemplate: settings?.SmsApprovalTemplate,
+            SmsSubmissionTemplate: settings?.SmsSubmissionTemplate,
           },
           status: curDonation.Status === 'Pending' ? 'Pending' : 'Approved',
         }),
