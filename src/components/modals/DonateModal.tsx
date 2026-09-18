@@ -87,6 +87,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     status: 'idle' | 'sending' | 'sent' | 'low_balance' | 'failed';
     message?: string;
   }>({ status: 'idle' });
+  const [isResendingSms, setIsResendingSms] = useState(false);
 
   if (!isOpen) return null;
 
@@ -274,8 +275,6 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     setSubmittedDonation(newDonation);
   };
 
-  const [isResendingSms, setIsResendingSms] = useState(false);
-
   const handleResendSms = async () => {
     if (!submittedDonation || !submittedDonation['Contact No'] || isResendingSms) return;
     setIsResendingSms(true);
@@ -342,8 +341,9 @@ export const DonateModal: React.FC<DonateModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
+  try {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
       <div className="glass-card max-w-lg w-full p-4 sm:p-6 shadow-2xl relative border-emerald-500/40 my-auto max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
@@ -1104,5 +1104,47 @@ export const DonateModal: React.FC<DonateModalProps> = ({
         </div>
       )}
     </div>
-  );
+    );
+  } catch (error: any) {
+    console.error("DonateModal Render Error:", error);
+    return (
+      <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="glass-card max-w-lg w-full p-4 sm:p-6 shadow-2xl relative border-rose-500/40 my-auto text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6 text-rose-400" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-100">Donation Panel Notice</h3>
+          <p className="text-xs text-slate-400">
+            An issue was encountered while initializing the donation panel. This is typically due to a stale browser cache or mismatched server assets.
+          </p>
+          <p className="text-[10px] font-mono text-rose-400 bg-rose-950/20 p-2 rounded-lg break-all">
+            {error?.message || String(error)}
+          </p>
+          <div className="flex gap-2 justify-center pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.clear();
+                  window.location.reload();
+                } catch {
+                  window.location.reload();
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              Clear Cache & Reload
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-500 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 };
