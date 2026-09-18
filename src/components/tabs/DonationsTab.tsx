@@ -312,7 +312,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       : 'Ali'
   );
   const [proofImage, setProofImage] = useState<string>('');
-  const [sendSms, setSendSms] = useState<boolean>(Boolean(settings?.AutoSmsSubmission));
+  const [sendSms, setSendSms] = useState<boolean>(settings?.AutoSmsSubmission !== false);
   const [isProcessingProof, setIsProcessingProof] = useState(false);
   const formFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -339,6 +339,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
           : 'Ali'
       ));
       setProofImage(editingItem.ProofImage || '');
+      setSendSms(editingItem.SendSms !== false);
       setEditingId(editingItem.id);
       setShowForm(true);
     }
@@ -362,7 +363,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
         : 'Ali'
     );
     setProofImage('');
-    setSendSms(Boolean(settings?.AutoSmsSubmission));
+    setSendSms(settings?.AutoSmsSubmission !== false);
     setEditingId(null);
     if (onClearEdit) onClearEdit();
   };
@@ -466,7 +467,7 @@ export const DonationsTab: React.FC<DonationsTabProps> = ({
       Date: date,
       'Donor Name': donorName.trim(),
       'NIC No': nicNo.trim(),
-      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
+      'Contact No': contactNo.trim() ? `${countryCode} ${contactNo.trim()}`.trim() : '',
       DonorEmail: donorEmail.trim(),
       'Permanent Address': address.trim() || 'District Shangla, KP',
       Profession: profession.trim() || 'Contributor',

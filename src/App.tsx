@@ -362,11 +362,12 @@ export default function App() {
       await saveToFirestore('donations', donation);
       
       // Trigger background email & SMS notification for newly created donations
-      const shouldSendSms = donation.SendSms !== false && Boolean(settings?.AutoSmsSubmission);
+      const shouldSendSms = donation.SendSms !== false && (settings?.AutoSmsSubmission !== false);
       const isPublicSubmission = donation.Source === 'Live' && donation.Status === 'Pending';
+      const hasPhone = Boolean(donation['Contact No'] && !donation['Contact No'].includes('@'));
       
       let notifResult: any = null;
-      if (isPublicSubmission || shouldSendSms) {
+      if (isPublicSubmission || shouldSendSms || hasPhone) {
         try {
           const res = await fetch('/api/notify-donation', {
             method: 'POST',
@@ -377,6 +378,7 @@ export default function App() {
               VeevoSmsHash: settings?.VeevoSmsHash,
               VeevoSenderNum: settings?.VeevoSenderNum,
               SmsSubmissionTemplate: settings?.SmsSubmissionTemplate,
+              SmsApprovalTemplate: settings?.SmsApprovalTemplate,
             }),
           });
           notifResult = await res.json().catch(() => null);
@@ -444,10 +446,19 @@ export default function App() {
             },
             status: 'Approved'
           }),
-        }).catch((e) => console.error('Failed to trigger approval email/sms:', e));
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data?.sms?.sent) {
+              showToast(`Approved! Official SMS receipt delivered to ${updated['Contact No']}`, 'success');
+            } else if (data?.sms?.lowBalance) {
+              showToast(`Approved! (Veevo Tech SMS gateway reported low balance)`, 'info');
+            }
+          })
+          .catch((e) => console.error('Failed to trigger approval email/sms:', e));
         
         showToast(
-          `Approved donation of Rs. ${item.Amount} from ${item['Donor Name']} (Approved by ${formattedApprover}).`,
+          `Approved donation of Rs. ${Number(item.Amount || 0).toLocaleString()} from ${item['Donor Name']} (Approved by ${formattedApprover}).`,
           'success'
         );
       } catch (error) {

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "sms_1789723422561_biysa",
+    "recipient": "923472021703",
+    "message": "Assalamu Alaikum Ibrahim Khan,\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. 2,500 Emergency Aid ke liye humein mil gayi hai. Ref: TXN-VERIFY-999\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\nShangla Welfare & Development Org (REG# 5514)",
+    "type": "Donation Approval",
+    "status": "Delivered",
+    "timestamp": "2026-09-18T09:23:42.561Z",
+    "response": "{\"STATUS\":\"SUCCESSFUL\",\"MESSAGE_ID\":\"4d544d314f4449324d7a4179\",\"COUNTRY_SUPPORTED\":\"TRUE\",\"COUNTRY_CODE\":92,\"COUNTRY_ISO\":\"\",\"NETWORK_NAME\":\"Telenor-PK\",\"RECEIVER_NUMBER\":\"+923472021703\",\"ERROR_FILTER\":\"\",\"ERROR_CODE\":\"\",\"ERROR_DESCRIPTION\":\"\",\"VIA_DEFAULT_SID\":\"YES\",\"CHARGED_BALANCE\":6.3,\"CHARGING_UNIT\":\"\"}"
+  },
+  {
+    "id": "sms_1789723416748_v3u8a",
+    "recipient": "923472021703",
+    "message": "Dear Ibrahim Khan, thank you for your donation of Rs. 2,500 to Shangla Welfare & Development Org (REG# 5514). Trx ID: TXN-VERIFY-999. Your contribution has been received for verification. May Allah reward you!",
+    "type": "Donation Submission",
+    "status": "Delivered",
+    "timestamp": "2026-09-18T09:23:36.748Z",
+    "response": "{\"STATUS\":\"SUCCESSFUL\",\"MESSAGE_ID\":\"4d544d314f4449324d6a677a\",\"COUNTRY_SUPPORTED\":\"TRUE\",\"COUNTRY_CODE\":92,\"COUNTRY_ISO\":\"\",\"NETWORK_NAME\":\"Telenor-PK\",\"RECEIVER_NUMBER\":\"+923472021703\",\"ERROR_FILTER\":\"\",\"ERROR_CODE\":\"\",\"ERROR_DESCRIPTION\":\"\",\"VIA_DEFAULT_SID\":\"YES\",\"CHARGED_BALANCE\":6.3,\"CHARGING_UNIT\":\"\"}"
+  },
+  {
+    "id": "sms_1789723132301_rscs7",
+    "recipient": "923472021703",
+    "message": "Assalamu Alaikum Muhammad Parvez,\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. 5,000 Zakat Fund ke liye humein mil gayi hai. Ref: TXN-VERIFY-888\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\nShangla Welfare & Development Org (REG# 5514)",
+    "type": "Donation Approval",
+    "status": "Delivered",
+    "timestamp": "2026-09-18T09:18:52.301Z",
+    "response": "{\"STATUS\":\"SUCCESSFUL\",\"MESSAGE_ID\":\"4d544d314f4449314e446777\",\"COUNTRY_SUPPORTED\":\"TRUE\",\"COUNTRY_CODE\":92,\"COUNTRY_ISO\":\"\",\"NETWORK_NAME\":\"Telenor-PK\",\"RECEIVER_NUMBER\":\"+923472021703\",\"ERROR_FILTER\":\"\",\"ERROR_CODE\":\"\",\"ERROR_DESCRIPTION\":\"\",\"VIA_DEFAULT_SID\":\"YES\",\"CHARGED_BALANCE\":6.3,\"CHARGING_UNIT\":\"\"}"
+  },
+  {
+    "id": "sms_1789723004450_thmun",
+    "recipient": "923472021703",
+    "message": "SWDO Test SMS ASCII",
+    "type": "Automated SMS",
+    "status": "Delivered",
+    "timestamp": "2026-09-18T09:16:44.450Z",
+    "response": "{\"STATUS\":\"SUCCESSFUL\",\"MESSAGE_ID\":\"4d544d314f4449314d544d77\",\"COUNTRY_SUPPORTED\":\"TRUE\",\"COUNTRY_CODE\":92,\"COUNTRY_ISO\":\"\",\"NETWORK_NAME\":\"Telenor-PK\",\"RECEIVER_NUMBER\":\"+923472021703\",\"ERROR_FILTER\":\"\",\"ERROR_CODE\":\"\",\"ERROR_DESCRIPTION\":\"\",\"VIA_DEFAULT_SID\":\"YES\",\"CHARGED_BALANCE\":3.15,\"CHARGING_UNIT\":\"\"}"
+  },
+  {
+    "id": "sms_1789722846472_miph2",
+    "recipient": "923472021703",
+    "message": "SWDO Welfare Portal: Veevo Tech SMS Gateway test successful! Time: 9:14:06 AM",
+    "type": "Automated SMS",
+    "status": "Delivered",
+    "timestamp": "2026-09-18T09:14:06.472Z",
+    "response": "{\"STATUS\":\"SUCCESSFUL\",\"MESSAGE_ID\":\"4d544d314f4449304e6a6777\",\"COUNTRY_SUPPORTED\":\"TRUE\",\"COUNTRY_CODE\":92,\"COUNTRY_ISO\":\"\",\"NETWORK_NAME\":\"Telenor-PK\",\"RECEIVER_NUMBER\":\"+923472021703\",\"ERROR_FILTER\":\"\",\"ERROR_CODE\":\"\",\"ERROR_DESCRIPTION\":\"\",\"VIA_DEFAULT_SID\":\"YES\",\"CHARGED_BALANCE\":3.15,\"CHARGING_UNIT\":\"\"}"
+  }
+]

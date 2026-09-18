@@ -104,6 +104,14 @@ async function startServer() {
   const app = express();
   app.use(express.json({ limit: '500mb' }));
   app.use(express.urlencoded({ limit: '500mb', extended: true }));
+  
+  // Disable caching for all API routes
+  app.use("/api", (req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    next();
+  });
 
   // Health check route for Cloud Run and monitoring
   app.get("/api/health", (req, res) => {
@@ -1372,20 +1380,32 @@ async function startServer() {
     let smsResult: any = null;
 
     // 1. Automated SMS dispatch to donor via Veevo Tech
-    if (donation['Contact No'] && donation.SendSms !== false) {
+    const hasContact = Boolean(donation['Contact No'] && !donation['Contact No'].includes('@'));
+    if (hasContact && donation.SendSms !== false) {
       try {
         const rawName = (donation['Donor Name'] || 'Contributor').trim();
         const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
         const amount = Number(donation.Amount || 0).toLocaleString();
         const txn = donation['Transaction ID'] || 'N/A';
-        const org = "SWDO Welfare (Reg# 5514)";
+        const purpose = (donation.Remarks || 'General Relief Fund').trim();
+        const org = "Shangla Welfare & Development Org (REG# 5514)";
+        const isApproved = donation.Status === 'Approved';
 
-        let smsBody = donation.SmsSubmissionTemplate ||
-          `Assalamu Alaikum {donor},\n\nWe have received your donation of Rs. {amount} to {org}.\nTrx ID: {txn}\n\nYour contribution is pending verification. JazakAllah Khair!`;
+        let smsBody = "";
+        if (isApproved) {
+          smsBody = donation.SmsApprovalTemplate ||
+            `Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
+        } else {
+          smsBody = donation.SmsSubmissionTemplate ||
+            `Dear {donor}, thank you for your donation of Rs. {amount} to {org}. Trx ID: {txn}. Your contribution has been received for verification. May Allah reward you!`;
+        }
 
         smsBody = smsBody
           .replace(/\{donor\}/gi, donorName)
+          .replace(/\{عطیہ کنندہ\}/gi, donorName)
           .replace(/\{amount\}/gi, amount)
+          .replace(/\{purpose\}/gi, purpose)
+          .replace(/\{مقصد\}/gi, purpose)
           .replace(/\{txn\}/gi, txn)
           .replace(/\{org\}/gi, org);
 
@@ -1393,15 +1413,16 @@ async function startServer() {
         smsBody = smsBody.replace(/\\n/g, '\n');
         smsBody = sanitizeForGsmSms(smsBody);
 
-        console.log(`📱 [Submission Notif] Body: ${smsBody.replace(/\n/g, ' [NL] ')}`);
+        console.log(`📱 [Donation SMS] Body: ${smsBody.replace(/\n/g, ' [NL] ')}`);
 
         smsResult = await sendVeevoSms({
           to: donation['Contact No'],
           message: smsBody,
           hash: donation.VeevoSmsHash,
           senderNum: donation.VeevoSenderNum,
-          type: "Donation Submission"
+          type: isApproved ? "Donation Approval" : "Donation Submission"
         } as any);
+        console.log(`📱 [Donation SMS] Outcome for ${donation['Contact No']}:`, smsResult.success ? 'DELIVERED' : smsResult.error);
       } catch (smsErr) {
         console.warn("⚠️ Error in automatic SMS dispatch:", smsErr);
         smsResult = { success: false, error: (smsErr as any).message || "SMS failed" };
@@ -1648,19 +1669,77 @@ async function startServer() {
     });
   });
 
-  // API route to send email notification to donor (and admin) when status changes to Approved or Rejected
+  // API route to send notification to donor (and admin) when status changes to Approved or Rejected
   app.post("/api/notify-donor-status", async (req, res) => {
     const { donation, status, reason } = req.body;
-    console.log(`⚡ High-speed donor status change alert (${status}):`, donation?.id);
+    console.log(`⚡ High-speed donor status change alert (${status}):`, donation?.id, donation?.['Donor Name']);
 
     if (!donation) {
       return res.status(400).json({ error: "Donation payload missing" });
     }
 
-    // Return instant HTTP response
-    res.json({ success: true, status, queued: true });
+    const isApproved = status === 'Approved';
+    let smsResult: any = null;
 
-    // Process email sending in non-blocking background task
+    // 1. Send automated SMS to donor upon approval (Completely independent of SMTP/Email)
+    const hasPhone = Boolean(donation['Contact No'] && !donation['Contact No'].includes('@'));
+    const isSmsPermitted = donation.SendSms !== false;
+
+    if (isApproved && hasPhone && isSmsPermitted) {
+      try {
+        const rawName = (donation['Donor Name'] || 'Contributor').trim();
+        const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
+        const amount = Number(donation.Amount || 0).toLocaleString();
+        const txn = donation['Transaction ID'] || 'N/A';
+        const purpose = (donation.Remarks || 'General Relief Fund').trim();
+        const org = "Shangla Welfare & Development Org (REG# 5514)";
+
+        let approvalSms = donation.SmsApprovalTemplate ||
+          `Assalamu Alaikum {donor},\n\nJazakAllahu Khair!\nAap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai. Ref: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
+
+        approvalSms = approvalSms
+          .replace(/\{donor\}/gi, donorName)
+          .replace(/\{عطیہ کنندہ\}/gi, donorName)
+          .replace(/\{amount\}/gi, amount)
+          .replace(/\{purpose\}/gi, purpose)
+          .replace(/\{مقصد\}/gi, purpose)
+          .replace(/\{txn\}/gi, txn)
+          .replace(/\{org\}/gi, org);
+
+        // Replace literal \n with actual newlines
+        approvalSms = approvalSms.replace(/\\n/g, '\n');
+        approvalSms = sanitizeForGsmSms(approvalSms);
+
+        console.log(`📱 [Status Notif] Dispatching approval SMS to ${donation['Contact No']}...`);
+        smsResult = await sendVeevoSms({
+          to: donation['Contact No'],
+          message: approvalSms,
+          hash: donation.VeevoSmsHash,
+          senderNum: donation.VeevoSenderNum,
+          type: "Donation Approval"
+        });
+        console.log(`📱 [Status Notif] SMS outcome for ${donation['Contact No']}:`, smsResult.success ? 'DELIVERED' : smsResult.error);
+      } catch (smsErr) {
+        console.warn("⚠️ Error sending status update SMS:", smsErr);
+        smsResult = { success: false, error: (smsErr as any).message || "Status SMS failed" };
+      }
+    } else {
+      console.log(`ℹ️ [Status Notif] SMS skipped. isApproved: ${isApproved}, hasPhone: ${hasPhone}, isSmsPermitted: ${isSmsPermitted}`);
+    }
+
+    // Return instant HTTP response including SMS outcome
+    res.json({
+      success: true,
+      status,
+      sms: smsResult ? {
+        sent: smsResult.success,
+        lowBalance: !!smsResult.lowBalance,
+        error: smsResult.error,
+        messageId: smsResult.messageId
+      } : null
+    });
+
+    // 2. Process email sending in non-blocking background task (isolated error boundary)
     (async () => {
       try {
         const result = await getSmtpTransporter();
@@ -1672,7 +1751,6 @@ async function startServer() {
           targetEmail = donation['Contact No'].trim();
         }
 
-        const isApproved = status === 'Approved';
         const formattedAmount = Number(donation.Amount || 0).toLocaleString();
 
         const subject = isApproved
@@ -1790,58 +1868,20 @@ async function startServer() {
         if (adminEmail && !recipients.includes(adminEmail)) recipients.push(adminEmail);
 
         if (recipients.length > 0) {
-          await transporter.sendMail({
-            from: `"SWDO Relief Portal" <${smtpUser}>`,
-            to: recipients.join(', '),
-            subject,
-            html: bodyHtml,
-          });
-          console.log(`✅ Status update email sent for ${status} to ${recipients.join(', ')}`);
-        }
-
-        // Send automated SMS to donor upon approval
-        if (isApproved && donation['Contact No'] && donation.SendSms !== false) {
           try {
-            const rawName = (donation['Donor Name'] || 'Contributor').trim();
-            const donorName = sanitizeForGsmSms(rawName) || 'Valued Donor';
-            const amount = Number(donation.Amount || 0).toLocaleString();
-            const txn = donation['Transaction ID'] || 'N/A';
-            const purpose = (donation.Remarks || 'General Relief Fund').trim();
-            const org = "Shangla Welfare & Development Org (REG# 5514)";
-
-            let approvalSms = donation.SmsApprovalTemplate ||
-              `Assalamu Alaikum {donor},\n\nJazakAllahu Khair! Aap ki bheji hui raqam Rs. {amount} {purpose} ke liye humein mil gayi hai.\nRef: {txn}\n\nAllah aap ke is sadqa ko qubool farmaye aur aap ke rizq mein barkat ata kare. Ameen\n\n{org}`;
-
-            approvalSms = approvalSms
-              .replace(/\{donor\}/gi, donorName)
-              .replace(/\{عطیہ کنندہ\}/gi, donorName)
-              .replace(/\{amount\}/gi, amount)
-              .replace(/\{purpose\}/gi, purpose)
-              .replace(/\{مقصد\}/gi, purpose)
-              .replace(/\{txn\}/gi, txn)
-              .replace(/\{org\}/gi, org);
-
-            // Replace literal \n with actual newlines
-            approvalSms = approvalSms.replace(/\\n/g, '\n');
-            approvalSms = sanitizeForGsmSms(approvalSms);
-
-            console.log(`📱 [Status Notif] Body: ${approvalSms.replace(/\n/g, ' [NL] ')}`);
-
-            console.log(`📱 [Status Notif] Dispatching SMS to ${donation['Contact No']}...`);
-            await sendVeevoSms({
-              to: donation['Contact No'],
-              message: approvalSms,
-              hash: donation.VeevoSmsHash,
-              senderNum: donation.VeevoSenderNum,
-              type: "Donation Approval"
+            await transporter.sendMail({
+              from: `"SWDO Relief Portal" <${smtpUser}>`,
+              to: recipients.join(', '),
+              subject,
+              html: bodyHtml,
             });
-          } catch (smsErr) {
-            console.warn("⚠️ Error sending status update SMS:", smsErr);
+            console.log(`✅ Status update email sent for ${status} to ${recipients.join(', ')}`);
+          } catch (emailSendErr) {
+            console.warn("⚠️ Status update email notice (SMTP server):", (emailSendErr as any).message || emailSendErr);
           }
         }
-
       } catch (err) {
-        console.warn("⚠️ Status update notification dispatch notice:", err);
+        console.warn("⚠️ Status update email background process notice:", err);
       }
     })();
   });

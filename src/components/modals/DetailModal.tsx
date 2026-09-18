@@ -21,6 +21,8 @@ import {
   Check,
   Eye,
   ShieldCheck,
+  MessageSquare,
+  Loader2,
 } from 'lucide-react';
 import { Donation, Beneficiary, Member, PortalSettings, UserAccount } from '../../types';
 import { formatPKR } from '../../utils/formatters';
@@ -56,8 +58,61 @@ export const DetailModal: React.FC<DetailModalProps> = ({
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showProofLightbox, setShowProofLightbox] = useState(false);
+  const [isSendingSms, setIsSendingSms] = useState(false);
+  const [smsFeedback, setSmsFeedback] = useState<{ status: 'idle' | 'success' | 'error'; message: string }>({ status: 'idle', message: '' });
 
   if (!item || !type) return null;
+
+  const handleSendManualSms = async () => {
+    if (type !== 'donation') return;
+    const curDonation = item as Donation;
+    if (!curDonation['Contact No'] || curDonation['Contact No'].includes('@')) return;
+
+    setIsSendingSms(true);
+    setSmsFeedback({ status: 'idle', message: '' });
+
+    try {
+      const res = await fetch('/api/notify-donor-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          donation: {
+            ...curDonation,
+            SendSms: true,
+            VeevoSmsHash: settings?.VeevoSmsHash,
+            VeevoSenderNum: settings?.VeevoSenderNum,
+            SmsApprovalTemplate: settings?.SmsApprovalTemplate,
+          },
+          status: curDonation.Status === 'Pending' ? 'Pending' : 'Approved',
+        }),
+      });
+
+      const data = await res.json();
+      if (data?.sms?.sent) {
+        setSmsFeedback({
+          status: 'success',
+          message: `SMS receipt successfully delivered to ${curDonation['Contact No']}`,
+        });
+      } else if (data?.sms?.lowBalance) {
+        setSmsFeedback({
+          status: 'error',
+          message: 'SMS gateway balance is low or zero. Please top up credits.',
+        });
+      } else {
+        setSmsFeedback({
+          status: 'error',
+          message: data?.sms?.error || 'SMS could not be delivered by gateway.',
+        });
+      }
+    } catch (err: any) {
+      setSmsFeedback({
+        status: 'error',
+        message: err.message || 'Network error attempting SMS dispatch.',
+      });
+    } finally {
+      setIsSendingSms(false);
+    }
+  };
 
 
   const renderContact = (contactNo: string | undefined) => {
@@ -330,6 +385,34 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     </span>
                     {renderContact(donation['Contact No'])}
                   </div>
+
+                  {donation['Contact No'] && !donation['Contact No'].includes('@') && donation['Contact No'] !== '-' && (
+                    <div className="my-1.5 p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                          <MessageSquare className="w-3.5 h-3.5 text-purple-500" /> Automated SMS
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isSendingSms}
+                          onClick={handleSendManualSms}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          {isSendingSms ? <Loader2 className="w-3 h-3 animate-spin" /> : <Phone className="w-3 h-3" />}
+                          {isSendingSms ? 'Sending SMS...' : 'Send / Resend SMS Receipt'}
+                        </button>
+                      </div>
+                      {smsFeedback.message && (
+                        <div className={`text-[11px] font-semibold px-2 py-1 rounded-lg border ${
+                          smsFeedback.status === 'success' 
+                            ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' 
+                            : 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30'
+                        }`}>
+                          {smsFeedback.message}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
               <div className="flex justify-between py-1 border-b dark:border-purple-900/20 border-purple-50">

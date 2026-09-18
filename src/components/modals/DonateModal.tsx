@@ -63,11 +63,11 @@ export const DonateModal: React.FC<DonateModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState('');
   const [txnId, setTxnId] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [receiveSms, setReceiveSms] = useState(Boolean(settings?.AutoSmsSubmission));
+  const [receiveSms, setReceiveSms] = useState(settings?.AutoSmsSubmission !== false);
 
   useEffect(() => {
     if (isOpen) {
-      setReceiveSms(Boolean(settings?.AutoSmsSubmission));
+      setReceiveSms(settings?.AutoSmsSubmission !== false);
     }
   }, [isOpen, settings?.AutoSmsSubmission]);
   
@@ -188,7 +188,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({
       Date: new Date().toISOString().split('T')[0],
       'Donor Name': donorName.trim() || 'Anonymous (فی سبیل اللہ)',
       'NIC No': '',
-      'Contact No': `${countryCode} ${contactNo.trim()}`.trim(),
+      'Contact No': contactNo.trim() ? `${countryCode} ${contactNo.trim()}`.trim() : '',
       DonorEmail: donorEmail.trim(),
       'Permanent Address': 'District Shangla, KP',
       Profession: 'Contributor / Philanthropist',
