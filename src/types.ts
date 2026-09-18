@@ -6,7 +6,8 @@ export type TabType =
   | 'users'
   | 'settings'
   | 'statement'
-  | 'sms-logs';
+  | 'sms-logs'
+  | 'analytics';
 
 export interface SmsLog {
   id: string;

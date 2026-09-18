@@ -29,6 +29,7 @@ import { UsersTab } from './components/tabs/UsersTab';
 import { SettingsTab } from './components/tabs/SettingsTab';
 import { StatementTab } from './components/tabs/StatementTab';
 import { SmsLogsTab } from './components/tabs/SmsLogsTab';
+import { AnalyticsTab } from './components/tabs/AnalyticsTab';
 import { DetailModal } from './components/modals/DetailModal';
 import { MonkeyFileModal } from './components/modals/MonkeyFileModal';
 import { DeleteModal } from './components/modals/DeleteModal';
@@ -1028,6 +1029,29 @@ export default function App() {
                 <h3 className="text-base font-bold text-slate-100 mb-1">Administrator Access Required</h3>
                 <p className="text-xs text-slate-400 mb-4">
                   SMS delivery logs and gateway audit history are restricted to administrators.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setAdminLoginModalOpen(true)}
+                  className="glow-button px-4 py-2 rounded-xl text-xs font-bold"
+                >
+                  Admin Login
+                </button>
+              </div>
+            )
+          )}
+
+          {activeTab === 'analytics' && (
+            isAdmin ? (
+              <AnalyticsTab isAdmin={isAdmin} />
+            ) : (
+              <div className="glass-card p-8 text-center max-w-md mx-auto my-12 border-purple-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-xl">🔒</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-100 mb-1">Administrator Access Required</h3>
+                <p className="text-xs text-slate-400 mb-4">
+                  Traffic analytics and server gateway logs are restricted to administrators.
                 </p>
                 <button
                   type="button"
